@@ -2,6 +2,11 @@
 name = "del-geo"
 version = "0.1.0"
 edition = "2021"
+authors = ["Nobuyuki Umetani <n.umetani@gmail.com>"]
+description = "2D/3D geometry utility coddes"
+documentation = "https://docs.rs/del_geo"
+license = "MIT"
+repository = "https://github.com/nobuyuki83/del-geo"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
