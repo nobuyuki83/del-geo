@@ -1,4 +1,4 @@
-pub mod geo_edge;
-pub mod geo_tet;
-pub mod geo_tri;
+pub mod edge;
+pub mod tet;
+pub mod tri;
 pub mod vec3;

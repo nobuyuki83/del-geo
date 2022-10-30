@@ -171,15 +171,15 @@ pub fn nearest_triangle3_point3(
     q0: &[f32],
     q1: &[f32],
     q2: &[f32]) -> ([f32; 3], f32, f32) {
-    use crate::{geo_tet, geo_edge, vec3};
+    use crate::{tet, edge, vec3};
     let (_area,n012) = area_and_unorm3(q0,q1,q2);
     let pe = [ ps[0] + n012[0], ps[1] + n012[1], ps[2] + n012[2] ];
-    let v012 = geo_tet::volume(ps, q0, q1, q2);
+    let v012 = tet::volume(ps, q0, q1, q2);
     if v012.abs() > 1.0e-10 {
         let sign: f32 = if v012 > 0_f32 { 1_f32} else {-1_f32};
-        let v0: f32 = geo_tet::volume(ps, q1, q2, &pe) * sign;
-        let v1: f32 = geo_tet::volume(ps, q2, q0, &pe) * sign;
-        let v2: f32 = geo_tet::volume(ps, q0, q1, &pe) * sign;
+        let v0: f32 = tet::volume(ps, q1, q2, &pe) * sign;
+        let v1: f32 = tet::volume(ps, q2, q0, &pe) * sign;
+        let v2: f32 = tet::volume(ps, q0, q1, &pe) * sign;
         assert!( (v0 + v1 + v2).abs() > 1.0e-10);
         let inv_v012 = 1.0 / (v0 + v1 + v2);
         let r0 = v0 * inv_v012;
@@ -194,9 +194,9 @@ pub fn nearest_triangle3_point3(
             return (nearp, r0, r1);
         }
     }
-    let r12: [f32; 3] = geo_edge::nearest_edge3_point3(ps, q1, q2);
-    let r20: [f32; 3] = geo_edge::nearest_edge3_point3(ps, q2, q0);
-    let r01: [f32; 3] = geo_edge::nearest_edge3_point3(ps, q0, q1);
+    let r12: [f32; 3] = edge::nearest_edge3_point3(ps, q1, q2);
+    let r20: [f32; 3] = edge::nearest_edge3_point3(ps, q2, q0);
+    let r01: [f32; 3] = edge::nearest_edge3_point3(ps, q0, q1);
     let d12 = vec3::distance(&r12, ps);
     let d20 = vec3::distance(&r20, ps);
     let d01 = vec3::distance(&r01, ps);
