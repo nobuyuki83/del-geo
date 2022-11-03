@@ -12,6 +12,15 @@ pub fn norm<T>(
     (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt()
 }
 
+pub fn normalize(v: &mut [f32]) -> f32 {
+    let l = norm(v);
+    let linv = 1_f32 / l;
+    v[0] *= linv;
+    v[1] *= linv;
+    v[2] *= linv;
+    l
+}
+
 pub fn cross_mut<T>(
     vo: &mut [T],
     v1: &[T],
@@ -50,10 +59,17 @@ pub fn sub<T>(
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
+pub fn scale<T>(
+    a: &[T],
+    s: T) -> [T; 3]
+    where T: Copy + std::ops::Mul<Output=T> {
+    [s * a[0], s * a[1], s * a[2]]
+}
+
 pub fn distance<T>(
     p0: &[T],
     p1: &[T]) -> T
-where T : num_traits::Float
+    where T: num_traits::Float
 {
     let v0 = p1[0] - p0[0];
     let v1 = p1[1] - p0[1];
