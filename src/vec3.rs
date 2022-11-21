@@ -12,9 +12,12 @@ pub fn norm<T>(
     (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt()
 }
 
-pub fn normalize(v: &mut [f32]) -> f32 {
+pub fn normalize<T>(
+    v: &mut [T]) -> T
+where T: num_traits::Float + std::ops::MulAssign
+{
     let l = norm(v);
-    let linv = 1_f32 / l;
+    let linv = T::one() / l;
     v[0] *= linv;
     v[1] *= linv;
     v[2] *= linv;
