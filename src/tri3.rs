@@ -1,45 +1,7 @@
 use num_traits::AsPrimitive;
 
-pub fn area2<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
-    where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + 'static + Copy,
-          f32: AsPrimitive<T>
-{
-    assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
-    0.5_f32.as_() * ((p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]))
-}
-
-pub fn dldx2(
-    p0: &[f32],
-    p1: &[f32],
-    p2: &[f32]) -> [[f32; 3]; 3] {
-    assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
-    let a0 = area2(p0, p1, p2);
-    let tmp1 = 0.5 / a0;
-    [
-        [
-            tmp1 * (p1[1] - p2[1]),
-            tmp1 * (p2[1] - p0[1]),
-            tmp1 * (p0[1] - p1[1]),
-        ],
-        [
-            tmp1 * (p2[0] - p1[0]),
-            tmp1 * (p0[0] - p2[0]),
-            tmp1 * (p1[0] - p0[0]),
-        ],
-        [
-            tmp1 * (p1[0] * p2[1] - p2[0] * p1[1]),
-            tmp1 * (p2[0] * p0[1] - p0[0] * p2[1]),
-            tmp1 * (p0[0] * p1[1] - p1[0] * p0[1]),
-        ]
-    ]
-}
-
-// above: 2D triangle
-// --------------------
-// below: 3D triangle
-
-pub fn area3<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
-    where T: num_traits::real::Real + 'static,
+pub fn area<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
+    where T: num_traits::Float + 'static,
           f32: num_traits::AsPrimitive<T>
 {
     use crate::vec3;
@@ -53,7 +15,7 @@ pub fn area3<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
     return vec3::squared_norm(&na).sqrt() * 0.5_f32.as_();
 }
 
-pub fn normal3<T>(
+pub fn normal<T>(
     vnorm: &mut [T],
     v1: &[T],
     v2: &[T],
@@ -65,7 +27,7 @@ pub fn normal3<T>(
     vnorm[2] = (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0]);
 }
 
-pub fn unit_normal3<T>(
+pub fn unit_normal<T>(
     n: &mut [T],
     v1: &[T],
     v2: &[T],
@@ -74,7 +36,7 @@ pub fn unit_normal3<T>(
           f32: num_traits::AsPrimitive<T>
 {
     use crate::vec3;
-    normal3(
+    normal(
         n,
         v1, v2, v3);
     let a = vec3::norm(n) * 0.5_f32.as_();
@@ -85,16 +47,16 @@ pub fn unit_normal3<T>(
     a
 }
 
-pub fn area_and_unorm3<T>(
+pub fn area_and_unorm<T>(
     v1: &[T],
     v2: &[T],
-    v3: &[T]) -> (T,[T;3])
+    v3: &[T]) -> (T, [T; 3])
     where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + num_traits::Float + 'static + Copy + std::ops::MulAssign,
           f32: num_traits::AsPrimitive<T>
 {
     use crate::vec3;
-    let mut n: [T;3] = [0_f32.as_();3];
-    normal3(
+    let mut n: [T; 3] = [0_f32.as_(); 3];
+    normal(
         &mut n,
         v1, v2, v3);
     let a = vec3::norm(&n) * 0.5_f32.as_();
@@ -105,11 +67,11 @@ pub fn area_and_unorm3<T>(
     (a, n)
 }
 
-pub fn cot3<T>(
+pub fn cot<T>(
     p0: &[T],
     p1: &[T],
     p2: &[T]) -> [T; 3]
-    where T: num_traits::real::Real + 'static,
+    where T: num_traits::Float + 'static,
           f32: num_traits::AsPrimitive<T>
 {
     use crate::vec3;
@@ -166,21 +128,21 @@ pub fn ray_triangle_intersection(
     // None
 }
 
-pub fn nearest_triangle3_point3(
-    ps: &[f32], // origin point
+pub fn nearest_to_point3(
+    ps: &[f32],
     q0: &[f32],
     q1: &[f32],
     q2: &[f32]) -> ([f32; 3], f32, f32) {
-    use crate::{tet, edge, vec3};
-    let (_area,n012) = area_and_unorm3(q0,q1,q2);
-    let pe = [ ps[0] + n012[0], ps[1] + n012[1], ps[2] + n012[2] ];
+    use crate::{tet, edge3, vec3};
+    let (_area, n012) = area_and_unorm(q0, q1, q2);
+    let pe = [ps[0] + n012[0], ps[1] + n012[1], ps[2] + n012[2]];
     let v012 = tet::volume(ps, q0, q1, q2);
     if v012.abs() > 1.0e-10 {
-        let sign: f32 = if v012 > 0_f32 { 1_f32} else {-1_f32};
+        let sign: f32 = if v012 > 0_f32 { 1_f32 } else { -1_f32 };
         let v0: f32 = tet::volume(ps, q1, q2, &pe) * sign;
         let v1: f32 = tet::volume(ps, q2, q0, &pe) * sign;
         let v2: f32 = tet::volume(ps, q0, q1, &pe) * sign;
-        assert!( (v0 + v1 + v2).abs() > 1.0e-10);
+        assert!((v0 + v1 + v2).abs() > 1.0e-10);
         let inv_v012 = 1.0 / (v0 + v1 + v2);
         let r0 = v0 * inv_v012;
         let r1 = v1 * inv_v012;
@@ -194,15 +156,15 @@ pub fn nearest_triangle3_point3(
             return (nearp, r0, r1);
         }
     }
-    let r12: [f32; 3] = edge::nearest_edge3_point3(ps, q1, q2);
-    let r20: [f32; 3] = edge::nearest_edge3_point3(ps, q2, q0);
-    let r01: [f32; 3] = edge::nearest_edge3_point3(ps, q0, q1);
+    let r12: [f32; 3] = edge3::nearest_point3(ps, q1, q2);
+    let r20: [f32; 3] = edge3::nearest_point3(ps, q2, q0);
+    let r01: [f32; 3] = edge3::nearest_point3(ps, q0, q1);
     let d12 = vec3::distance(&r12, ps);
     let d20 = vec3::distance(&r20, ps);
     let d01 = vec3::distance(&r01, ps);
     if d12 < d20 {
         if d12 < d01 { // 12 is the smallest
-            let nearp = [ r12[0], r12[1], r12[2]];
+            let nearp = [r12[0], r12[1], r12[2]];
             let r0 = 0_f32;
             let r1 = vec3::distance(&nearp, q2) / vec3::distance(q1, q2);
             return (nearp, r0, r1);

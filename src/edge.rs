@@ -1,27 +1,30 @@
-pub fn nearest_edge3_point3(
-    point_pos: &[f32],
-    edge_pos0: &[f32],
-    edge_pos1: &[f32]) -> [f32; 3]
+use num_traits::AsPrimitive;
+
+pub fn nearest_to_origin<T, const X: usize>(
+    p0: &nalgebra::base::SVector<T,X>, // start
+    p1: &nalgebra::base::SVector<T,X>) -> nalgebra::base::SVector<T,X>
+    where T: nalgebra::RealField + 'static + Copy,
+          f64: num_traits::AsPrimitive<T>
 {
-    use crate::vec3;
-    let d = [
-        edge_pos1[0] - edge_pos0[0],
-        edge_pos1[1] - edge_pos0[1],
-        edge_pos1[2] - edge_pos0[2]];
-    let t = {
-        if vec3::dot(&d, &d) > 1.0e-20 {
-            let ps = [
-                edge_pos0[0] - point_pos[0],
-                edge_pos0[1] - point_pos[1],
-                edge_pos0[2] - point_pos[2]];
-            let a = vec3::dot(&d, &d);
-            let b = vec3::dot(&d, &ps);
-            (-b / a).clamp(0_f32, 1_f32)
-        } else {
-            0.5_f32
-        }
-    };
-    [edge_pos0[0] + t * d[0],
-        edge_pos0[1] + t * d[1],
-        edge_pos0[2] + t * d[2]]
+    let d = p1 - p0;
+    let a: T = d.dot(&d);
+    if a < 1.0e-20_f64.as_() {
+        return (p0 + p1) * 0.5_f64.as_();
+    }
+    let b = d.dot(&p0);
+    let mut r0: T = -b / a;
+    if r0 < 0_f64.as_() { r0 = 0_f64.as_(); }
+    if r0 > 1_f64.as_() { r0 = 1_f64.as_(); }
+    return  p0.scale(1_f64.as_() - r0) + p1.scale(r0);
+}
+
+
+pub fn distance_to_point<T, const X: usize>(
+    po_c: &nalgebra::base::SVector<T,X>,
+    po_s: &nalgebra::base::SVector<T,X>,
+    po_e: &nalgebra::base::SVector<T,X>) -> T
+    where T: nalgebra::RealField + 'static + Copy,
+          f64: num_traits::AsPrimitive<T>
+{
+    return crate::edge::nearest_to_origin(&(po_s - po_c), &(po_e - po_c)).norm();
 }

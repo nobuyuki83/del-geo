@@ -12,4 +12,6 @@ repository = "https://github.com/nobuyuki83/del-geo"
 
 [dependencies]
 num-traits = "0.2.15"
+nalgebra = "0.32.3"
+
 
