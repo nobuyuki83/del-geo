@@ -3,7 +3,7 @@ pub fn nearest_to_line3<T>(
     line_dir_a: &nalgebra::Vector3<T>,
     line_org_b: &nalgebra::Vector3<T>,
     line_dir_b: &nalgebra::Vector3<T>)
-    -> (T, nalgebra::Vector3<T>, nalgebra::Vector3<T>)
+    -> (T, T, T, nalgebra::Vector3<T>, nalgebra::Vector3<T>)
     where T: nalgebra::RealField + Copy
 {
     let xaa = line_dir_a.dot(line_dir_a);
@@ -16,5 +16,5 @@ pub fn nearest_to_line3<T>(
     let db = xab * xac - xaa * xbc;
     let scaled_neraest_a = line_org_a.scale(scale) + line_dir_a.scale(da);
     let scaled_nearest_b = line_org_b.scale(scale) + line_dir_b.scale(db);
-    (scale, scaled_neraest_a, scaled_nearest_b)
+    (scale, da, db, scaled_neraest_a, scaled_nearest_b)
 }

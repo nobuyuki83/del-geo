@@ -1,6 +1,6 @@
 use num_traits::AsPrimitive;
 
-pub fn culling_intersection<T>(
+pub fn culling_intersection_<T>(
     po_s0: &[T],
     po_e0: &[T],
     po_s1: &[T],
@@ -25,7 +25,7 @@ where T: num_traits::Float + 'static + Copy,
 }
 
 
-pub fn intersection_edge2_edge2<T>(
+pub fn intersection_edge2_<T>(
     po_s0: &[T],
     po_e0: &[T],
     po_s1: &[T],
@@ -76,7 +76,7 @@ pub fn distance_to_edge2<T>(
     where T: num_traits::Float + nalgebra::RealField + 'static + Copy + std::fmt::Debug,
         f64: num_traits::AsPrimitive<T>
 {
-    if intersection_edge2_edge2(po_s0.into(), po_e0.into(), po_s1.into(), po_e1.into()).is_some() {
+    if intersection_edge2_(po_s0.into(), po_e0.into(), po_s1.into(), po_e1.into()).is_some() {
         return -1_f64.as_();
     }
     let ds1 = crate::edge::distance_to_point(po_s0, po_s1, po_e1);

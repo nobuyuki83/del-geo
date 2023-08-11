@@ -6,5 +6,6 @@ pub mod edge2;
 pub mod edge3;
 pub mod tri2;
 pub mod tri3;
+pub mod plane;
 pub mod tet;
 pub mod polygon;
