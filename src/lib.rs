@@ -7,6 +7,9 @@
  tet
  */
 pub mod vec3;
+pub mod mat3;
+//
+pub mod kdtree2;
 //
 pub mod line;
 pub mod line3;

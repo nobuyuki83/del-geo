@@ -1,3 +1,5 @@
+use num_traits::AsPrimitive;
+
 pub fn squared_norm_<T>(p: &[T]) -> T
     where T: std::ops::Mul<Output=T> + std::ops::Add<Output=T> + Copy
 {
@@ -78,4 +80,25 @@ pub fn distance_<T>(
     let v1 = p1[1] - p0[1];
     let v2 = p1[2] - p0[2];
     (v0 * v0 + v1 * v1 + v2 * v2).sqrt()
+}
+
+pub fn frame_from_z_vector<T>(
+    vec_n: nalgebra::Vector3::<T>) -> (nalgebra::Vector3::<T>, nalgebra::Vector3::<T>)
+where T: nalgebra::RealField + 'static + Copy,
+    f64: num_traits::AsPrimitive<T>
+{
+    let vec_s = nalgebra::Vector3::<T>::new(T::zero(), T::one(), T::zero() );
+    let mut vec_x = vec_s.cross(&vec_n);
+    let len = vec_x.norm();
+    if len < 1.0e-10_f64.as_() {
+        let vec_t = nalgebra::Vector3::<T>::new( T::one(), T::zero(), T::zero() );
+        let vec_x = vec_t.cross(&vec_n);
+        let vec_y = vec_n.cross(&vec_x);
+        (vec_x, vec_y)
+    } else {
+        let invlen = T::one() / len;
+        vec_x *= invlen;
+        let vec_y = vec_n.cross(&vec_x);
+        (vec_x, vec_y)
+    }
 }

@@ -5,8 +5,8 @@ pub fn culling_intersection_<T>(
     po_e0: &[T],
     po_s1: &[T],
     po_e1: &[T]) -> bool
-where T: num_traits::Float + 'static + Copy,
-      f64: num_traits::AsPrimitive<T>
+    where T: num_traits::Float + 'static + Copy,
+          f64: num_traits::AsPrimitive<T>
 {
     let min0x = if po_s0[0] < po_e0[0] { po_s0[0] } else { po_e0[0] };
     let max0x = if po_s0[0] > po_e0[0] { po_s0[0] } else { po_e0[0] };
@@ -74,7 +74,7 @@ pub fn distance_to_edge2<T>(
     po_s1: &nalgebra::Vector2<T>,
     po_e1: &nalgebra::Vector2<T>) -> T
     where T: num_traits::Float + nalgebra::RealField + 'static + Copy + std::fmt::Debug,
-        f64: num_traits::AsPrimitive<T>
+          f64: num_traits::AsPrimitive<T>
 {
     if intersection_edge2_(po_s0.into(), po_e0.into(), po_s1.into(), po_e1.into()).is_some() {
         return -1_f64.as_();
@@ -88,4 +88,18 @@ pub fn distance_to_edge2<T>(
     min_dist = if ds0 < min_dist { ds0 } else { min_dist };
     min_dist = if de0 < min_dist { de0 } else { min_dist };
     min_dist
+}
+
+pub fn winding_number<T>(
+    ps: &nalgebra::Vector2<T>,
+    pe: &nalgebra::Vector2<T>,
+    po: &nalgebra::Vector2<T>) -> T
+    where T: nalgebra::RealField + Copy,
+          f64: AsPrimitive<T>
+{
+    let p0 = ps - po;
+    let p1 = pe - po;
+    let y: T = p1[1] * p0[0] - p1[0] * p0[1];
+    let x: T = p0[0] * p1[0] + p0[1] * p1[1];
+    y.atan2(x) * std::f64::consts::FRAC_1_PI.as_() * 0.5.as_()
 }
