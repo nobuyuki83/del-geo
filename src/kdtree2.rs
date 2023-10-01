@@ -1,10 +1,8 @@
-use num_traits::Zero;
-
 #[derive(Clone)]
 pub struct Node<Real> {
-    pos: (nalgebra::Vector2::<Real>, usize),
-    idx_node_left: usize,
-    idx_node_right: usize,
+    pub pos: (nalgebra::Vector2::<Real>, usize),
+    pub idx_node_left: usize,
+    pub idx_node_right: usize,
 }
 
 impl<Real> Node<Real>
@@ -72,14 +70,14 @@ pub fn construct_kdtree<Real>(
     }
 }
 
-fn find_edges<Real>(
+pub fn find_edges<Real>(
     xyz: &mut Vec<Real>,
     nodes: &Vec<Node<Real>>,
     idx_node: usize,
     min: nalgebra::Vector2::<Real>,
     max: nalgebra::Vector2::<Real>,
     i_depth: i32)
-where Real: Copy
+    where Real: Copy
 {
     if idx_node >= nodes.len() { return; }
     let pos = &nodes[idx_node].pos.0;
@@ -89,29 +87,66 @@ where Real: Copy
         xyz.push(pos[0]);
         xyz.push(max[1]);
         find_edges(xyz, nodes, nodes[idx_node].idx_node_left,
-                          min,
-                          nalgebra::Vector2::new(pos[0], max[1]),
-                          i_depth + 1);
+                   min,
+                   nalgebra::Vector2::new(pos[0], max[1]),
+                   i_depth + 1);
         find_edges(xyz, nodes, nodes[idx_node].idx_node_right,
-                          nalgebra::Vector2::new(pos[0], min[1]),
-                          max,
-                          i_depth + 1);
+                   nalgebra::Vector2::new(pos[0], min[1]),
+                   max,
+                   i_depth + 1);
     } else {
         xyz.push(min[0]);
         xyz.push(pos[1]);
         xyz.push(max[0]);
         xyz.push(pos[1]);
         find_edges(xyz, nodes, nodes[idx_node].idx_node_left,
-                          min,
-                          nalgebra::Vector2::new(max[0], pos[1]),
-                          i_depth + 1);
+                   min,
+                   nalgebra::Vector2::new(max[0], pos[1]),
+                   i_depth + 1);
         find_edges(xyz, nodes, nodes[idx_node].idx_node_right,
-                          nalgebra::Vector2::new(min[0], pos[1]),
-                          max,
-                          i_depth + 1);
+                   nalgebra::Vector2::new(min[0], pos[1]),
+                   max,
+                   i_depth + 1);
     }
 }
 
+pub fn nearest<Real>(
+    pos_near: &mut (nalgebra::Vector2<Real>, usize),
+    pos_in: nalgebra::Vector2<Real>,
+    nodes: &Vec<Node<Real>>,
+    idx_node: usize,
+    min: nalgebra::Vector2<Real>,
+    max: nalgebra::Vector2<Real>,
+    i_depth: usize)
+    where Real: nalgebra::RealField + Copy
+{
+    if idx_node >= nodes.len() { return; } // this node does not exist
+
+    let pos = nodes[idx_node].pos.0;
+    if (pos - pos_in).norm() < (pos_near.0 - pos_in).norm() {
+        *pos_near = nodes[idx_node].pos; // update the nearest position
+    }
+
+    if i_depth % 2 == 0 { // division in x direction
+        nearest(pos_near, pos_in, nodes, nodes[idx_node].idx_node_left,
+                min,
+                nalgebra::Vector2::<Real>::new(pos.x, max.y),
+                i_depth + 1);
+        nearest(pos_near, pos_in, nodes, nodes[idx_node].idx_node_right,
+                nalgebra::Vector2::<Real>::new(pos.x, min.y),
+                max,
+                i_depth + 1);
+    } else { // division in y-direction
+        nearest(pos_near, pos_in, nodes, nodes[idx_node].idx_node_left,
+                min,
+                nalgebra::Vector2::<Real>::new(max.x, pos.y),
+                i_depth + 1);
+        nearest(pos_near, pos_in, nodes, nodes[idx_node].idx_node_right,
+                nalgebra::Vector2::<Real>::new(min.x, pos.y),
+                max,
+                i_depth + 1);
+    }
+}
 
 pub struct KdTree2<Real> {
     min: nalgebra::Vector2::<Real>,
@@ -172,5 +207,64 @@ impl<Real> KdTree2<Real>
         xys.push(self.min.x);
         xys.push(self.min.y);
         xys
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::kdtree2::Node;
+    use crate::kdtree2::nearest;
+    use num_traits::AsPrimitive;
+    use rand::distributions::Standard;
+
+    fn test_data<Real>() -> (Vec<nalgebra::Vector2<Real>>, Vec<Node<Real>>)
+        where Real: nalgebra::RealField + 'static + Copy,
+              f64: AsPrimitive<Real>,
+              Standard: rand::prelude::Distribution<Real>
+    {
+        let xys = {
+            use rand::Rng;
+            let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([13_u8; 32]);
+            let rad: Real = 0.3_f64.as_();
+            let half: Real = 0.5_f64.as_();
+            let mut ps = Vec::<nalgebra::Vector2::<Real>>::new();
+            for _i in 0..100 {
+                let x: Real = (rng.gen::<Real>() * 2_f64.as_() - Real::one()) * rad + half;
+                let y: Real = (rng.gen::<Real>() * 2_f64.as_() - Real::one()) * rad + half;
+                ps.push(nalgebra::Vector2::<Real>::new(x, y));
+            }
+            ps
+        };
+        let nodes = {
+            let mut nodes = Vec::<crate::kdtree2::Node<Real>>::new();
+            let mut ps = xys.iter().enumerate().map(|v| (*v.1, v.0)).collect();
+            nodes.resize(1, crate::kdtree2::Node::new());
+            crate::kdtree2::construct_kdtree(
+                &mut nodes, 0,
+                &mut ps, 0, xys.len(),
+                0);
+            nodes
+        };
+        (xys, nodes)
+    }
+
+    #[test]
+    fn it_works() {
+        type Real = f64;
+        type Vector = nalgebra::Vector2::<Real>;
+        let (xys, nodes) = test_data();
+        let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([13_u8; 32]);
+        use rand::Rng;
+        for _ in 0..1000 {
+            let p0 = Vector::new(rng.gen::<Real>(), rng.gen::<Real>());
+            let mut pos_near = (Vector::new(Real::MAX, Real::MAX), usize::MAX);
+            nearest(&mut pos_near, p0, &nodes, 0,
+                    Vector::new(0., 0.), Vector::new(1., 1.),
+                    0);
+            let dist_min = (xys[pos_near.1] - p0).norm();
+            for i in 0..xys.len() {
+                assert!((xys[i] - p0).norm() >= dist_min);
+            }
+        }
     }
 }
