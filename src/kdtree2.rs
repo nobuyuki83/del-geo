@@ -248,6 +248,25 @@ impl<Real> KdTree2<Real>
         }
     }
 
+    pub fn from_vec(points_: &Vec<nalgebra::Vector2::<Real>>) -> Self {
+        let mut nodes = Vec::<Node<Real>>::new();
+        let mut ps = points_.iter().enumerate().map(|v| (*v.1, v.0)).collect();
+        nodes.resize(1, Node::new());
+        construct_kdtree(&mut nodes, 0,
+                         &mut ps, 0, points_.len(),
+                         0);
+        use num_traits::Float;
+        let min_x = points_.iter().fold(Real::nan(), |m, v| Float::min(v.x, m));
+        let max_x = points_.iter().fold(Real::nan(), |m, v| Float::max(v.x, m));
+        let min_y = points_.iter().fold(Real::nan(), |m, v| Float::min(v.y, m));
+        let max_y = points_.iter().fold(Real::nan(), |m, v| Float::max(v.y, m));
+        KdTree2 {
+            min: nalgebra::Vector2::<Real>::new(min_x, min_y),
+            max: nalgebra::Vector2::<Real>::new(max_x, max_y),
+            nodes,
+        }
+    }
+
     pub fn edges(&self) -> Vec<Real> {
         let mut xys = Vec::<Real>::new();
         find_edges(
