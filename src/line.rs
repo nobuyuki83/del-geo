@@ -16,3 +16,5 @@ pub fn nearest_to_point<T, const X: usize>(
     let t: T = -b / a;
     (s + d.scale(t), t)
 }
+
+

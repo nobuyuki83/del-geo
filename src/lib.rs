@@ -16,13 +16,8 @@ pub mod line3;
 pub mod edge;
 pub mod edge2;
 pub mod edge3;
-//
-pub mod polyline;
-//
 pub mod plane;
 pub mod tri2;
 pub mod tri3;
-pub mod polygon;
-//
 pub mod tet;
 

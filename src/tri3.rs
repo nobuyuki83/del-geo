@@ -2,7 +2,7 @@ use num_traits::AsPrimitive;
 
 pub fn area_<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
     where T: num_traits::Float + 'static,
-          f32: num_traits::AsPrimitive<T>
+          f64: num_traits::AsPrimitive<T>
 {
     use crate::vec3;
     assert!(p0.len() == 3 && p1.len() == 3 && p2.len() == 3);
@@ -12,7 +12,7 @@ pub fn area_<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
         v1[1] * v2[2] - v2[1] * v1[2],
         v1[2] * v2[0] - v2[2] * v1[0],
         v1[0] * v2[1] - v2[0] * v1[1]];
-    return vec3::squared_norm_(&na).sqrt() * 0.5_f32.as_();
+    return vec3::squared_norm_(&na).sqrt() * 0.5_f64.as_();
 }
 
 pub fn normal_<T>(
@@ -178,4 +178,17 @@ pub fn nearest_to_point3_(
     let r0 = vec3::distance_(&nearp, q1) / vec3::distance_(q0, q1);
     let r1 = 1_f32 - r0;
     return (nearp, r0, r1);
+}
+
+/* ------------------------------------ */
+
+pub fn height<T>(
+    q: &nalgebra::Vector3::<T>,
+    p0: &nalgebra::Vector3::<T>,
+    p1: &nalgebra::Vector3::<T>) -> T
+    where T: nalgebra::RealField + 'static + Copy + num_traits::Float,
+        f64: AsPrimitive<T>
+{
+    let a = area_(q.as_slice(), p0.as_slice(), p1.as_slice());
+    a * 2.0.as_() / (p0 - p1).norm()
 }
