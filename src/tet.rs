@@ -27,3 +27,18 @@ pub fn volume<T>(
     let a2 =  (v2[2] - v1[2]) * ((v3[0] - v1[0]) * (v4[1] - v1[1]) - (v4[0] - v1[0]) * (v3[1] - v1[1]));
     (a0 + a1 + a2) * 0.16666666666666666666666666666667_f64.as_()
 }
+
+
+/**
+ height of tetrahedron base:v1,v2,v3, top:v4
+ */
+pub fn height<T>(
+    v1: &nalgebra::Vector3<T>,
+    v2: &nalgebra::Vector3<T>,
+    v3: &nalgebra::Vector3<T>,
+    v4: &nalgebra::Vector3<T>) -> T
+where T: nalgebra::RealField
+{
+    let na = (v2-v1).cross(&(v3-v1)).normalize();
+    na.dot(&(v4-v1))
+}

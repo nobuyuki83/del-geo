@@ -160,7 +160,7 @@ mod tests {
             let vy = (numerical(&qey, &p0, &p1, 1000, 3) - v0) / eps;
             let vz = (numerical(&qez, &p0, &p1, 1000, 3) - v0) / eps;
             let dv1 = nalgebra::Vector3::<f64>::new(vx, vy, vz);
-            dbg!(p0, p1, q);
+            // dbg!(p0, p1, q);
             assert!((dv0 - dv1).norm() < 0.03 * (dv0.norm() + 1.0));
         }
     }
