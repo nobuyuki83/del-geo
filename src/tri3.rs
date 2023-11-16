@@ -312,19 +312,10 @@ mod tests {
     use rand::Rng;
     use crate::tri3::{area, height, integrate_numerically, wdw_integral_of_inverse_distance_cubic};
 
-    fn get_rand_vector3() -> nalgebra::Vector3::<f64> {
-        let mut p0 = nalgebra::Vector3::<f64>::zeros();
-        let mut rng = rand::thread_rng();
-        for v in p0.iter_mut() {
-            *v = rng.gen();
-        }
-        p0
-    }
-
     #[test]
     fn test_w_inverse_distance_cubic_integrated_over_wedge() {
         for _ in 0..1000 {
-            let x = get_rand_vector3() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
+            let x = crate::vec3::sample_unit_cube() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
             if x.z.abs() < 0.1 { continue; }
             let b = core::f64::consts::PI * 0.5; // 90 degree
             let n_r = 200;
@@ -353,7 +344,7 @@ mod tests {
         use crate::tri3::wdw_inverse_distance_cubic_integrated_over_wedge;
         // let x0 = nalgebra::Vector3::<f64>::new(10., 1., -2.);
         for _ in 0..100000 {
-            let x0 = get_rand_vector3() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
+            let x0 = crate::vec3::sample_unit_cube() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
             if x0.z.abs() < 0.2 { continue; }
             // dbg!(x0);
             let b = core::f64::consts::PI * (rand::thread_rng().gen::<f64>() * 0.8 + 0.1); // 90 degree
@@ -379,13 +370,10 @@ mod tests {
     #[test]
     fn test_w_inverse_distance_cubic_integrated() {
         for _ in 0..1000 {
-            // let p0 = nalgebra::Vector3::<f64>::new(0., 0., 0.);
-            // let p1 = nalgebra::Vector3::<f64>::new(1., 0., 0.);
-            // let p2 = nalgebra::Vector3::<f64>::new(0., 1., 0.);
-            let p0 = get_rand_vector3();
-            let p1 = get_rand_vector3();
-            let p2 = get_rand_vector3();
-            let q = get_rand_vector3() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
+            let p0 = crate::vec3::sample_unit_cube();
+            let p1 = crate::vec3::sample_unit_cube();
+            let p2  = crate::vec3::sample_unit_cube();
+            let q  = crate::vec3::sample_unit_cube();
             {
                 let area = area(&p0, &p1, &p2);
                 let h0 = height(&p0, &p1, &p2);
@@ -415,15 +403,11 @@ mod tests {
     fn test_wdw_integral_of_inverse_distance_cubic() {
         use crate::tri3::wdw_integral_of_inverse_distance_cubic;
         for _ in 0..1000 {
-            //let p0 = nalgebra::Vector3::<f64>::new(0., 0., 0.);
-            //let p1 = nalgebra::Vector3::<f64>::new(2., 0., 0.01);
-            //let p2 = nalgebra::Vector3::<f64>::new(0., 2., 0.);
-            //let q0 = nalgebra::Vector3::<f64>::new(0.5, 0.5, 1.);
-            let p0 = get_rand_vector3();
-            let p1 = get_rand_vector3();
-            let p2 = get_rand_vector3();
+            let p0 = crate::vec3::sample_unit_cube();
+            let p1 = crate::vec3::sample_unit_cube();
+            let p2 = crate::vec3::sample_unit_cube();
             let q0 =
-                get_rand_vector3() - nalgebra::Vector3::<f64>::new(0.5, 0.5, 0.5);
+                crate::vec3::sample_unit_cube() - nalgebra::Vector3::<f64>::new(0.5, 0.5, 0.5);
             {
                 let area = area(&p0, &p1, &p2);
                 let h0 = height(&p0, &p1, &p2);

@@ -33,10 +33,10 @@ pub fn intersection_edge2_<T>(
     where T: num_traits::Float + 'static + Copy,
           f64: num_traits::AsPrimitive<T>
 {
-    let area1 = crate::tri2::area(po_s0, po_e0, po_s1);
-    let area2 = crate::tri2::area(po_s0, po_e0, po_e1);
-    let area3 = crate::tri2::area(po_s1, po_e1, po_s0);
-    let area4 = crate::tri2::area(po_s1, po_e1, po_e0);
+    let area1 = crate::tri2::area_(po_s0, po_e0, po_s1);
+    let area2 = crate::tri2::area_(po_s0, po_e0, po_e1);
+    let area3 = crate::tri2::area_(po_s1, po_e1, po_s0);
+    let area4 = crate::tri2::area_(po_s1, po_e1, po_e0);
     if area1 * area2 > 0_f64.as_() { return None; }
     if area3 * area4 > 0_f64.as_() { return None; }
     let r1 = area1 / (area1 - area2);
@@ -52,10 +52,10 @@ pub fn intersect_edge2(
     po_e0: &nalgebra::Vector2<f32>,
     po_s1: &nalgebra::Vector2<f32>,
     po_e1: &nalgebra::Vector2<f32>) -> bool {
-    let area1 = crate::tri2::area(po_s0.as_slice(), po_e0.as_slice(), po_s1.as_slice());
-    let area2 = crate::tri2::area(po_s0.as_slice(), po_e0.as_slice(), po_e1.as_slice());
-    let area3 = crate::tri2::area(po_s1.as_slice(), po_e1.as_slice(), po_s0.as_slice());
-    let area4 = crate::tri2::area(po_s1.as_slice(), po_e1.as_slice(), po_e0.as_slice());
+    let area1 = crate::tri2::area_(po_s0.as_slice(), po_e0.as_slice(), po_s1.as_slice());
+    let area2 = crate::tri2::area_(po_s0.as_slice(), po_e0.as_slice(), po_e1.as_slice());
+    let area3 = crate::tri2::area_(po_s1.as_slice(), po_e1.as_slice(), po_s0.as_slice());
+    let area4 = crate::tri2::area_(po_s1.as_slice(), po_e1.as_slice(), po_e0.as_slice());
     //  std::cout << area1 << " " << area2 << " " << area3 << " " << area4 << std::endl;
     let a12 = area1 * area2;
     if a12 > 0_f32 {

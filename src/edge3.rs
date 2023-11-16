@@ -97,15 +97,6 @@ pub fn wdw_integral_of_inverse_distance_cubic(
 
 #[cfg(test)]
 mod tests {
-    use rand::Rng;
-    fn get_rand_vector3() -> nalgebra::Vector3::<f64> {
-        let mut p0 = nalgebra::Vector3::<f64>::zeros();
-        let mut rng = rand::thread_rng();
-        for v in p0.iter_mut() {
-            *v = rng.gen();
-        }
-        p0
-    }
 
     fn numerical(
         q: &nalgebra::Vector3::<f64>,
@@ -133,14 +124,11 @@ mod tests {
     }
 
     #[test]
-    fn it_works() {
+    fn test_wdw_integral_of_inverse_distance_cubic() {
         for _i in 0..10000 {
-            // let p0 = nalgebra::Vector3::<f64>::new(0., 0., 0.);
-            // let p1 = nalgebra::Vector3::<f64>::new(0.3, 0., 0.);
-            // let q = nalgebra::Vector3::<f64>::new(0.3, 0., 0.5);
-            let p0 = get_rand_vector3();
-            let p1 = get_rand_vector3();
-            let q = get_rand_vector3();
+            let p0 = crate::vec3::sample_unit_cube();
+            let p1 = crate::vec3::sample_unit_cube();
+            let q = crate::vec3::sample_unit_cube();
             let len = (p0 - p1).norm();
             let height = crate::tri3::height(&q, &p0, &p1);
             if height < 0.1 { continue; }
