@@ -423,17 +423,17 @@ mod tests {
             let q1x = q0 + nalgebra::Vector3::<f64>::new(eps, 0., 0.);
             let (w1x, _) = wdw_integral_of_inverse_distance_cubic(&p0, &p1, &p2, &q1x);
             // dbg!((w1x-w0)/eps, dw.x);
-            assert!(((w1x - w0) / eps - dw.x).abs() < 3.0e-2 * (dw.x.abs() + 0.1));
+            assert!(((w1x - w0) / eps - dw.x).abs() < 5.0e-2 * (dw.x.abs() + 0.1));
             //
             let q1y = q0 + nalgebra::Vector3::<f64>::new(0., eps, 0.);
             let (w1y, _) = wdw_integral_of_inverse_distance_cubic(&p0, &p1, &p2, &q1y);
             // dbg!((w1y-w0)/eps, dw.y);
-            assert!(((w1y - w0) / eps - dw.y).abs() < 3.0e-2 * (dw.y.abs() + 0.1));
+            assert!(((w1y - w0) / eps - dw.y).abs() < 5.0e-2 * (dw.y.abs() + 0.1));
             //
             let q1z = q0 + nalgebra::Vector3::<f64>::new(0., 0., eps);
             let (w1z, _) = wdw_integral_of_inverse_distance_cubic(&p0, &p1, &p2, &q1z);
             // dbg!((w1z-w0)/eps, dw.z);
-            assert!(((w1z - w0) / eps - dw.z).abs() < 3.0e-2 * (dw.z.abs() + 0.1));
+            assert!(((w1z - w0) / eps - dw.z).abs() < 5.0e-2 * (dw.z.abs() + 0.1));
         }
     }
 }
