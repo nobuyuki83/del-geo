@@ -95,9 +95,59 @@ pub fn wdw_integral_of_inverse_distance_cubic(
     (v, dv * lsinv)
 }
 
+
+pub fn nearest_to_edge3(
+    p0: &nalgebra::Vector3::<f64>,
+    p1: &nalgebra::Vector3::<f64>,
+    q0: &nalgebra::Vector3::<f64>,
+    q1: &nalgebra::Vector3::<f64>) -> (f64, f64, f64)
+{
+    let vp = p1 - p0;
+    let vq = q1 - q0;
+    if vp.cross(&vq).norm() < 1.0e-10 { // handling parallel edge
+        let pq0 = p0 - q0;
+        let nvp = vp;
+        let nvp = nvp.normalize();
+        let vert = pq0 - pq0.dot(&nvp) * nvp;
+        let dist = vert.norm();
+        let lp0 = p0.dot(&nvp);
+        let lp1 = p1.dot(&nvp);
+        let lq0 = q0.dot(&nvp);
+        let lq1 = q1.dot(&nvp);
+        let p_min = if lp0 < lp1 { lp0 } else { lp1 };
+        let p_max = if lp0 > lp1 { lp0 } else { lp1 };
+        let q_min = if lq0 < lq1 { lq0 } else { lq1 };
+        let q_max = if lq0 > lq1 { lq0 } else { lq1 };
+        let lm;
+        if p_max < q_min {
+            lm = (p_max + q_min) * 0.5;
+        } else if q_max < p_min {
+            lm = (q_max + p_min) * 0.5;
+        } else if p_max < q_max {
+            lm = (p_max + q_min) * 0.5;
+        } else {
+            lm = (q_max + p_min) * 0.5;
+        }
+        let ratio_p = (lm - lp0) / (lp1 - lp0);
+        let ratio_q = (lm - lq0) / (lq1 - lq0);
+        return (dist, ratio_p, ratio_q);
+    }
+    let t0 = vp.dot(&vp);
+    let t1 = vq.dot(&vq);
+    let t2 = vp.dot(&vq);
+    let t3 = vp.dot(&(q0 - p0));
+    let t4 = vq.dot(&(q0 - p0));
+    let det = t0 * t1 - t2 * t2;
+    let invdet = 1.0 / det;
+    let ratio_p = (t1 * t3 - t2 * t4) * invdet;
+    let ratio_q = (t2 * t3 - t0 * t4) * invdet;
+    let pc = p0 + ratio_p * vp;
+    let qc = q0 + ratio_q * vq;
+    return ((pc - qc).norm(), ratio_p, ratio_q);
+}
+
 #[cfg(test)]
 mod tests {
-
     fn numerical(
         q: &nalgebra::Vector3::<f64>,
         p0: &nalgebra::Vector3::<f64>,
@@ -150,6 +200,34 @@ mod tests {
             let dv1 = nalgebra::Vector3::<f64>::new(vx, vy, vz);
             // dbg!(p0, p1, q);
             assert!((dv0 - dv1).norm() < 0.03 * (dv0.norm() + 1.0));
+        }
+    }
+
+    #[test]
+    fn test_distance() {
+        let eps = 10e-3;
+        for _i in 0..10000 {
+            let p0 = crate::vec3::sample_unit_cube();
+            let p1 = crate::vec3::sample_unit_cube();
+            let q0 = crate::vec3::sample_unit_cube();
+            let q1 = crate::vec3::sample_unit_cube();
+            let (dist, rp, rq) = crate::edge3::nearest_to_edge3(&p0, &p1, &q0, &q1);
+            let vp = p1 - p0;
+            let vq = q1 - q0;
+            let pc1 = p0 + rp * vp;
+            let pc0 = p0 + f64::clamp(rp - eps, 0.0, 1.0) * vp;
+            let pc2 = p0 + f64::clamp(rp + eps, 0.0, 1.0) * vp;
+            let qc1 = q0 + rq * vq;
+            let qc0 = q0 + f64::clamp(rq - eps, 0.0, 1.0) * vq;
+            let qc2 = q0 + f64::clamp(rq + eps, 0.0, 1.0) * vq;
+            assert!(dist <= (pc0 - qc0).norm());
+            assert!(dist <= (pc0 - qc1).norm());
+            assert!(dist <= (pc0 - qc2).norm());
+            assert!(dist <= (pc1 - qc0).norm());
+            assert!(dist <= (pc1 - qc2).norm());
+            assert!(dist <= (pc2 - qc0).norm());
+            assert!(dist <= (pc2 - qc1).norm());
+            assert!(dist <= (pc2 - qc2).norm());
         }
     }
 }

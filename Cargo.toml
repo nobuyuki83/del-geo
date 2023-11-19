@@ -1,6 +1,6 @@
 [package]
 name = "del-geo"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["Nobuyuki Umetani <n.umetani@gmail.com>"]
 description = "2D/3D geometry utility coddes"
