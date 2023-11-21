@@ -11,11 +11,11 @@ pub fn nearest_to_origin<T, const X: usize>(
     if a < 1.0e-20_f64.as_() {
         return (p0 + p1) * 0.5_f64.as_();
     }
-    let b = d.dot(&p0);
+    let b = d.dot(p0);
     let mut r0: T = -b / a;
     if r0 < 0_f64.as_() { r0 = 0_f64.as_(); }
     if r0 > 1_f64.as_() { r0 = 1_f64.as_(); }
-    return  p0.scale(1_f64.as_() - r0) + p1.scale(r0);
+    p0.scale(1_f64.as_() - r0) + p1.scale(r0)
 }
 
 
@@ -26,5 +26,5 @@ pub fn distance_to_point<T, const X: usize>(
     where T: nalgebra::RealField + 'static + Copy,
           f64: num_traits::AsPrimitive<T>
 {
-    return crate::edge::nearest_to_origin(&(po_s - po_c), &(po_e - po_c)).norm();
+    crate::edge::nearest_to_origin(&(po_s - po_c), &(po_e - po_c)).norm()
 }

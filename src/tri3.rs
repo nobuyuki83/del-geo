@@ -12,7 +12,7 @@ pub fn area_<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
         v1[1] * v2[2] - v2[1] * v1[2],
         v1[2] * v2[0] - v2[2] * v1[0],
         v1[0] * v2[1] - v2[0] * v1[1]];
-    return vec3::squared_norm_(&na).sqrt() * 0.5_f64.as_();
+    vec3::squared_norm_(&na).sqrt() * 0.5_f64.as_()
 }
 
 pub fn normal_<T>(
@@ -110,7 +110,7 @@ pub fn ray_triangle_intersection_(
     // const EPSILON: f32 = 1.0e-4;
     let edge1 = vec3::sub_(p1, p0);
     let edge2 = vec3::sub_(p2, p0);
-    let pvec = vec3::cross_(&ray_dir, &edge2);
+    let pvec = vec3::cross_(ray_dir, &edge2);
     let det = vec3::dot_(&edge1, &pvec);
     // if det > -EPSILON && det < EPSILON { return None; }
     let invdet = 1.0 / det;
@@ -122,7 +122,7 @@ pub fn ray_triangle_intersection_(
     if v < 0.0 || u + v > 1.0 { return None; }
     // At this stage we can compute t to find out where the intersection point is on the line.
     let t = invdet * vec3::dot_(&edge2, &qvec);
-    return Some(t);
+    Some(t)
 }
 
 pub fn nearest_to_point3_(
@@ -166,18 +166,16 @@ pub fn nearest_to_point3_(
             let r1 = vec3::distance_(&nearp, q2) / vec3::distance_(q1, q2);
             return (nearp, r0, r1);
         }
-    } else {
-        if d20 < d01 { // d20 is the smallest
-            let nearp = [r20[0], r20[1], r20[2]];
-            let r0 = vec3::distance_(&nearp, q2) / vec3::distance_(q0, q2);
-            let r1 = 0_f32;
-            return (nearp, r0, r1);
-        }
+    } else if d20 < d01 { // d20 is the smallest
+        let nearp = [r20[0], r20[1], r20[2]];
+        let r0 = vec3::distance_(&nearp, q2) / vec3::distance_(q0, q2);
+        let r1 = 0_f32;
+        return (nearp, r0, r1);
     }
     let nearp = [r01[0], r01[1], r01[2]];
     let r0 = vec3::distance_(&nearp, q1) / vec3::distance_(q0, q1);
     let r1 = 1_f32 - r0;
-    return (nearp, r0, r1);
+    (nearp, r0, r1)
 }
 
 // above: w/o nalgebra
@@ -280,7 +278,7 @@ pub fn integrate_numerically<F>(
     n: usize) -> f64
     where F: Fn(f64, f64) -> f64
 {
-    let area = crate::tri3::area(&p0, &p1, &p2);
+    let area = crate::tri3::area(p0, p1, p2);
     let jacobian = area / (n * n) as f64;
     let mut val_num = 0_f64;
     for i in 0..n {

@@ -43,7 +43,7 @@ where T: nalgebra::RealField + 'static + Copy,
     let st = st2.sqrt();
     let n = n.normalize();
 // Rodoriguez's rotation formula
-    return nalgebra::Matrix3::<T>::new(
+    nalgebra::Matrix3::<T>::new(
         ct + (T::one() - ct) * n.x * n.x,
         -n.z * st + (T::one() - ct) * n.x * n.y,
         n.y * st + (T::one() - ct) * n.x * n.z,
@@ -53,5 +53,5 @@ where T: nalgebra::RealField + 'static + Copy,
         -n.y * st + (T::one() - ct) * n.z * n.x,
         n.x * st + (T::one() - ct) * n.z * n.y,
         ct + (T::one() - ct) * n.z * n.z,
-    );
+    )
 }

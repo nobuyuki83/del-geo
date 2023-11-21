@@ -9,7 +9,7 @@ pub fn intersection_line3<T>(
     where T: nalgebra::RealField
 {
     let t = ((o - s).dot(n)) / (d.dot(n));
-    return s + d.scale(t);
+    s + d.scale(t)
 }
 
 
@@ -20,7 +20,7 @@ pub fn nearest_to_point3<T>(
     where T: nalgebra::RealField
 {
     let n0 = n.normalize();
-    return p + n0.scale((o - p).dot(&n0));
+    p + n0.scale((o - p).dot(&n0))
 }
 
 pub fn intersection_line3_triplane3<T>(

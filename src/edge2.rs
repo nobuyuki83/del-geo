@@ -41,7 +41,7 @@ pub fn intersection_edge2_<T>(
     if area3 * area4 > 0_f64.as_() { return None; }
     let r1 = area1 / (area1 - area2);
     let r0 = area3 / (area3 - area4);
-    return Some((r0, r1));
+    Some((r0, r1))
 }
 
 ///////////////
@@ -65,7 +65,7 @@ pub fn intersect_edge2(
     if a34 > 0_f32 {
         return false;
     }
-    return true;
+    true
 }
 
 pub fn distance_to_edge2<T>(
@@ -77,7 +77,7 @@ pub fn distance_to_edge2<T>(
           f64: num_traits::AsPrimitive<T>
 {
     if intersection_edge2_(po_s0.into(), po_e0.into(), po_s1.into(), po_e1.into()).is_some() {
-        return -1_f64.as_();
+        return (-1_f64).as_();
     }
     let ds1 = crate::edge::distance_to_point(po_s0, po_s1, po_e1);
     let de1 = crate::edge::distance_to_point(po_e0, po_s1, po_e1);

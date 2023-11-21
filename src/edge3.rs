@@ -48,7 +48,7 @@ pub fn nearest_to_line3(
     if scale.abs() < 1.0e-10 { // pararell
         let nearest_edge = (edge_start + edge_end) * 0.5;
         let (nearest_line, _) = crate::line::nearest_to_point(
-            &nearest_edge, &line_origin, &line_direction);
+            &nearest_edge, line_origin, line_direction);
         return (nearest_edge, nearest_line);
     }
     let ratio_edge = scaled_ratio_edge / scale;
@@ -69,7 +69,7 @@ pub fn nearest_to_line3(
     }
     let nearest_edge = edge_end;
     let nearest_line = p2;
-    return (*nearest_edge, nearest_line);
+    (*nearest_edge, nearest_line)
 }
 
 pub fn wdw_integral_of_inverse_distance_cubic(
@@ -143,7 +143,7 @@ pub fn nearest_to_edge3(
     let ratio_q = (t2 * t3 - t0 * t4) * invdet;
     let pc = p0 + ratio_p * vp;
     let qc = q0 + ratio_q * vq;
-    return ((pc - qc).norm(), ratio_p, ratio_q);
+    ((pc - qc).norm(), ratio_p, ratio_q)
 }
 
 #[cfg(test)]
