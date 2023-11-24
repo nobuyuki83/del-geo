@@ -1,3 +1,5 @@
+/// methods for 3D vector
+
 use num_traits::AsPrimitive;
 
 pub fn squared_norm_<T>(p: &[T]) -> T

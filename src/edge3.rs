@@ -1,3 +1,5 @@
+/// methods for 3D edge (line segment)
+
 use num_traits::AsPrimitive;
 
 pub fn nearest_point3_<T>(
@@ -205,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_distance() {
-        let eps = 10e-3;
+        let eps = 10e-4;
         for _i in 0..10000 {
             let p0 = crate::vec3::sample_unit_cube();
             let p1 = crate::vec3::sample_unit_cube();
@@ -220,6 +222,7 @@ mod tests {
             let qc1 = q0 + rq * vq;
             let qc0 = q0 + f64::clamp(rq - eps, 0.0, 1.0) * vq;
             let qc2 = q0 + f64::clamp(rq + eps, 0.0, 1.0) * vq;
+            assert!((dist-(pc1-qc1).norm()).abs()<1.0e-5);
             assert!(dist <= (pc0 - qc0).norm());
             assert!(dist <= (pc0 - qc1).norm());
             assert!(dist <= (pc0 - qc2).norm());

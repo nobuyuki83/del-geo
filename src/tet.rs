@@ -1,3 +1,5 @@
+/// methods for 3D tetrahedron
+
 use num_traits::AsPrimitive;
 
 pub fn volume_<T>(

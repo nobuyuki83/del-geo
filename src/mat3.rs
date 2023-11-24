@@ -1,3 +1,5 @@
+/// methods for 3x3 matrix
+
 use num_traits::AsPrimitive;
 
 pub fn minimum_rotation_matrix<T>(

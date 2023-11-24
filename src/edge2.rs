@@ -1,3 +1,5 @@
+/// methods for 2D edge (line segment)
+
 use num_traits::AsPrimitive;
 
 pub fn culling_intersection_<T>(

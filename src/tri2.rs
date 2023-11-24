@@ -1,3 +1,5 @@
+/// methods for 2D triangle
+
 use num_traits::AsPrimitive;
 
 pub fn area_<T>(p0: &[T], p1: &[T], p2: &[T]) -> T

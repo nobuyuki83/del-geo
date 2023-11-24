@@ -1,3 +1,5 @@
+/// methods for 3D plane
+
 use num_traits::AsPrimitive;
 
 pub fn intersection_line3<T>(

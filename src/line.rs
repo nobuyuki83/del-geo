@@ -1,3 +1,5 @@
+/// methods for 2D or 3D line
+
 use num_traits::AsPrimitive;
 
 pub fn nearest_to_point<T, const X: usize>(

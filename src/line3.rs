@@ -1,3 +1,5 @@
+/// methods for 3D line
+
 pub fn nearest_to_line3<T>(
     line_org_a: &nalgebra::Vector3<T>,
     line_dir_a: &nalgebra::Vector3<T>,
