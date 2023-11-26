@@ -55,8 +55,8 @@ pub fn from_two_aabbs_slice6(
     assert_eq!(i1.len(), 6);
     let mut o = [0_f32; 6];
     for i in 0..3 {
-        o[i + 0] = if i0[i] < i1[i] { i0[i] } else { i1[i] };
-        o[i + 3] = if i0[i] > i1[i] { i0[i] } else { i1[i] };
+        o[i + 0] = if i0[i+0] < i1[i+0] { i0[i+0] } else { i1[i+0] };
+        o[i + 3] = if i0[i+3] > i1[i+3] { i0[i+3] } else { i1[i+3] };
     }
     o
 }
