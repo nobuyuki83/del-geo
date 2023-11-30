@@ -1,4 +1,4 @@
-/// methods for 2D or 3D line
+//! methods for 2D or 3D line
 
 use num_traits::AsPrimitive;
 

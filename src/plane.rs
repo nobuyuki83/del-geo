@@ -1,4 +1,4 @@
-/// methods for 3D plane
+//! methods for 3D plane
 
 use num_traits::AsPrimitive;
 
@@ -12,6 +12,18 @@ pub fn intersection_line3<T>(
 {
     let t = ((o - s).dot(n)) / (d.dot(n));
     s + d.scale(t)
+}
+
+pub fn intersection_ray3<T>(
+    o: &nalgebra::Vector3<T>, // one point on plane
+    n: &nalgebra::Vector3<T>, // plane normal
+    s: &nalgebra::Vector3<T>, // one point on line
+    d: &nalgebra::Vector3<T>) // direction of line
+    -> Option<T>
+    where T: nalgebra::RealField
+{
+    let t = ((o - s).dot(n)) / (d.dot(n));
+    if t < T::zero() { None } else { Some(t)}
 }
 
 

@@ -1,4 +1,4 @@
-/// methods for 2D triangle
+//! methods for 2D triangle
 
 use num_traits::AsPrimitive;
 

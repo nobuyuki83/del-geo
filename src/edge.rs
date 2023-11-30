@@ -1,4 +1,4 @@
-/// methods for 2D or 3D edge (line segment)
+//! methods for 2D or 3D edge (line segment)
 
 use num_traits::AsPrimitive;
 

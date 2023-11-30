@@ -1,4 +1,4 @@
-/// methods for 3D vector
+//! methods for 3D vector
 
 use num_traits::AsPrimitive;
 
@@ -105,9 +105,12 @@ where T: nalgebra::RealField + 'static + Copy,
     }
 }
 
-pub fn sample_unit_cube() -> nalgebra::Vector3::<f64> {
+pub fn sample_unit_cube<T>() -> nalgebra::Vector3::<T>
+where T: nalgebra::RealField + nalgebra::Scalar,
+      rand::distributions::Standard: rand::prelude::Distribution<T>
+{
     use rand::Rng;
-    let mut p0 = nalgebra::Vector3::<f64>::zeros();
+    let mut p0 = nalgebra::Vector3::<T>::zeros();
     let mut rng = rand::thread_rng();
     for v in p0.iter_mut() {
         *v = rng.gen();
@@ -115,8 +118,8 @@ pub fn sample_unit_cube() -> nalgebra::Vector3::<f64> {
     p0
 }
 
-pub fn navec3<T>(vtx2xyz: &[T], i: usize) -> nalgebra::Vector3::<T>
-    where T: Copy
+pub fn navec3<T>(vtx2xyz: &[T], i_vtx: usize) -> nalgebra::Vector3::<T>
+    where T: Copy + nalgebra::RealField
 {
-    nalgebra::Vector3::<T>::new(vtx2xyz[i*3], vtx2xyz[i*3+1], vtx2xyz[i*3+2])
+    nalgebra::Vector3::<T>::from_row_slice(&vtx2xyz[i_vtx *3..(i_vtx +1)*3])
 }

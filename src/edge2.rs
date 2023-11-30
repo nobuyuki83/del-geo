@@ -1,4 +1,4 @@
-/// methods for 2D edge (line segment)
+//! methods for 2D edge (line segment)
 
 use num_traits::AsPrimitive;
 
@@ -46,8 +46,8 @@ pub fn intersection_edge2_<T>(
     Some((r0, r1))
 }
 
-///////////////
-// use nalgebra
+// -----------------------------
+// below: use nalgebra
 
 pub fn intersect_edge2(
     po_s0: &nalgebra::Vector2<f32>,

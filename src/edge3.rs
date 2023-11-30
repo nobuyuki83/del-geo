@@ -1,4 +1,4 @@
-/// methods for 3D edge (line segment)
+//! methods for 3D edge (line segment)
 
 use num_traits::AsPrimitive;
 
@@ -182,7 +182,7 @@ mod tests {
             let p1 = crate::vec3::sample_unit_cube();
             let q = crate::vec3::sample_unit_cube();
             let len = (p0 - p1).norm();
-            let height = crate::tri3::height(&q, &p0, &p1);
+            let height = crate::tri3::height(&p0, &p1, &q);
             if height < 0.1 { continue; }
             if len < 0.1 { continue; }
             if (p0 - q).norm() < 0.1 { continue; }

@@ -1,4 +1,4 @@
-/// methods for 3D tetrahedron
+//! methods for 3D tetrahedron
 
 use num_traits::AsPrimitive;
 

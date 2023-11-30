@@ -1,4 +1,4 @@
-/// methods for 3x3 matrix
+//! methods for 3x3 matrix
 
 use num_traits::AsPrimitive;
 
