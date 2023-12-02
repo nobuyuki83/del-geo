@@ -8,6 +8,7 @@
  */
 pub mod vec3;
 pub mod mat3;
+pub mod aabb2;
 pub mod aabb3;
 //
 pub mod line;
