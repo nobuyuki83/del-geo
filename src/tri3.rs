@@ -112,12 +112,12 @@ where T: num_traits::Float + Copy + 'static,
       f64: AsPrimitive<T>
 {
     use crate::vec3;
-    // const EPSILON: f32 = 1.0e-4;
+    let eps: T = T::epsilon();
     let edge1 = vec3::sub_(p1, p0);
     let edge2 = vec3::sub_(p2, p0);
     let pvec = vec3::cross_(ray_dir, &edge2);
     let det = vec3::dot_(&edge1, &pvec);
-    // if det > -EPSILON && det < EPSILON { return None; }
+    if det > -eps && det < eps { return None; }
     let invdet = T::one() / det;
     let tvec = vec3::sub_(ray_org, p0);
     let u = invdet * vec3::dot_(&tvec, &pvec);

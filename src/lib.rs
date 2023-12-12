@@ -1,12 +1,12 @@
 
 /*
- aabb ->
+ vec -> mat -> aabb ->
  line -> ray -> edge ->
- polyline -> curve_quadratic -> curve_cubic -> curve_ndegree ->
  plane -> tri -> quad ->
  tet
  */
 pub mod vec3;
+pub mod mat2;
 pub mod mat3;
 pub mod aabb2;
 pub mod aabb3;
@@ -20,4 +20,5 @@ pub mod plane;
 pub mod tri2;
 pub mod tri3;
 pub mod tet;
+pub mod vec2;
 

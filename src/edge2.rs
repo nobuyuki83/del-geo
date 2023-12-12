@@ -46,6 +46,20 @@ pub fn intersection_edge2_<T>(
     Some((r0, r1))
 }
 
+pub fn winding_number_<T>(
+    ps: &[T],
+    pe: &[T],
+    po: &[T]) -> T
+    where T: num_traits::Float + Copy + 'static,
+          f64: AsPrimitive<T>
+{
+    let p0 = crate::vec2::sub_(ps,po);
+    let p1 = crate::vec2::sub_(pe,po);
+    let y: T = p1[1] * p0[0] - p1[0] * p0[1];
+    let x: T = p0[0] * p1[0] + p0[1] * p1[1];
+    y.atan2(x) * std::f64::consts::FRAC_1_PI.as_() * 0.5.as_()
+}
+
 // -----------------------------
 // below: use nalgebra
 
