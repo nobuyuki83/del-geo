@@ -1,13 +1,14 @@
 //! methods for 3D Axis-aligned Bounding Box (AABB)
 
 #[allow(clippy::identity_op)]
-pub fn from_list_of_vertices(
+pub fn from_list_of_vertices<T>(
     idx2vtx: &[usize],
-    vtx2xyz: &[f32],
-    eps: f32) -> [f32;6]
+    vtx2xyz: &[T],
+    eps: T) -> [T;6]
+where T: num_traits::Float
 {
     assert!(!idx2vtx.is_empty());
-    let mut aabb = [0_f32;6];
+    let mut aabb = [T::zero();6];
     {
         let i_vtx = idx2vtx[0];
         {
@@ -50,13 +51,14 @@ pub fn from_list_of_vertices(
 }
 
 #[allow(clippy::identity_op)]
-pub fn from_two_aabbs_slice6(
-    i0: &[f32],
-    i1: &[f32]) -> [f32; 6]
+pub fn from_two_aabbs_slice6<T>(
+    i0: &[T],
+    i1: &[T]) -> [T; 6]
+where T: num_traits::Float
 {
     assert_eq!(i0.len(), 6);
     assert_eq!(i1.len(), 6);
-    let mut o = [0_f32; 6];
+    let mut o = [T::zero(); 6];
     for i in 0..3 {
         o[i + 0] = if i0[i + 0] < i1[i + 0] { i0[i + 0] } else { i1[i + 0] };
         o[i + 3] = if i0[i + 3] > i1[i + 3] { i0[i + 3] } else { i1[i + 3] };
@@ -64,14 +66,16 @@ pub fn from_two_aabbs_slice6(
     o
 }
 
-pub fn is_active(i0: &[f32]) -> bool
+pub fn is_active<T>(i0: &[T]) -> bool
+where T: std::cmp::PartialOrd
 {
     i0[0] <= i0[3]
 }
 
-pub fn is_intersect(
-    i0: &[f32],
-    i1: &[f32]) -> bool
+pub fn is_intersect<T>(
+    i0: &[T],
+    i1: &[T]) -> bool
+where T: std::cmp::PartialOrd
 {
     assert_eq!(i0.len(), 6);
     assert_eq!(i1.len(), 6);

@@ -35,7 +35,32 @@ pub fn nearest_point3_<T>(
         edge_pos0[2] + t * d[2]]
 }
 
+// above: w/o nalgebra
 /* -------------------------- */
+// below: w/ nalgebra
+
+pub fn intersection_edge3<T>(
+    p0: &nalgebra::Vector3<T>,
+    p1: &nalgebra::Vector3<T>,
+    q0: &nalgebra::Vector3<T>,
+    q1: &nalgebra::Vector3<T>) -> Option<(T,T,T,T)>
+where T: nalgebra::RealField + Copy + 'static,
+    f64: num_traits::AsPrimitive<T>
+{
+    let n = (p1-p0).cross(&(q0-p0));
+    let p2 = p0 + n;
+    let rq1 = crate::tet::volume(p0,p1,&p2, q0);
+    let rq0 = crate::tet::volume(p0,p1,&p2, q1);
+    let rp1 = crate::tet::volume(q0,q1,&p2, p0);
+    let rp0 = crate::tet::volume(q0,q1,&p2, p1);
+    if (rp0-rp1).abs() < T::default_epsilon() { return None; }
+    if (rq0-rq1).abs() < T::default_epsilon() { return None; }
+    let t = T::one()/(rp0-rp1);
+    let (rp0,rp1) = (rp0.scale(t), -rp1.scale(t));
+    let t = T::one()/(rq0-rq1);
+    let (rq0,rq1) = (rq0.scale(t), -rq1.scale(t));
+    Some((rp0,rp1,rq0,rq1))
+}
 
 pub fn nearest_to_line3(
     edge_start: &nalgebra::Vector3<f64>,

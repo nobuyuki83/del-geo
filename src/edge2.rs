@@ -72,7 +72,6 @@ pub fn intersect_edge2(
     let area2 = crate::tri2::area_(po_s0.as_slice(), po_e0.as_slice(), po_e1.as_slice());
     let area3 = crate::tri2::area_(po_s1.as_slice(), po_e1.as_slice(), po_s0.as_slice());
     let area4 = crate::tri2::area_(po_s1.as_slice(), po_e1.as_slice(), po_e0.as_slice());
-    //  std::cout << area1 << " " << area2 << " " << area3 << " " << area4 << std::endl;
     let a12 = area1 * area2;
     if a12 > 0_f32 {
         return false;

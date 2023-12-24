@@ -84,6 +84,29 @@ pub fn distance_<T>(
     (v0 * v0 + v1 * v1 + v2 * v2).sqrt()
 }
 
+pub fn scalar_triple_product_<T>(
+    a: &[T],
+    b: &[T],
+    c: &[T]) -> T
+    where T: std::ops::Mul<Output=T> + std::ops::Sub<Output=T> + std::ops::Add<Output=T> + Copy
+{
+    let v0: T = a[0] * (b[1] * c[2] - b[2] * c[1]);
+    let v1: T = a[1] * (b[2] * c[0] - b[0] * c[2]);
+    let v2: T = a[2] * (b[0] * c[1] - b[1] * c[0]);
+    v0 + v1 + v2
+}
+
+// -------------------
+
+pub fn scalar_triple_product<T>(
+    a: &nalgebra::Vector3::<T>,
+    b: &nalgebra::Vector3::<T>,
+    c: &nalgebra::Vector3::<T>) -> T
+    where T: nalgebra::RealField
+{
+    b.cross(c).dot(a)
+}
+
 pub fn frame_from_z_vector<T>(
     vec_n: nalgebra::Vector3::<T>) -> (nalgebra::Vector3::<T>, nalgebra::Vector3::<T>)
 where T: nalgebra::RealField + 'static + Copy,

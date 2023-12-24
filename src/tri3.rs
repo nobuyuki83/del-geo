@@ -349,35 +349,37 @@ pub fn is_intersection_tri3_sat(
     true
 }
 
-pub fn is_intersection_tri3(
-    p0: &nalgebra::Vector3::<f32>,
-    p1: &nalgebra::Vector3::<f32>,
-    p2: &nalgebra::Vector3::<f32>,
-    q0: &nalgebra::Vector3::<f32>,
-    q1: &nalgebra::Vector3::<f32>,
-    q2: &nalgebra::Vector3::<f32>) -> Option<(nalgebra::Vector3::<f32>, nalgebra::Vector3::<f32>)>
+pub fn is_intersection_tri3<T>(
+    p0: &nalgebra::Vector3::<T>,
+    p1: &nalgebra::Vector3::<T>,
+    p2: &nalgebra::Vector3::<T>,
+    q0: &nalgebra::Vector3::<T>,
+    q1: &nalgebra::Vector3::<T>,
+    q2: &nalgebra::Vector3::<T>)
+    -> Option<(nalgebra::Vector3::<T>, nalgebra::Vector3::<T>)>
+    where T: nalgebra::RealField + Copy
 {
     let np = normal(p0, p1, p2);
     let nq = normal(q0, q1, q2);
     let dp0 = (p0 - q0).dot(&nq);
     let dp1 = (p1 - q0).dot(&nq);
     let dp2 = (p2 - q0).dot(&nq);
-    if ((dp0 > 0.) == (dp1 > 0.)) && ((dp1 > 0.) == (dp2 > 0.)) { return None; }
+    if ((dp0 > T::zero()) == (dp1 > T::zero())) && ((dp1 > T::zero()) == (dp2 > T::zero())) { return None; }
     let dq0 = (q0 - p0).dot(&np);
     let dq1 = (q1 - p0).dot(&np);
     let dq2 = (q2 - p0).dot(&np);
-    if ((dq0 > 0.) == (dq1 > 0.)) && ((dq1 > 0.) == (dq2 > 0.)) { return None; }
+    if ((dq0 > T::zero()) == (dq1 > T::zero())) && ((dq1 > T::zero()) == (dq2 > T::zero())) { return None; }
     let vz = np.cross(&nq);
     let (ps, pe) = {
-        let p01 = (1.0 / (dp0 - dp1)) * (dp0 * p1 - dp1 * p0);
-        let p12 = (1.0 / (dp1 - dp2)) * (dp1 * p2 - dp2 * p1);
-        let p20 = (1.0 / (dp2 - dp0)) * (dp2 * p0 - dp0 * p2);
+        let p01 = (p1.scale(dp0) - p0.scale(dp1)).scale(T::one() / (dp0 - dp1));
+        let p12 = (p2.scale(dp1) - p1.scale(dp2)).scale(T::one()/ (dp1 - dp2));
+        let p20 = (p0.scale(dp2) - p2.scale(dp0)).scale(T::one() / (dp2 - dp0));
         let mut pe;
         let mut ps;
-        if dp0 * dp1 > 0. {
+        if dp0 * dp1 > T::zero() {
             ps = p20;
             pe = p12;
-        } else if dp1 * dp2 > 0. {
+        } else if dp1 * dp2 > T::zero() {
             ps = p01;
             pe = p20;
         } else {
@@ -394,15 +396,15 @@ pub fn is_intersection_tri3(
     assert!(zps <= zpe);
 //
     let (qs, qe) = {
-        let q01 = (1.0 / (dq0 - dq1)) * (dq0 * q1 - dq1 * q0);
-        let q12 = (1.0 / (dq1 - dq2)) * (dq1 * q2 - dq2 * q1);
-        let q20 = (1.0 / (dq2 - dq0)) * (dq2 * q0 - dq0 * q2);
+        let q01 = (q1.scale(dq0) - q0.scale(dq1)).scale(T::one() / (dq0 - dq1));
+        let q12 = (q2.scale(dq1) - q1.scale(dq2)).scale(T::one() / (dq1 - dq2));
+        let q20 = (q0.scale(dq2) - q2.scale(dq0)).scale(T::one() / (dq2 - dq0));
         let mut qs;
         let mut qe;
-        if dq0 * dq1 > 0. {
+        if dq0 * dq1 > T::zero() {
             qs = q20;
             qe = q12;
-        } else if dq1 * dq2 > 0. {
+        } else if dq1 * dq2 > T::zero() {
             qs = q01;
             qe = q20;
         } else {
@@ -419,7 +421,7 @@ pub fn is_intersection_tri3(
     assert!(zqs <= zqe);
 //
     if zps > zqe || zqs > zpe { return None; }
-    let mut ap = [nalgebra::Vector3::<f32>::zeros(); 4];
+    let mut ap = [nalgebra::Vector3::<T>::zeros(); 4];
     let mut icnt = 0;
     if zps > zqs && zps < zqe {
         ap[icnt] = ps;

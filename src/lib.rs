@@ -21,4 +21,5 @@ pub mod tri2;
 pub mod tri3;
 pub mod tet;
 pub mod vec2;
+pub mod ccd;
 
