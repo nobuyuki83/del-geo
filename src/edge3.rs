@@ -1,5 +1,6 @@
 //! methods for 3D edge (line segment)
 
+use nalgebra::clamp;
 use num_traits::AsPrimitive;
 
 pub fn nearest_point3_<T>(
@@ -39,27 +40,51 @@ pub fn nearest_point3_<T>(
 /* -------------------------- */
 // below: w/ nalgebra
 
-pub fn intersection_edge3<T>(
+pub fn nearest_point3<T>(
+    edge_pos0: &nalgebra::Vector3<T>,
+    edge_pos1: &nalgebra::Vector3<T>,
+    point_pos: &nalgebra::Vector3<T>) -> (nalgebra::Vector3<T>, T)
+    where T: nalgebra::RealField + 'static + Copy + PartialOrd,
+          f64: num_traits::AsPrimitive<T>
+{
+    let d = edge_pos1 - edge_pos0;
+    let dsq = d.norm_squared();
+    let t = if dsq != T::zero() {
+        let r: T = -d.dot(&(edge_pos0 - point_pos)) / dsq;
+        clamp(r, T::zero(), T::one())
+    } else {
+        0.5_f64.as_()
+    };
+    (edge_pos0 + d.scale(t), t)
+}
+
+
+/// the two edges need to be co-planar
+pub fn intersection_edge3_when_coplanar<T>(
     p0: &nalgebra::Vector3<T>,
     p1: &nalgebra::Vector3<T>,
     q0: &nalgebra::Vector3<T>,
-    q1: &nalgebra::Vector3<T>) -> Option<(T,T,T,T)>
-where T: nalgebra::RealField + Copy + 'static,
-    f64: num_traits::AsPrimitive<T>
+    q1: &nalgebra::Vector3<T>) -> Option<(T, T, T, T)>
+    where T: nalgebra::RealField + Copy + 'static,
+          f64: num_traits::AsPrimitive<T>
 {
-    let n = (p1-p0).cross(&(q0-p0));
+    let n = {
+        let n0 = (p1 - p0).cross(&(q0 - p0));
+        let n1 = (p1 - p0).cross(&(q1 - p0));
+        if n0.norm_squared() < n1.norm_squared() { n1 } else { n0 }
+    };
     let p2 = p0 + n;
-    let rq1 = crate::tet::volume(p0,p1,&p2, q0);
-    let rq0 = crate::tet::volume(p0,p1,&p2, q1);
-    let rp1 = crate::tet::volume(q0,q1,&p2, p0);
-    let rp0 = crate::tet::volume(q0,q1,&p2, p1);
-    if (rp0-rp1).abs() < T::default_epsilon() { return None; }
-    if (rq0-rq1).abs() < T::default_epsilon() { return None; }
-    let t = T::one()/(rp0-rp1);
-    let (rp0,rp1) = (rp0.scale(t), -rp1.scale(t));
-    let t = T::one()/(rq0-rq1);
-    let (rq0,rq1) = (rq0.scale(t), -rq1.scale(t));
-    Some((rp0,rp1,rq0,rq1))
+    let rq1 = crate::tet::volume(p0, p1, &p2, q0);
+    let rq0 = crate::tet::volume(p0, p1, &p2, q1);
+    let rp1 = crate::tet::volume(q0, q1, &p2, p0);
+    let rp0 = crate::tet::volume(q0, q1, &p2, p1);
+    if (rp0 - rp1).abs() <= T::zero() { return None; }
+    if (rq0 - rq1).abs() <= T::zero() { return None; }
+    let t = T::one() / (rp0 - rp1);
+    let (rp0, rp1) = (rp0.scale(t), -rp1.scale(t));
+    let t = T::one() / (rq0 - rq1);
+    let (rq0, rq1) = (rq0.scale(t), -rq1.scale(t));
+    Some((rp0, rp1, rq0, rq1))
 }
 
 pub fn nearest_to_line3(
@@ -123,54 +148,83 @@ pub fn wdw_integral_of_inverse_distance_cubic(
 }
 
 
-pub fn nearest_to_edge3(
-    p0: &nalgebra::Vector3::<f64>,
-    p1: &nalgebra::Vector3::<f64>,
-    q0: &nalgebra::Vector3::<f64>,
-    q1: &nalgebra::Vector3::<f64>) -> (f64, f64, f64)
+pub fn nearest_to_edge3<T>(
+    p0: &nalgebra::Vector3::<T>,
+    p1: &nalgebra::Vector3::<T>,
+    q0: &nalgebra::Vector3::<T>,
+    q1: &nalgebra::Vector3::<T>) -> (T, T, T)
+    where T: nalgebra::RealField + Copy + 'static,
+          f64: AsPrimitive<T>
 {
     let vp = p1 - p0;
     let vq = q1 - q0;
-    if vp.cross(&vq).norm() < 1.0e-10 { // handling parallel edge
+    assert!(vp.norm() > T::zero());
+    assert!(vq.norm() > T::zero());
+    if vp.cross(&vq).norm() < T::default_epsilon() { // handling parallel edge
         let pq0 = p0 - q0;
-        let nvp = vp;
-        let nvp = nvp.normalize();
-        let vert = pq0 - pq0.dot(&nvp) * nvp;
-        let dist = vert.norm();
-        let lp0 = p0.dot(&nvp);
-        let lp1 = p1.dot(&nvp);
-        let lq0 = q0.dot(&nvp);
-        let lq1 = q1.dot(&nvp);
-        let p_min = if lp0 < lp1 { lp0 } else { lp1 };
-        let p_max = if lp0 > lp1 { lp0 } else { lp1 };
-        let q_min = if lq0 < lq1 { lq0 } else { lq1 };
-        let q_max = if lq0 > lq1 { lq0 } else { lq1 };
-        let lm;
-        if p_max < q_min {
-            lm = (p_max + q_min) * 0.5;
-        } else if q_max < p_min {
-            lm = (q_max + p_min) * 0.5;
-        } else if p_max < q_max {
-            lm = (p_max + q_min) * 0.5;
-        } else {
-            lm = (q_max + p_min) * 0.5;
-        }
+        let uvp = vp.normalize();
+        // a vector vertical to vp and vq and in the plane of vp and vq
+        let vert = pq0 - uvp.scale(pq0.dot(&uvp));
+        let dist = vert.norm(); // distance betwen two edges
+        let lp0 = p0.dot(&uvp);
+        let lp1 = p1.dot(&uvp);
+        let lq0 = q0.dot(&uvp);
+        let lq1 = q1.dot(&uvp);
+        let (lp_min, lp_max, p_min, p_max, rp_min, rp_max)
+            = (lp0, lp1, p0, p1, T::zero(), T::one());
+        assert!(lp_min < lp_max);
+        let (lq_min, lq_max, q_min, q_max, rq_min, rq_max) =
+            if lq0 < lq1 {
+                (
+                    lq0, lq1, q0, q1, T::zero(), T::one())
+            } else {
+                (lq1, lq0, q1, q0, T::one(), T::zero())
+            };
+        if lp_max < lq_min { return ((p_max - q_min).norm(), rp_max, rq_min); }
+        if lq_max < lp_min { return ((q_max - p_min).norm(), rp_min, rq_max); }
+        let lm_min = lp_min.max(lq_min);
+        let lm_max = lp_max.min(lq_max);
+        let lm = (lm_min + lm_max) * 0.5f64.as_();
         let ratio_p = (lm - lp0) / (lp1 - lp0);
         let ratio_q = (lm - lq0) / (lq1 - lq0);
         return (dist, ratio_p, ratio_q);
     }
-    let t0 = vp.dot(&vp);
-    let t1 = vq.dot(&vq);
-    let t2 = vp.dot(&vq);
-    let t3 = vp.dot(&(q0 - p0));
-    let t4 = vq.dot(&(q0 - p0));
-    let det = t0 * t1 - t2 * t2;
-    let invdet = 1.0 / det;
-    let ratio_p = (t1 * t3 - t2 * t4) * invdet;
-    let ratio_q = (t2 * t3 - t0 * t4) * invdet;
-    let pc = p0 + ratio_p * vp;
-    let qc = q0 + ratio_q * vq;
-    ((pc - qc).norm(), ratio_p, ratio_q)
+    let (rp1,rq1) = { // line-line intersection
+        let t0 = vp.dot(&vp);
+        let t1 = vq.dot(&vq);
+        let t2 = vp.dot(&vq);
+        let t3 = vp.dot(&(q0 - p0));
+        let t4 = vq.dot(&(q0 - p0));
+        let det = t0 * t1 - t2 * t2;
+        let invdet = T::one() / det;
+        let rp1 = (t1 * t3 - t2 * t4) * invdet;
+        let rq1 = (t2 * t3 - t0 * t4) * invdet;
+        (rp1,rq1)
+    };
+    if T::zero() <= rp1 && rp1 <= T::one() && T::zero() <= rq1 && rq1 <= T::one() { // both in range
+        let pc = p0 + vp.scale(rp1);
+        let qc = q0 + vq.scale(rq1);
+        return ((pc - qc).norm(), rp1, rq1);
+    }
+    if (T::zero() <= rp1 && rp1 <= T::one()) && (rq1<=T::zero() || T::one()<=rq1) { // p in range
+        let rq1 = clamp(rq1, T::zero(), T::one());
+        let qc = q0 + vq.scale(rq1);
+        let (pc, rp1) = nearest_point3(p0, p1, &qc);
+        return ((pc - qc).norm(), rp1, rq1);
+    }
+    if (T::zero() <= rq1 && rq1 <= T::one()) && (rp1<=T::zero() || T::one()<=rp1) { // q in range
+        let rp1 = clamp(rp1, T::zero(), T::one());
+        let pc = p0 + vp.scale(rp1);
+        let (qc, rq1) = nearest_point3(q0, q1, &pc);
+        return ((pc - qc).norm(), rp1, rq1);
+    }
+    // convex projection technique
+    let rp1 = clamp(rp1, T::zero(), T::one());
+    let pc = p0 + vp.scale(rp1);
+    let (qc, _rq1) = nearest_point3(q0, q1, &pc);
+    let (pc, rp1) = nearest_point3(p0, p1, &qc);
+    let (qc, rq1) = nearest_point3(q0, q1, &pc);
+    return ((pc - qc).norm(), rp1, rq1);
 }
 
 #[cfg(test)]
@@ -232,22 +286,25 @@ mod tests {
 
     #[test]
     fn test_distance() {
-        let eps = 10e-4;
+        let eps = 1.0e-4;
         for _i in 0..10000 {
-            let p0 = crate::vec3::sample_unit_cube();
-            let p1 = crate::vec3::sample_unit_cube();
-            let q0 = crate::vec3::sample_unit_cube();
-            let q1 = crate::vec3::sample_unit_cube();
+            let p0 = crate::vec3::sample_unit_cube::<f64>();
+            let p1 = crate::vec3::sample_unit_cube::<f64>();
+            let q0 = crate::vec3::sample_unit_cube::<f64>();
+            let q1 = crate::vec3::sample_unit_cube::<f64>();
             let (dist, rp, rq) = crate::edge3::nearest_to_edge3(&p0, &p1, &q0, &q1);
+            //
             let vp = p1 - p0;
-            let vq = q1 - q0;
-            let pc1 = p0 + rp * vp;
+            //let pc0 = p0 + f64::clamp(rp - eps, 0.0, 1.0) * vp;
             let pc0 = p0 + f64::clamp(rp - eps, 0.0, 1.0) * vp;
+            let pc1 = p0 + rp * vp;
             let pc2 = p0 + f64::clamp(rp + eps, 0.0, 1.0) * vp;
-            let qc1 = q0 + rq * vq;
+            //
+            let vq = q1 - q0;
             let qc0 = q0 + f64::clamp(rq - eps, 0.0, 1.0) * vq;
+            let qc1 = q0 + rq * vq;
             let qc2 = q0 + f64::clamp(rq + eps, 0.0, 1.0) * vq;
-            assert!((dist-(pc1-qc1).norm()).abs()<1.0e-5);
+            assert!((dist - (pc1 - qc1).norm()).abs() < 1.0e-5);
             assert!(dist <= (pc0 - qc0).norm());
             assert!(dist <= (pc0 - qc1).norm());
             assert!(dist <= (pc0 - qc2).norm());

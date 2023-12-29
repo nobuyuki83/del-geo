@@ -51,51 +51,56 @@ fn test_quadratic_root() {
 }
 
 /// f(x) = c0 + c1*x + c2*x^2 + c3*x^3
-fn cubic_root_in_range_zero_to_one_closest_zero<T>(
+fn cubic_roots_in_range_zero_to_t<T>(
     c0: T,
     c1: T,
     c2: T,
     c3: T,
-    epsilon: T) -> Option<T>
+    t: T,
+    epsilon: T) -> Vec<T>
     where T: num_traits::Float + 'static + Copy + std::fmt::Debug,
           i64: AsPrimitive<T>
 {
+    assert!(t>T::zero());
+    let mut result = vec!(T::zero();0);
+    let eval_f = |r| ((c3 * r + c2) * r + c1) * r + c0;
     let f0 = c0;
-    if f0.abs() < T::epsilon() { return Some(T::zero()); }
-    let f1 = c0 + c1 + c2 + c3;
-    if c3.abs() < T::epsilon() {
-        if c2.abs() < T::epsilon() {
-            if c1.abs() < T::epsilon() { // constant function
-                if c0.abs() < T::epsilon() {
-                    return Some(T::zero());
-                }
-                else {
-                    return None;
-                }
+    let ft = eval_f(t);
+    if c3.abs() < T::epsilon() { // lesser than cubic function
+        if c2.abs() < T::epsilon() { // lesser than quadratic function
+            if c1.abs() < T::epsilon() { // lesser than linear function
+                // constant function
+                if c0.abs() < T::epsilon() { result.push(T::zero()); }
+                return result;
             }
             else { // linear function
-                return if (f0 < T::zero() && f1 > T::zero()) || (f0 > T::zero() && f1 < T::zero()) {
-                    Some(f0 / (f0 - f1))
-                } else {
-                    None
+                if (f0 <= T::zero() && ft >= T::zero()) || (f0 >= T::zero() && ft <= T::zero()) {
+                    assert_ne!(f0,ft);
+                    result.push(f0 / (f0 - ft));
                 }
+                return result;
             }
         }
         else { // quadratic function
-            panic!();
+            if let Some((e0,e1)) = quadratic_root(c0,c1,c2) {
+                let (e0, e1) = if e0 < e1 { (e0, e1) } else { (e1, e0) };
+                if e0 >= T::zero() && e0 <= t { result.push(e0); }
+                if e1 >= T::zero() && e1 <= t { result.push(e1); }
+            }
+            return result;
         }
     }
     //
     let two = 2.as_();
     let three = 3.as_();
     //
-    let eval_f = |r| ((c3 * r + c2) * r + c1) * r + c0;
-    let newton = |x0: T, x1: T, f0: T, f1: T| {
-        if (f0 < T::zero() && f1 < T::zero()) || (f0 > T::zero() && f1 > T::zero()) {
+    let newton = |xs: T, xe: T, fs: T, fe: T| {
+        if (fs < T::zero() && fe < T::zero()) || (fs > T::zero() && fe > T::zero()) {
             return None;
         }
-        let mut r = (f0 * x1 - f1 * x0) / (f0 - f1);
-        assert!(r >= T::zero() && r <= T::one());
+        assert_ne!(fs,fe);
+        let mut r = (fs * xe - fe * xs) / (fs - fe);
+        assert!(r >= T::zero() && r <= t);
         for _i in 0..20 {
             let fr = eval_f(r);
             if fr.abs() < epsilon {
@@ -103,31 +108,36 @@ fn cubic_root_in_range_zero_to_one_closest_zero<T>(
             }
             let dfr = c1 + two * c2 * r + three * c3 * r * r;
             r = r - fr / dfr;
+            r = num_traits::clamp(r, T::zero(), t);
         }
-        if r < T::zero() || r > T::one() { return None; }
+        if r < T::zero() || r > t { return None; }
         Some(r)
     };
     // f'(x) = c1 + 2*c2*x + 3*c3*x^2
     if let Some((e0, e1)) = quadratic_root(c1, two * c2, three * c3) {
-        let fe0 = eval_f(e0);
-        let fe1 = eval_f(e1);
-        if T::zero() < e0 && e0 < T::one() { // overlap [0.1] and [-\infty,e0]
-            if let Some(r) = newton(T::zero(), e0, f0, fe0) { return Some(r); }
+        assert!(e0<=e1);
+        if T::zero() <= e0 { // overlap [0,t] and [-\infty,e0]
+            let a1 = t.min(e0);
+            let fa1 = eval_f(a1);
+            if let Some(r) = newton(T::zero(), a1, f0, fa1) { result.push(r); }
         }
-        if e0 < T::one() && T::zero() < e1 { // overlap [0,1] and [e0,e1]
+        if e0 <= t && T::zero() <= e1 { // overlap [0,t] and [e0,e1]
             let a0 = T::zero().max(e0);
-            let a1 = T::one().min(e1);
+            let a1 = t.min(e1);
             let fa0 = eval_f(a0);
             let fa1 = eval_f(a1);
-            if let Some(r) = newton(a0, a1, fa0, fa1) { return Some(r); }
+            assert!(a0<=a1);
+            if let Some(r) = newton(a0, a1, fa0, fa1) { result.push(r); }
         }
-        if T::zero() < e1 && e1 < T::one() { // overlap [0.1] and [-\infty,e0]
-            if let Some(r) = newton(e1, T::one(), fe1, f1) { return Some(r); }
+        if e1 <= t { // overlap [0,t] and [e1,\infty]
+            let a0 = T::zero().max(e1);
+            let fa0 = eval_f(a0);
+            if let Some(r) = newton(a0, t, fa0, ft) { result.push(r); }
         }
     } else { // monotonic
-        if let Some(r) = newton(T::zero(), T::one(), f0, f1) { return Some(r); }
+        if let Some(r) = newton(T::zero(), t, f0, ft) { result.push(r); }
     }
-    None
+    return result;
 }
 
 #[test]
@@ -140,10 +150,12 @@ fn test_cubic_root() {
         let c1: f64 = 4. * rng.gen::<f64>() - 2.;
         let c2: f64 = 4. * rng.gen::<f64>() - 2.;
         let c3: f64 = 4. * rng.gen::<f64>() - 2.;
-        if let Some(r) = crate::ccd::cubic_root_in_range_zero_to_one_closest_zero(c0, c1, c2, c3, eps) {
-            let fr: f64 = c0 + c1 * r + c2 * r * r + c3 * r * r * r;
+        let list_time = crate::ccd::cubic_roots_in_range_zero_to_t(
+            c0, c1, c2, c3,1.0,eps);
+        for t in list_time {
+            let fr: f64 = c0 + c1 * t + c2 * t * t + c3 * t * t * t;
             assert!(fr.abs() < eps);
-        } else {}
+        }
     }
 }
 
@@ -157,7 +169,7 @@ fn coplanar_time<T>(
     e1: &nalgebra::Vector3::<T>,
     e2: &nalgebra::Vector3::<T>,
     e3: &nalgebra::Vector3::<T>,
-    epsilon: T) -> Option<T>
+    epsilon: T) -> Vec<T>
     where T: nalgebra::RealField + std::marker::Copy + num_traits::Float,
           i64: AsPrimitive<T>
 {
@@ -178,8 +190,8 @@ fn coplanar_time<T>(
         + scalar_triple_product(&x3, &v1, &v2);
     let k3 = scalar_triple_product(&v3, &v1, &v2);
     // cubic function is f(x) = k0 + k1*x + k2*x^2 + k3*x^3
-    cubic_root_in_range_zero_to_one_closest_zero(
-        k0, k1, k2, k3,
+    cubic_roots_in_range_zero_to_t(
+        k0, k1, k2, k3, T::one(),
         epsilon)
 }
 
@@ -197,16 +209,22 @@ pub fn intersecting_time_fv<T>(
           i64: AsPrimitive<T>,
           f64: AsPrimitive<T>
 {
-    let te = coplanar_time(f0s, f1s, f2s, vs, f0e, f1e, f2e, ve, epsilon);
-    let Some(te) = te else { return None; };
-    let ts = T::one() - te;
-    let f0 = f0s.scale(ts) + f0e.scale(te);
-    let f1 = f1s.scale(ts) + f1e.scale(te);
-    let f2 = f2s.scale(ts) + f2e.scale(te);
-    let v = vs.scale(ts) + ve.scale(te);
-    let coord = crate::tri3::barycentric(&f0, &f1, &f2, &v);
-    if coord.x < T::zero() || coord.y < T::zero() || coord.z < T::zero() { return None; }
-    Some(te)
+    let list_te = coplanar_time(
+        f0s, f1s, f2s, vs,
+        f0e, f1e, f2e, ve,
+        epsilon);
+    for te in list_te {
+        let ts = T::one() - te;
+        let f0 = f0s.scale(ts) + f0e.scale(te);
+        let f1 = f1s.scale(ts) + f1e.scale(te);
+        let f2 = f2s.scale(ts) + f2e.scale(te);
+        let v = vs.scale(ts) + ve.scale(te);
+        let coord = crate::tri3::barycentric(&f0, &f1, &f2, &v);
+        if coord.x >= T::zero() && coord.y >= T::zero() && coord.z >= T::zero() {
+            return Some(te);
+        }
+    }
+    return None;
 }
 
 pub fn intersecting_time_ee<T>(
@@ -223,32 +241,22 @@ pub fn intersecting_time_ee<T>(
           i64: AsPrimitive<T>,
           f64: AsPrimitive<T>
 {
-    let te = coplanar_time(
+    let list_te = coplanar_time(
         a0s, a1s, b0s, b1s,
         a0e, a1e, b0e, b1e,
         epsilon);
-    let Some(te) = te else { return None; };
-    let ts = T::one() - te;
-    let a0 = a0s.scale(ts) + a0e.scale(te);
-    let a1 = a1s.scale(ts) + a1e.scale(te);
-    let b0 = b0s.scale(ts) + b0e.scale(te);
-    let b1 = b1s.scale(ts) + b1e.scale(te);
-    let coord = crate::edge3::intersection_edge3(&a0, &a1, &b0, &b1);
-    let Some(coord) = coord else { return None; }; // coplanar case
-    if coord.0 < T::zero() || coord.1 < T::zero() || coord.2 < T::zero() || coord.3 < T::zero() { return None; }
-    /*
-    {
-        let n = (a1-a0).cross(&(b0-a0));
-        dbg!(a0.dot(&n), a1.dot(&n), b0.dot(&n), b1.dot(&n));
-        let a2 = a0 + n;
-        let rq1 = crate::tet::volume(&a0,&a1,&a2, &b0);
-        let rq0 = crate::tet::volume(&a0,&a1,&a2, &b1);
-        let rp1 = crate::tet::volume(&a0,&a1,&a2, &b0);
-        let rp0 = crate::tet::volume(&a0,&a1,&a2, &b1);
-        dbg!(rq1,rq0,rp1,rp0);
+    for te in list_te {
+        let ts = T::one() - te;
+        let a0 = a0s.scale(ts) + a0e.scale(te);
+        let a1 = a1s.scale(ts) + a1e.scale(te);
+        let b0 = b0s.scale(ts) + b0e.scale(te);
+        let b1 = b1s.scale(ts) + b1e.scale(te);
+        let coord
+            = crate::edge3::intersection_edge3_when_coplanar(
+            &a0, &a1, &b0, &b1);
+        let Some(coord) = coord else { continue; }; // coplanar case
+        if coord.0 >= T::zero() && coord.1 >= T::zero() &&
+            coord.2 >= T::zero() && coord.3 >= T::zero() { return Some(te); }
     }
-    dbg!((a0.scale(coord.0)+a1.scale(coord.1), b0.scale(coord.2)+b1.scale(coord.3)));
-    dbg!(&coord,te);
-     */
-    Some(te)
+    return None;
 }

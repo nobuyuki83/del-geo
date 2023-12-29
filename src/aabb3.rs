@@ -1,5 +1,56 @@
 //! methods for 3D Axis-aligned Bounding Box (AABB)
 
+
+use num_traits::AsPrimitive;
+
+#[allow(clippy::identity_op)]
+pub fn from_vtx2xyz<T>(
+    vtx2xyz: &[T],
+    eps: T) -> [T;6]
+    where T: num_traits::Float
+{
+    assert!(!vtx2xyz.is_empty());
+    let mut aabb = [T::zero();6];
+    {
+        {
+            let cgx = vtx2xyz[0];
+            aabb[0] = cgx - eps;
+            aabb[3] = cgx + eps;
+        }
+        {
+            let cgy = vtx2xyz[1];
+            aabb[1] = cgy - eps;
+            aabb[4] = cgy + eps;
+        }
+        {
+            let cgz = vtx2xyz[2];
+            aabb[2] = cgz - eps;
+            aabb[5] = cgz + eps;
+        }
+    }
+    for i_vtx in 1..vtx2xyz.len()/3 {
+        {
+            let cgx = vtx2xyz[i_vtx * 3 + 0];
+            aabb[0] = if cgx - eps < aabb[0] { cgx - eps } else { aabb[0] };
+            aabb[3] = if cgx + eps > aabb[3] { cgx + eps } else { aabb[3]};
+        }
+        {
+            let cgy = vtx2xyz[i_vtx * 3 + 1];
+            aabb[1] = if cgy - eps < aabb[1] { cgy - eps } else { aabb[1] };
+            aabb[4] = if cgy + eps > aabb[4] { cgy + eps } else { aabb[4] };
+        }
+        {
+            let cgz = vtx2xyz[i_vtx * 3 + 2];
+            aabb[2] = if cgz - eps < aabb[2] { cgz - eps } else { aabb[2] };
+            aabb[5] = if cgz + eps > aabb[5] { cgz + eps } else { aabb[5] };
+        }
+    }
+    assert!(aabb[0] <= aabb[3]);
+    assert!(aabb[1] <= aabb[4]);
+    assert!(aabb[2] <= aabb[5]);
+    aabb
+}
+
 #[allow(clippy::identity_op)]
 pub fn from_list_of_vertices<T>(
     idx2vtx: &[usize],
@@ -48,6 +99,30 @@ where T: num_traits::Float
     assert!(aabb[1] <= aabb[4]);
     assert!(aabb[2] <= aabb[5]);
     aabb
+}
+
+pub fn center<T>(aabb: &[T;6]) -> [T;3]
+where T: num_traits::Float + 'static + Copy,
+    f64: AsPrimitive<T>
+{
+    [
+        (aabb[0]+aabb[3])*0.5f64.as_(),
+        (aabb[1]+aabb[4])*0.5f64.as_(),
+        (aabb[2]+aabb[5])*0.5f64.as_()]
+}
+
+pub fn max_edge_size<T>(aabb: &[T;6]) -> T
+where T: num_traits::Float
+{
+    let lx = aabb[3] - aabb[0];
+    let ly = aabb[4] - aabb[1];
+    let lz = aabb[5] - aabb[2];
+    if lx > ly {
+        if lx > lz { return lx; }
+        else { return lz; }
+    }
+    if ly > lz {return ly; }
+    return lz;
 }
 
 #[allow(clippy::identity_op)]
