@@ -29,9 +29,9 @@ pub fn nearest_to_origin<T, const X: usize>(
     }
     let b = d.dot(p0);
     let mut r0: T = -b / a;
-    if r0 < 0_f64.as_() { r0 = 0_f64.as_(); }
-    if r0 > 1_f64.as_() { r0 = 1_f64.as_(); }
-    p0.scale(1_f64.as_() - r0) + p1.scale(r0)
+    if r0 < T::zero() { r0 = T::zero(); }
+    if r0 > T::one() { r0 = T::one(); }
+    p0.scale(T::one() - r0) + p1.scale(r0)
 }
 
 

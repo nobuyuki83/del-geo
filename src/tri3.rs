@@ -15,7 +15,7 @@ pub fn clamp<T>(r0: T,r1: T,r2: T) -> (T,T,T)
     if r0 <= T::zero() { return (T::zero(), r1/(r1+r2), r2/(r1+r2)); }
     if r1 <= T::zero() { return (r0/(r0+r2), T::zero(), r2/(r0+r2)); }
     if r2 <= T::zero() { return (r0/(r0+r1), r1/(r0+r1), T::zero()); }
-    return (r0,r1,r2);
+    (r0,r1,r2)
 }
 
 // ----------------------
@@ -405,7 +405,7 @@ pub fn is_intersection_tri3<T>(
                dp1: T| {
         let r1  = dp0/(dp0 - dp1);
         let r0 = T::one()-r1;
-        return p0.scale(r0) + p1.scale(r1);
+        p0.scale(r0) + p1.scale(r1)
     };
     let sgn = |v: T| {
         if v  == T::zero() {1}

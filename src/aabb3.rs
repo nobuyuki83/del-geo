@@ -122,7 +122,7 @@ where T: num_traits::Float
         else { return lz; }
     }
     if ly > lz {return ly; }
-    return lz;
+    lz
 }
 
 #[allow(clippy::identity_op)]

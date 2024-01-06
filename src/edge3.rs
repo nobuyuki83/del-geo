@@ -224,7 +224,7 @@ pub fn nearest_to_edge3<T>(
     let (qc, _rq1) = nearest_point3(q0, q1, &pc);
     let (pc, rp1) = nearest_point3(p0, p1, &qc);
     let (qc, rq1) = nearest_point3(q0, q1, &pc);
-    return ((pc - qc).norm(), rp1, rq1);
+    ((pc - qc).norm(), rp1, rq1)
 }
 
 #[cfg(test)]

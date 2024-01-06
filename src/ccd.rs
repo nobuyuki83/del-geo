@@ -137,7 +137,7 @@ fn cubic_roots_in_range_zero_to_t<T>(
     } else { // monotonic
         if let Some(r) = newton(T::zero(), t, f0, ft) { result.push(r); }
     }
-    return result;
+    result
 }
 
 #[test]
@@ -224,7 +224,7 @@ pub fn intersecting_time_fv<T>(
             return Some(te);
         }
     }
-    return None;
+    None
 }
 
 pub fn intersecting_time_ee<T>(
@@ -258,5 +258,5 @@ pub fn intersecting_time_ee<T>(
         if coord.0 >= T::zero() && coord.1 >= T::zero() &&
             coord.2 >= T::zero() && coord.3 >= T::zero() { return Some(te); }
     }
-    return None;
+    None
 }
