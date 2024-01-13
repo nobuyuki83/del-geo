@@ -141,7 +141,7 @@ where T: nalgebra::RealField + nalgebra::Scalar,
     p0
 }
 
-pub fn navec3<T>(vtx2xyz: &[T], i_vtx: usize) -> nalgebra::Vector3::<T>
+pub fn to_na<T>(vtx2xyz: &[T], i_vtx: usize) -> nalgebra::Vector3::<T>
     where T: Copy + nalgebra::RealField
 {
     nalgebra::Vector3::<T>::from_row_slice(&vtx2xyz[i_vtx *3..(i_vtx +1)*3])

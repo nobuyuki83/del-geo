@@ -57,3 +57,23 @@ where T: nalgebra::RealField + 'static + Copy,
         ct + (T::one() - ct) * n.z * n.z,
     )
 }
+
+/// sort eigen value and reorder the eigen vector
+/// TODO: write some test
+pub fn sort_eigen<T>(
+    eval: &nalgebra::Vector3<T>,
+    evec: &nalgebra::Matrix3<T>,
+    is_increasing: bool) -> (nalgebra::Vector3<T>, nalgebra::Matrix3<T>)
+where T: nalgebra::RealField + Copy
+{
+    let sgn = if is_increasing { T::one() } else {-T::one()};
+    // let cov = evec*nalgebra::Matrix3::<T>::from_diagonal(eval)*evec.transpose();
+    let mut prmt: Vec<usize> = vec!(0,1,2);
+    prmt.sort_by(|&idx, &jdx| (sgn*eval[idx]).partial_cmp(&(sgn*eval[jdx])).unwrap() );
+    dbg!(&prmt,eval);
+    let eval1 = nalgebra::Vector3::<T>::new(eval[prmt[0]], eval[prmt[1]], eval[prmt[2]]);
+    let evec1 = nalgebra::Matrix3::<T>::from_columns(&[
+        evec.column(prmt[0]), evec.column(prmt[1]), evec.column(prmt[2])]);
+    //let cov1 = evec1*nalgebra::Matrix3::<T>::from_diagonal(&eval1)*evec1.transpose();
+    (eval1, evec1)
+}

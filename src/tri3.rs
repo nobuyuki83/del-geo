@@ -220,12 +220,15 @@ pub fn nearest_to_point3<T>(
             return (nearp, r0, r1);
         }
     }
-    let r12 = crate::edge3::nearest_point3(q1, q2, ps).0;
-    let r20 = crate::edge3::nearest_point3(q2, q0, ps).0;
-    let r01 = crate::edge3::nearest_point3(q0, q1, ps).0;
-    let d12 = (r12 - ps).norm();
-    let d20 = (r20 - ps).norm();
-    let d01 = (r01 - ps).norm();
+    let r12 = crate::edge3::nearest_to_point3(q1, q2, ps);
+    let r20 = crate::edge3::nearest_to_point3(q2, q0, ps);
+    let r01 = crate::edge3::nearest_to_point3(q0, q1, ps);
+    let d12 = r12.0;
+    let d20 = r20.0;
+    let d01 = r01.0;
+    let r12 = q1+(q2-q1).scale(r12.1);
+    let r20 = q2+(q0-q2).scale(r20.1);
+    let r01 = q0+(q1-q0).scale(r01.1);
     if d12 < d20 {
         if d12 < d01 { // 12 is the smallest
             let r0 = T::zero();

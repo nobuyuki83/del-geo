@@ -12,6 +12,7 @@ fn quadratic_root<T>(
     where T: num_traits::Float + 'static + Copy + std::fmt::Debug,
           i64: num_traits::AsPrimitive<T>
 {
+    assert_ne!(c2, T::zero());
     let det = c1 * c1 - 4.as_() * c2 * c0;
     if det < T::zero() {
         return None;
@@ -20,8 +21,16 @@ fn quadratic_root<T>(
     let sgnb: T = if c1 < T::zero() { -T::one() } else { T::one() };
     let tmp = -(c1 + sgnb * det.sqrt());
     let x2 = tmp / (two * c2);
-    let x1 = (two * c0) / tmp;
+    let x1 = if tmp != T::zero() {
+        (two * c0) / tmp
+    }
+    else{ // c1 ==0, det == 0
+        x2
+    };
     let (x1, x2) = if x1 < x2 { (x1, x2) } else { (x2, x1) };
+    if x1 <= x2 {} else{
+        dbg!(c0,c1,c2,det,tmp,x1,x2);
+    }
     assert!(x1 <= x2);
     Some((x1, x2))
 }
@@ -58,7 +67,7 @@ fn cubic_roots_in_range_zero_to_t<T>(
     c3: T,
     t: T,
     epsilon: T) -> Vec<T>
-    where T: num_traits::Float + 'static + Copy + std::fmt::Debug,
+    where T: num_traits::Float + 'static + Copy + std::fmt::Debug + std::fmt::Display,
           i64: AsPrimitive<T>
 {
     assert!(t>T::zero());
@@ -98,7 +107,10 @@ fn cubic_roots_in_range_zero_to_t<T>(
         if (fs < T::zero() && fe < T::zero()) || (fs > T::zero() && fe > T::zero()) {
             return None;
         }
-        assert_ne!(fs,fe);
+        if xs == xe {
+          if fs == T::zero() { return Some(xs); } else { return None };
+        }
+        assert_ne!(fs,fe,"hoge {} {} {} {} {} {}", xs, xe, c0, c1, c2, c3);
         let mut r = (fs * xe - fe * xs) / (fs - fe);
         assert!(r >= T::zero() && r <= t);
         for _i in 0..20 {

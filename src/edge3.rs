@@ -40,10 +40,11 @@ pub fn nearest_point3_<T>(
 /* -------------------------- */
 // below: w/ nalgebra
 
-pub fn nearest_point3<T>(
+/// return  distance and parameter
+pub fn nearest_to_point3<T>(
     edge_pos0: &nalgebra::Vector3<T>,
     edge_pos1: &nalgebra::Vector3<T>,
-    point_pos: &nalgebra::Vector3<T>) -> (nalgebra::Vector3<T>, T)
+    point_pos: &nalgebra::Vector3<T>) -> (T, T)
     where T: nalgebra::RealField + 'static + Copy + PartialOrd,
           f64: num_traits::AsPrimitive<T>
 {
@@ -55,7 +56,8 @@ pub fn nearest_point3<T>(
     } else {
         0.5_f64.as_()
     };
-    (edge_pos0 + d.scale(t), t)
+    let distance = (edge_pos0 + d.scale(t) - point_pos).norm();
+    (distance, t)
 }
 
 
@@ -209,22 +211,24 @@ pub fn nearest_to_edge3<T>(
     if (T::zero() <= rp1 && rp1 <= T::one()) && (rq1<=T::zero() || T::one()<=rq1) { // p in range
         let rq1 = clamp(rq1, T::zero(), T::one());
         let qc = q0 + vq.scale(rq1);
-        let (pc, rp1) = nearest_point3(p0, p1, &qc);
-        return ((pc - qc).norm(), rp1, rq1);
+        let (dist, rp1) = nearest_to_point3(p0, p1, &qc);
+        return (dist, rp1, rq1);
     }
     if (T::zero() <= rq1 && rq1 <= T::one()) && (rp1<=T::zero() || T::one()<=rp1) { // q in range
         let rp1 = clamp(rp1, T::zero(), T::one());
         let pc = p0 + vp.scale(rp1);
-        let (qc, rq1) = nearest_point3(q0, q1, &pc);
-        return ((pc - qc).norm(), rp1, rq1);
+        let (dist, rq1) = nearest_to_point3(q0, q1, &pc);
+        return (dist, rp1, rq1);
     }
     // convex projection technique
     let rp1 = clamp(rp1, T::zero(), T::one());
     let pc = p0 + vp.scale(rp1);
-    let (qc, _rq1) = nearest_point3(q0, q1, &pc);
-    let (pc, rp1) = nearest_point3(p0, p1, &qc);
-    let (qc, rq1) = nearest_point3(q0, q1, &pc);
-    ((pc - qc).norm(), rp1, rq1)
+    let (_dist, rq1) = nearest_to_point3(q0, q1, &pc);
+    let qc = q0 + (q1-q0).scale(rq1);
+    let (_dist, rp1) = nearest_to_point3(p0, p1, &qc);
+    let pc = p0 + (p1-p0).scale(rp1);
+    let (dist, rq1) = nearest_to_point3(q0, q1, &pc);
+    (dist, rp1, rq1)
 }
 
 #[cfg(test)]
