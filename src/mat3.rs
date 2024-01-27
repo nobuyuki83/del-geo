@@ -70,7 +70,7 @@ where T: nalgebra::RealField + Copy
     // let cov = evec*nalgebra::Matrix3::<T>::from_diagonal(eval)*evec.transpose();
     let mut prmt: Vec<usize> = vec!(0,1,2);
     prmt.sort_by(|&idx, &jdx| (sgn*eval[idx]).partial_cmp(&(sgn*eval[jdx])).unwrap() );
-    dbg!(&prmt,eval);
+    // dbg!(&prmt,eval);
     let eval1 = nalgebra::Vector3::<T>::new(eval[prmt[0]], eval[prmt[1]], eval[prmt[2]]);
     let evec1 = nalgebra::Matrix3::<T>::from_columns(&[
         evec.column(prmt[0]), evec.column(prmt[1]), evec.column(prmt[2])]);
