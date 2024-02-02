@@ -77,3 +77,21 @@ where T: nalgebra::RealField + Copy
     //let cov1 = evec1*nalgebra::Matrix3::<T>::from_diagonal(&eval1)*evec1.transpose();
     (eval1, evec1)
 }
+
+
+/// when SVD of 3x3 matrix a is U*S*V^T, compute U*V^T
+pub fn rotational_component<T>(
+    a: &nalgebra::Matrix3::<T>) -> nalgebra::Matrix3::<T>
+where T: nalgebra::RealField + Copy
+{
+    let svd = nalgebra::linalg::SVD::<T, nalgebra::U3, nalgebra::U3>::new(*a, true, true);
+    let u = svd.u.unwrap();
+    let v_t = svd.v_t.unwrap();
+    let u_vt = u * v_t;
+    let u_vt = if u_vt.determinant() > T::zero() { u_vt } else {
+        let mut v_t = v_t;
+        v_t.row_mut(0).scale_mut(-T::one());
+        u * v_t
+    };
+    u_vt
+}

@@ -87,31 +87,52 @@ pub fn area_and_unorm_<T>(
     (a, n)
 }
 
+
+/// compute contangent for angles of a triangle
 pub fn cot_<T>(
     p0: &[T],
     p1: &[T],
     p2: &[T]) -> [T; 3]
     where T: num_traits::Float + 'static,
-          f32: num_traits::AsPrimitive<T>
+          f64: num_traits::AsPrimitive<T>
 {
     use crate::vec3;
     assert!(p0.len() == 3 && p1.len() == 3 && p2.len() == 3);
     let v0 = [p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]];
     let v1 = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
     let v2 = [p0[0] - p1[0], p0[1] - p1[1], p0[2] - p1[2]];
-    let na = [
-        v1[1] * v2[2] - v2[1] * v1[2],
-        v1[2] * v2[0] - v2[2] * v1[0],
-        v1[0] * v2[1] - v2[0] * v1[1]];
-    let area: T = vec3::squared_norm_(&na).sqrt() * 0.5_f32.as_();
-    let tmp: T = 0.25_f32.as_() / area;
+    let area  = {
+        let na = [
+            v1[1] * v2[2] - v2[1] * v1[2],
+            v1[2] * v2[0] - v2[2] * v1[0],
+            v1[0] * v2[1] - v2[0] * v1[1]];
+        vec3::squared_norm_(&na).sqrt() * 0.5f64.as_()
+    };
+    let tmp: T = 0.25f64.as_() / area;
     let l0 = vec3::squared_norm_(&v0);
     let l1 = vec3::squared_norm_(&v1);
     let l2 = vec3::squared_norm_(&v2);
     [
-        (l1 + l2 - l0) * tmp,
-        (l2 + l0 - l1) * tmp,
-        (l0 + l1 - l2) * tmp
+        (l1 + l2 - l0) * tmp, // cot0 = cos0/sin0 = {(l1*l1+l2*l2-l0*l0)/(2*l1*l2)} / {2*area/(l1*l2)}
+        (l2 + l0 - l1) * tmp, // cot1 = cos1/sin1 = {(l2*l2+l0*l0-l1*l1)/(2*l2*l0)} / {2*area/(l2*l0)}
+        (l0 + l1 - l2) * tmp  // cot2 = cos2/sin2 = {(l0*l0+l1*l1-l2*l2)/(2*l0*l1)} / {2*area/(l0*l1)}
+    ]
+}
+
+
+pub fn emat_cotangent_laplacian<T>(
+    p0: &[T],
+    p1: &[T],
+    p2: &[T]) -> [T; 9]
+    where T: num_traits::Float + 'static,
+          f64: num_traits::AsPrimitive<T>
+{
+    let cots = cot_(p0, p1, p2);
+    // todo: check if emat needs to be half
+    [
+        cots[1] + cots[2], -cots[2], -cots[1],
+        -cots[2], cots[2] + cots[0], -cots[0],
+        -cots[1], -cots[0], cots[0] + cots[1]
     ]
 }
 
