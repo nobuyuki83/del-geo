@@ -95,3 +95,14 @@ where T: nalgebra::RealField + Copy
     };
     u_vt
 }
+
+/*
+pub fn to_na_from_row_major_slice<T>(s: &[T;9]) -> nalgebra::Matrix3::<T>
+    where T: Copy + nalgebra::RealField
+{
+    nalgebra::Matrix3::<T>::new(
+        s[0], s[3], s[6],
+        s[1], s[4], s[7],
+        s[2], s[5], s[8])
+}
+ */

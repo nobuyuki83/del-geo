@@ -3,10 +3,10 @@
 use num_traits::AsPrimitive;
 
 pub fn culling_intersection_<T>(
-    po_s0: &[T],
-    po_e0: &[T],
-    po_s1: &[T],
-    po_e1: &[T]) -> bool
+    po_s0: &[T;2],
+    po_e0: &[T;2],
+    po_s1: &[T;2],
+    po_e1: &[T;2]) -> bool
     where T: num_traits::Float + 'static + Copy,
           f64: num_traits::AsPrimitive<T>
 {
@@ -28,10 +28,10 @@ pub fn culling_intersection_<T>(
 
 
 pub fn intersection_edge2_<T>(
-    po_s0: &[T],
-    po_e0: &[T],
-    po_s1: &[T],
-    po_e1: &[T]) -> Option<(T, T)>
+    po_s0: &[T;2],
+    po_e0: &[T;2],
+    po_s1: &[T;2],
+    po_e1: &[T;2]) -> Option<(T, T)>
     where T: num_traits::Float + 'static + Copy,
           f64: num_traits::AsPrimitive<T>
 {
@@ -47,9 +47,9 @@ pub fn intersection_edge2_<T>(
 }
 
 pub fn winding_number_<T>(
-    ps: &[T],
-    pe: &[T],
-    po: &[T]) -> T
+    ps: &[T;2],
+    pe: &[T;2],
+    po: &[T;2]) -> T
     where T: num_traits::Float + Copy + 'static,
           f64: AsPrimitive<T>
 {
@@ -68,10 +68,10 @@ pub fn intersect_edge2(
     po_e0: &nalgebra::Vector2<f32>,
     po_s1: &nalgebra::Vector2<f32>,
     po_e1: &nalgebra::Vector2<f32>) -> bool {
-    let area1 = crate::tri2::area_(po_s0.as_slice(), po_e0.as_slice(), po_s1.as_slice());
-    let area2 = crate::tri2::area_(po_s0.as_slice(), po_e0.as_slice(), po_e1.as_slice());
-    let area3 = crate::tri2::area_(po_s1.as_slice(), po_e1.as_slice(), po_s0.as_slice());
-    let area4 = crate::tri2::area_(po_s1.as_slice(), po_e1.as_slice(), po_e0.as_slice());
+    let area1 = crate::tri2::area_(po_s0.as_ref(), po_e0.as_ref(), po_s1.as_ref());
+    let area2 = crate::tri2::area_(po_s0.as_ref(), po_e0.as_ref(), po_e1.as_ref());
+    let area3 = crate::tri2::area_(po_s1.as_ref(), po_e1.as_ref(), po_s0.as_ref());
+    let area4 = crate::tri2::area_(po_s1.as_ref(), po_e1.as_ref(), po_e0.as_ref());
     let a12 = area1 * area2;
     if a12 > 0_f32 {
         return false;
@@ -91,7 +91,7 @@ pub fn distance_to_edge2<T>(
     where T: num_traits::Float + nalgebra::RealField + 'static + Copy + std::fmt::Debug,
           f64: num_traits::AsPrimitive<T>
 {
-    if intersection_edge2_(po_s0.into(), po_e0.into(), po_s1.into(), po_e1.into()).is_some() {
+    if intersection_edge2_(po_s0.as_ref(), po_e0.as_ref(), po_s1.as_ref(), po_e1.as_ref()).is_some() {
         return (-1_f64).as_();
     }
     let ds1 = crate::edge::distance_to_point(po_s0, po_s1, po_e1);

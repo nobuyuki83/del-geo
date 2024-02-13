@@ -127,8 +127,8 @@ where T: num_traits::Float
 
 #[allow(clippy::identity_op)]
 pub fn from_two_aabbs_slice6<T>(
-    i0: &[T],
-    i1: &[T]) -> [T; 6]
+    i0: &[T;6],
+    i1: &[T;6]) -> [T; 6]
 where T: num_traits::Float
 {
     assert_eq!(i0.len(), 6);
@@ -141,15 +141,15 @@ where T: num_traits::Float
     o
 }
 
-pub fn is_active<T>(i0: &[T]) -> bool
+pub fn is_active<T>(i0: &[T;6]) -> bool
 where T: std::cmp::PartialOrd
 {
     i0[0] <= i0[3]
 }
 
 pub fn is_intersect<T>(
-    i0: &[T],
-    i1: &[T]) -> bool
+    i0: &[T;6],
+    i1: &[T;6]) -> bool
 where T: std::cmp::PartialOrd
 {
     assert_eq!(i0.len(), 6);

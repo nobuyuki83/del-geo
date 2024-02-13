@@ -4,9 +4,9 @@ use nalgebra::clamp;
 use num_traits::AsPrimitive;
 
 pub fn nearest_point3_<T>(
-    point_pos: &[T],
-    edge_pos0: &[T],
-    edge_pos1: &[T]) -> [T; 3]
+    point_pos: &[T;3],
+    edge_pos0: &[T;3],
+    edge_pos1: &[T;3]) -> [T; 3]
     where T: num_traits::Float + 'static + Copy + PartialOrd,
           f64: num_traits::AsPrimitive<T>
 {

@@ -20,7 +20,10 @@ pub fn clamp<T>(r0: T,r1: T,r2: T) -> (T,T,T)
 
 // ----------------------
 
-pub fn area_<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
+pub fn area_<T>(
+    p0: &[T;3],
+    p1: &[T;3],
+    p2: &[T;3]) -> T
     where T: num_traits::Float + 'static,
           f64: num_traits::AsPrimitive<T>
 {
@@ -36,10 +39,10 @@ pub fn area_<T>(p0: &[T], p1: &[T], p2: &[T]) -> T
 }
 
 pub fn normal_<T>(
-    vnorm: &mut [T],
-    v1: &[T],
-    v2: &[T],
-    v3: &[T])
+    vnorm: &mut [T;3],
+    v1: &[T;3],
+    v2: &[T;3],
+    v3: &[T;3])
     where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + std::ops::Sub + Copy
 {
     vnorm[0] = (v2[1] - v1[1]) * (v3[2] - v1[2]) - (v2[2] - v1[2]) * (v3[1] - v1[1]);
@@ -48,10 +51,10 @@ pub fn normal_<T>(
 }
 
 pub fn unit_normal_<T>(
-    n: &mut [T],
-    v1: &[T],
-    v2: &[T],
-    v3: &[T]) -> T
+    n: &mut [T;3],
+    v1: &[T;3],
+    v2: &[T;3],
+    v3: &[T;3]) -> T
     where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + num_traits::Float + 'static + Copy + std::ops::MulAssign,
           f32: num_traits::AsPrimitive<T>
 {
@@ -68,9 +71,9 @@ pub fn unit_normal_<T>(
 }
 
 pub fn area_and_unorm_<T>(
-    v1: &[T],
-    v2: &[T],
-    v3: &[T]) -> (T, [T; 3])
+    v1: &[T;3],
+    v2: &[T;3],
+    v3: &[T;3]) -> (T, [T; 3])
     where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + num_traits::Float + 'static + Copy + std::ops::MulAssign,
           f32: num_traits::AsPrimitive<T>
 {
@@ -90,9 +93,9 @@ pub fn area_and_unorm_<T>(
 
 /// compute contangent for angles of a triangle
 pub fn cot_<T>(
-    p0: &[T],
-    p1: &[T],
-    p2: &[T]) -> [T; 3]
+    p0: &[T;3],
+    p1: &[T;3],
+    p2: &[T;3]) -> [T; 3]
     where T: num_traits::Float + 'static,
           f64: num_traits::AsPrimitive<T>
 {
@@ -121,18 +124,18 @@ pub fn cot_<T>(
 
 
 pub fn emat_cotangent_laplacian<T>(
-    p0: &[T],
-    p1: &[T],
-    p2: &[T]) -> [T; 9]
+    p0: &[T;3],
+    p1: &[T;3],
+    p2: &[T;3]) -> [T; 9]
     where T: num_traits::Float + 'static,
           f64: num_traits::AsPrimitive<T>
 {
     let cots = cot_(p0, p1, p2);
-    // todo: check if emat needs to be half
+    let half: T = 0.5f64.as_();
     [
-        cots[1] + cots[2], -cots[2], -cots[1],
-        -cots[2], cots[2] + cots[0], -cots[0],
-        -cots[1], -cots[0], cots[0] + cots[1]
+        (cots[1] + cots[2])*half, -cots[2]*half, -cots[1]*half,
+        -cots[2]*half, (cots[2] + cots[0])*half, -cots[0]*half,
+        -cots[1]*half, -cots[0]*half, (cots[0] + cots[1])*half
     ]
 }
 
@@ -142,11 +145,11 @@ pub fn emat_cotangent_laplacian<T>(
 /// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 pub fn ray_triangle_intersection_<T>(
-    ray_org: &[T],
-    ray_dir: &[T],
-    p0: &[T],
-    p1: &[T],
-    p2: &[T]) -> Option<T>
+    ray_org: &[T;3],
+    ray_dir: &[T;3],
+    p0: &[T;3],
+    p1: &[T;3],
+    p2: &[T;3]) -> Option<T>
     where T: num_traits::Float + Copy + 'static,
           f64: AsPrimitive<T>
 {
