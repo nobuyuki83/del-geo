@@ -20,6 +20,7 @@ pub fn clamp<T>(r0: T,r1: T,r2: T) -> (T,T,T)
 
 // ----------------------
 
+/// area of a 3D triangle (coordinates given by stack-allocated arrays)
 pub fn area_<T>(
     p0: &[T;3],
     p1: &[T;3],
@@ -38,6 +39,7 @@ pub fn area_<T>(
     vec3::squared_norm_(&na).sqrt() * 0.5_f64.as_()
 }
 
+/// normal vector of a 3D triangle (coordinates given by stack-allocated arrays)
 pub fn normal_<T>(
     vnorm: &mut [T;3],
     v1: &[T;3],
@@ -91,7 +93,7 @@ pub fn area_and_unorm_<T>(
 }
 
 
-/// compute contangent for angles of a triangle
+/// compute cotangents of the three angles of a triangle
 pub fn cot_<T>(
     p0: &[T;3],
     p1: &[T;3],
@@ -142,6 +144,7 @@ pub fn emat_cotangent_laplacian<T>(
 // ----------
 
 /// Möller–Trumbore ray-triangle intersection algorithm
+///
 /// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 pub fn ray_triangle_intersection_<T>(
@@ -188,7 +191,7 @@ pub fn height<T>(
     a * 2.0.as_() / (p0 - p1).norm()
 }
 
-
+/// normal of a triangle
 pub fn normal<T>(
     p0: &nalgebra::Vector3::<T>,
     p1: &nalgebra::Vector3::<T>,
@@ -198,6 +201,7 @@ pub fn normal<T>(
     (p1 - p0).cross(&(p2 - p0))
 }
 
+/// unit normal of a triangle
 pub fn unit_normal<T>(
     p0: &nalgebra::Vector3::<T>,
     p1: &nalgebra::Vector3::<T>,
