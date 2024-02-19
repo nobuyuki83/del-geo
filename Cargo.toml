@@ -1,6 +1,6 @@
 [package]
 name = "del-geo"
-version = "0.1.18"
+version = "0.1.19"
 edition = "2021"
 authors = ["Nobuyuki Umetani <n.umetani@gmail.com>"]
 description = "2D/3D geometry utility codes"
@@ -12,6 +12,6 @@ repository = "https://github.com/nobuyuki83/del-geo"
 
 [dependencies]
 num-traits = "0.2.18"
-nalgebra = "0.32.3"
+nalgebra = "0.32.4"
 rand = "0.8.5"
 

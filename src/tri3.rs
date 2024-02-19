@@ -2,9 +2,8 @@
 
 use num_traits::AsPrimitive;
 
-
 /// clamp barycentric coordinates inside a triangle
-pub fn clamp<T>(r0: T,r1: T,r2: T) -> (T,T,T)
+pub fn clamp<T>(r0: T, r1: T, r2: T) -> (T, T, T)
     where T: num_traits::Float
 {
     // vertex projection
@@ -12,21 +11,20 @@ pub fn clamp<T>(r0: T,r1: T,r2: T) -> (T,T,T)
     if r1 <= T::zero() && r2 <= T::zero() { return (T::one(), T::zero(), T::zero()); }
     if r2 <= T::zero() && r0 <= T::zero() { return (T::zero(), T::one(), T::zero()); }
     // edge projection
-    if r0 <= T::zero() { return (T::zero(), r1/(r1+r2), r2/(r1+r2)); }
-    if r1 <= T::zero() { return (r0/(r0+r2), T::zero(), r2/(r0+r2)); }
-    if r2 <= T::zero() { return (r0/(r0+r1), r1/(r0+r1), T::zero()); }
-    (r0,r1,r2)
+    if r0 <= T::zero() { return (T::zero(), r1 / (r1 + r2), r2 / (r1 + r2)); }
+    if r1 <= T::zero() { return (r0 / (r0 + r2), T::zero(), r2 / (r0 + r2)); }
+    if r2 <= T::zero() { return (r0 / (r0 + r1), r1 / (r0 + r1), T::zero()); }
+    (r0, r1, r2)
 }
 
 // ----------------------
 
 /// area of a 3D triangle (coordinates given by stack-allocated arrays)
 pub fn area_<T>(
-    p0: &[T;3],
-    p1: &[T;3],
-    p2: &[T;3]) -> T
-    where T: num_traits::Float + 'static,
-          f64: num_traits::AsPrimitive<T>
+    p0: &[T; 3],
+    p1: &[T; 3],
+    p2: &[T; 3]) -> T
+    where T: num_traits::Float
 {
     use crate::vec3;
     assert!(p0.len() == 3 && p1.len() == 3 && p2.len() == 3);
@@ -36,15 +34,16 @@ pub fn area_<T>(
         v1[1] * v2[2] - v2[1] * v1[2],
         v1[2] * v2[0] - v2[2] * v1[0],
         v1[0] * v2[1] - v2[0] * v1[1]];
-    vec3::squared_norm_(&na).sqrt() * 0.5_f64.as_()
+    let half = T::one() / (T::one() + T::one());
+    vec3::squared_norm_(&na).sqrt() * half
 }
 
 /// normal vector of a 3D triangle (coordinates given by stack-allocated arrays)
 pub fn normal_<T>(
-    vnorm: &mut [T;3],
-    v1: &[T;3],
-    v2: &[T;3],
-    v3: &[T;3])
+    vnorm: &mut [T; 3],
+    v1: &[T; 3],
+    v2: &[T; 3],
+    v3: &[T; 3])
     where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + std::ops::Sub + Copy
 {
     vnorm[0] = (v2[1] - v1[1]) * (v3[2] - v1[2]) - (v2[2] - v1[2]) * (v3[1] - v1[1]);
@@ -53,67 +52,68 @@ pub fn normal_<T>(
 }
 
 pub fn unit_normal_<T>(
-    n: &mut [T;3],
-    v1: &[T;3],
-    v2: &[T;3],
-    v3: &[T;3]) -> T
-    where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + num_traits::Float + 'static + Copy + std::ops::MulAssign,
-          f32: num_traits::AsPrimitive<T>
+    n: &mut [T; 3],
+    v1: &[T; 3],
+    v2: &[T; 3],
+    v3: &[T; 3]) -> T
+    where T: num_traits::Float
 {
     use crate::vec3;
     normal_(
         n,
         v1, v2, v3);
-    let a = vec3::norm_(n) * 0.5_f32.as_();
-    let invlen: T = 0.5_f32.as_() / a;
-    n[0] *= invlen;
-    n[1] *= invlen;
-    n[2] *= invlen;
+    let half = T::one() / (T::one() + T::one());
+    let a = vec3::norm_(n) * half;
+    let invlen: T = half / a;
+    n[0] = n[0] * invlen;
+    n[1] = n[1] * invlen;
+    n[2] = n[2] * invlen;
     a
 }
 
 pub fn area_and_unorm_<T>(
-    v1: &[T;3],
-    v2: &[T;3],
-    v3: &[T;3]) -> (T, [T; 3])
-    where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + num_traits::Float + 'static + Copy + std::ops::MulAssign,
-          f32: num_traits::AsPrimitive<T>
+    v1: &[T; 3],
+    v2: &[T; 3],
+    v3: &[T; 3]) -> (T, [T; 3])
+    where T: num_traits::Float
 {
     use crate::vec3;
-    let mut n: [T; 3] = [0_f32.as_(); 3];
+    let mut n: [T; 3] = [T::zero(); 3];
     normal_(
         &mut n,
         v1, v2, v3);
-    let a = vec3::norm_(&n) * 0.5_f32.as_();
-    let invlen: T = 0.5_f32.as_() / a;
-    n[0] *= invlen;
-    n[1] *= invlen;
-    n[2] *= invlen;
+    let half = T::one() / (T::one() + T::one());
+    let a = vec3::norm_(&n) * half;
+    let invlen: T = half / a;
+    n[0] = n[0] * invlen;
+    n[1] = n[1] * invlen;
+    n[2] = n[2] * invlen;
     (a, n)
 }
 
 
 /// compute cotangents of the three angles of a triangle
 pub fn cot_<T>(
-    p0: &[T;3],
-    p1: &[T;3],
-    p2: &[T;3]) -> [T; 3]
-    where T: num_traits::Float + 'static,
-          f64: num_traits::AsPrimitive<T>
+    p0: &[T; 3],
+    p1: &[T; 3],
+    p2: &[T; 3]) -> [T; 3]
+    where T: num_traits::Float
 {
     use crate::vec3;
     assert!(p0.len() == 3 && p1.len() == 3 && p2.len() == 3);
     let v0 = [p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]];
     let v1 = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
     let v2 = [p0[0] - p1[0], p0[1] - p1[1], p0[2] - p1[2]];
-    let area  = {
+    let half = T::one() / (T::one() + T::one());
+    let onefourth = T::one() / (T::one() + T::one() + T::one() + T::one());
+    let area = {
         let na = [
             v1[1] * v2[2] - v2[1] * v1[2],
             v1[2] * v2[0] - v2[2] * v1[0],
             v1[0] * v2[1] - v2[0] * v1[1]];
-        vec3::squared_norm_(&na).sqrt() * 0.5f64.as_()
+        vec3::squared_norm_(&na).sqrt() * half
     };
-    let tmp: T = 0.25f64.as_() / area;
+    let tmp: T = onefourth / area;
     let l0 = vec3::squared_norm_(&v0);
     let l1 = vec3::squared_norm_(&v1);
     let l2 = vec3::squared_norm_(&v2);
@@ -126,18 +126,17 @@ pub fn cot_<T>(
 
 
 pub fn emat_cotangent_laplacian<T>(
-    p0: &[T;3],
-    p1: &[T;3],
-    p2: &[T;3]) -> [T; 9]
-    where T: num_traits::Float + 'static,
-          f64: num_traits::AsPrimitive<T>
+    p0: &[T; 3],
+    p1: &[T; 3],
+    p2: &[T; 3]) -> [T; 9]
+    where T: num_traits::Float
 {
     let cots = cot_(p0, p1, p2);
-    let half: T = 0.5f64.as_();
+    let half = T::one() / (T::one() + T::one());
     [
-        (cots[1] + cots[2])*half, -cots[2]*half, -cots[1]*half,
-        -cots[2]*half, (cots[2] + cots[0])*half, -cots[0]*half,
-        -cots[1]*half, -cots[0]*half, (cots[0] + cots[1])*half
+        (cots[1] + cots[2]) * half, -cots[2] * half, -cots[1] * half,
+        -cots[2] * half, (cots[2] + cots[0]) * half, -cots[0] * half,
+        -cots[1] * half, -cots[0] * half, (cots[0] + cots[1]) * half
     ]
 }
 
@@ -148,11 +147,11 @@ pub fn emat_cotangent_laplacian<T>(
 /// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 pub fn ray_triangle_intersection_<T>(
-    ray_org: &[T;3],
-    ray_dir: &[T;3],
-    p0: &[T;3],
-    p1: &[T;3],
-    p2: &[T;3]) -> Option<T>
+    ray_org: &[T; 3],
+    ray_dir: &[T; 3],
+    p0: &[T; 3],
+    p1: &[T; 3],
+    p2: &[T; 3]) -> Option<T>
     where T: num_traits::Float + Copy + 'static,
           f64: AsPrimitive<T>
 {
@@ -254,9 +253,9 @@ pub fn nearest_to_point3<T>(
     let d12 = r12.0;
     let d20 = r20.0;
     let d01 = r01.0;
-    let r12 = q1+(q2-q1).scale(r12.1);
-    let r20 = q2+(q0-q2).scale(r20.1);
-    let r01 = q0+(q1-q0).scale(r01.1);
+    let r12 = q1 + (q2 - q1).scale(r12.1);
+    let r20 = q2 + (q0 - q2).scale(r20.1);
+    let r01 = q0 + (q1 - q0).scale(r01.1);
     if d12 < d20 {
         if d12 < d01 { // 12 is the smallest
             let r0 = T::zero();
@@ -275,27 +274,27 @@ pub fn nearest_to_point3<T>(
 
 #[test]
 fn test_triangle_point_nearest() {
-    let eps = 1.0-5f64;
+    let eps = 1.0 - 5f64;
     for _ in 0..10000 {
         let q0 = crate::vec3::sample_unit_cube::<f64>();
         let q1 = crate::vec3::sample_unit_cube::<f64>();
         let q2 = crate::vec3::sample_unit_cube::<f64>();
         let ps = crate::vec3::sample_unit_cube::<f64>();
-        let (qs,r0,r1) = nearest_to_point3(&q0, &q1, &q2, &ps);
+        let (qs, r0, r1) = nearest_to_point3(&q0, &q1, &q2, &ps);
         let dist0 = (qs - ps).norm();
         use crate::tri3::clamp;
-        let (r0a,r1a,r2a) = clamp(r0+eps,r1+eps,1.-r0-eps-r1-eps);
+        let (r0a, r1a, r2a) = clamp(r0 + eps, r1 + eps, 1. - r0 - eps - r1 - eps);
         let qa = q0.scale(r0a) + q1.scale(r1a) + q2.scale(r2a);
-        assert!( (qa - ps).norm() >= dist0 );
-        let (r0b,r1b,r2b) = clamp(r0+eps,r1-eps,1.-r0-eps-r1+eps);
+        assert!((qa - ps).norm() >= dist0);
+        let (r0b, r1b, r2b) = clamp(r0 + eps, r1 - eps, 1. - r0 - eps - r1 + eps);
         let qb = q0.scale(r0b) + q1.scale(r1b) + q2.scale(r2b);
-        assert!( (qb - ps).norm() >= dist0 );
-        let (r0c,r1c,r2c) = clamp(r0-eps,r1+eps,1.-r0+eps-r1-eps);
+        assert!((qb - ps).norm() >= dist0);
+        let (r0c, r1c, r2c) = clamp(r0 - eps, r1 + eps, 1. - r0 + eps - r1 - eps);
         let qc = q0.scale(r0c) + q1.scale(r1c) + q2.scale(r2c);
-        assert!( (qc - ps).norm() >= dist0 );
-        let (r0d,r1d,r2d) = clamp(r0-eps,r1-eps,1.-r0+eps-r1+eps);
+        assert!((qc - ps).norm() >= dist0);
+        let (r0d, r1d, r2d) = clamp(r0 - eps, r1 - eps, 1. - r0 + eps - r1 + eps);
         let qd = q0.scale(r0d) + q1.scale(r1d) + q2.scale(r2d);
-        assert!( (qd - ps).norm() >= dist0 );
+        assert!((qd - ps).norm() >= dist0);
     }
 }
 
@@ -434,14 +433,13 @@ pub fn is_intersection_tri3<T>(
                p1: &nalgebra::Vector3::<T>,
                dp0: T,
                dp1: T| {
-        let r1  = dp0/(dp0 - dp1);
-        let r0 = T::one()-r1;
+        let r1 = dp0 / (dp0 - dp1);
+        let r0 = T::one() - r1;
         p0.scale(r0) + p1.scale(r1)
     };
     let sgn = |v: T| {
-        if v  == T::zero() {1}
-        else if v < T::zero() {0}
-        else {2}  };
+        if v == T::zero() { 1 } else if v < T::zero() { 0 } else { 2 }
+    };
     let nq = normal(q0, q1, q2);
     // hights of (p0,p1,p2) against the plane span by (q0,q1,q2)
     let np = normal(p0, p1, p2);
@@ -452,31 +450,31 @@ pub fn is_intersection_tri3<T>(
         let dp0 = (p0 - q0).dot(&nq);
         let dp1 = (p1 - q0).dot(&nq);
         let dp2 = (p2 - q0).dot(&nq);
-        let (sp0,sp1,sp2) = (sgn(dp0), sgn(dp1), sgn(dp2));
+        let (sp0, sp1, sp2) = (sgn(dp0), sgn(dp1), sgn(dp2));
         if sp0 == 0 && sp1 == 0 && sp2 == 0 { return None; } // all negative side
         if sp0 == 2 && sp1 == 2 && sp2 == 2 { return None; } // all positive side
         if sp0 + sp1 + sp2 == 1 || sp0 + sp1 + sp2 == 5 { return None; } // sharing point but not intersecting
         if sp0 == 1 && sp1 == 1 && sp2 == 1 { return None; } // degenerate case inside same plane
         // intersection of the lines connecting (p0,p1),(p1,p2),(p2,p0) and the plane span by (q0,q1,q2)
-        let mut ap = Vec::< nalgebra::Vector3::<T> >::with_capacity(2);
-        if (sp0 == 0 && sp1 == 2) || (sp0 == 2 && sp1 == 0 ){
-            ap.push( sec(p0, p1, dp0, dp1) );
+        let mut ap = Vec::<nalgebra::Vector3::<T>>::with_capacity(2);
+        if (sp0 == 0 && sp1 == 2) || (sp0 == 2 && sp1 == 0) {
+            ap.push(sec(p0, p1, dp0, dp1));
         }
-        if (sp1 == 0 && sp2 == 2) || (sp1 == 2 && sp2 == 0 ){
-            ap.push( sec(p1, p2, dp1, dp2) );
+        if (sp1 == 0 && sp2 == 2) || (sp1 == 2 && sp2 == 0) {
+            ap.push(sec(p1, p2, dp1, dp2));
         }
-        if (sp2 == 0 && sp0 == 2) || (sp2 == 2 && sp0 == 0 ){
-            ap.push( sec(p2, p0, dp2, dp0) );
+        if (sp2 == 0 && sp0 == 2) || (sp2 == 2 && sp0 == 0) {
+            ap.push(sec(p2, p0, dp2, dp0));
         }
         if sp0 == 1 { ap.push(*p0); }
         if sp1 == 1 { ap.push(*p1); }
         if sp2 == 1 { ap.push(*p2); }
-        assert_eq!(ap.len(),2);
+        assert_eq!(ap.len(), 2);
         (ap[0], ap[1])
     };
     let zps = ps.dot(&vz);
     let zpe = pe.dot(&vz);
-    let (ps, pe, zps, zpe) = if zps > zpe {(pe,ps,zpe,zps)} else {(ps,pe,zps,zpe)};
+    let (ps, pe, zps, zpe) = if zps > zpe { (pe, ps, zpe, zps) } else { (ps, pe, zps, zpe) };
     assert!(zps <= zpe);
 //
     let (qs, qe) = { // intersection line between triangle p and plane span by (q0,q1,q2)
@@ -489,31 +487,31 @@ pub fn is_intersection_tri3<T>(
         if sq0 + sq1 + sq2 == 1 || sq0 + sq1 + sq2 == 5 { return None; } // sharing point
         if sq0 == 1 && sq1 == 1 && sq2 == 1 { return None; }
         // intersection of the lines connnecting (q0,q1),(q1,q2),(q2,q0) and the plane span by (p0,p1,p2)
-        let mut aq = Vec::< nalgebra::Vector3::<T> >::with_capacity(2);
-        if (sq0 == 0 && sq1 == 2) || (sq0 == 2 && sq1 == 0 ){
-            aq.push( sec(q0, q1, dq0, dq1) );
+        let mut aq = Vec::<nalgebra::Vector3::<T>>::with_capacity(2);
+        if (sq0 == 0 && sq1 == 2) || (sq0 == 2 && sq1 == 0) {
+            aq.push(sec(q0, q1, dq0, dq1));
         }
-        if (sq1 == 0 && sq2 == 2) || (sq1 == 2 && sq2 == 0 ){
-            aq.push( sec(q1, q2, dq1, dq2) );
+        if (sq1 == 0 && sq2 == 2) || (sq1 == 2 && sq2 == 0) {
+            aq.push(sec(q1, q2, dq1, dq2));
         }
-        if (sq2 == 0 && sq0 == 2) || (sq2 == 2 && sq0 == 0 ){
-            aq.push( sec(q2, q0, dq2, dq0) );
+        if (sq2 == 0 && sq0 == 2) || (sq2 == 2 && sq0 == 0) {
+            aq.push(sec(q2, q0, dq2, dq0));
         }
         if sq0 == 1 { aq.push(*q0); }
         if sq1 == 1 { aq.push(*q1); }
         if sq2 == 1 { aq.push(*q2); }
-        assert_eq!(aq.len(),2);
+        assert_eq!(aq.len(), 2);
         (aq[0], aq[1])
     };
     let zqs = qs.dot(&vz);
     let zqe = qe.dot(&vz);
-    let (qs, qe, zqs, zqe) = if zqs > zqe {(qe,qs,zqe,zqs)} else {(qs,qe,zqs,zqe)};
+    let (qs, qe, zqs, zqe) = if zqs > zqe { (qe, qs, zqe, zqs) } else { (qs, qe, zqs, zqe) };
     assert!(zqs <= zqe);
 //
     if zps >= zqe || zqs >= zpe { return None; } // no overlap or overlap at point
-    let s = if zps<zqs {qs} else {ps};
-    let e = if zpe<zqe {pe} else {qe};
-    Some((s,e))
+    let s = if zps < zqs { qs } else { ps };
+    let e = if zpe < zqe { pe } else { qe };
+    Some((s, e))
 }
 
 #[test]

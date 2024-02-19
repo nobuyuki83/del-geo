@@ -2,11 +2,38 @@
 
 use num_traits::AsPrimitive;
 
+pub fn inverse_<T>(gd: [[T; 3]; 3]) -> [[T; 3]; 3]
+    where T: num_traits::Float
+{ // contravariant basis vectors
+    let mut gu = [[T::zero(); 3]; 3];
+    crate::vec3::cross_mut_(&mut gu[0], &gd[1], &gd[2]);
+    let invtmp1 = T::one() / crate::vec3::dot_(&gu[0], &gd[0]);
+    gu[0][0] = gu[0][0] * invtmp1;
+    gu[0][1] = gu[0][1] * invtmp1;
+    gu[0][2] = gu[0][2] * invtmp1;
+    //
+    crate::vec3::cross_mut_(&mut gu[1], &gd[2], &gd[0]);
+    let invtmp2 = T::one() / crate::vec3::dot_(&gu[1], &gd[1]);
+    gu[1][0] = gu[1][0] * invtmp2;
+    gu[1][1] = gu[1][1] * invtmp2;
+    gu[1][2] = gu[1][2] * invtmp2;
+    //
+    crate::vec3::cross_mut_(&mut gu[2], &gd[0], &gd[1]);
+    let invtmp3 = T::one() / crate::vec3::dot_(&gu[2], &gd[2]);
+    gu[2][0] = gu[2][0] * invtmp3;
+    gu[2][1] = gu[2][1] * invtmp3;
+    gu[2][2] = gu[2][2] * invtmp3;
+    gu
+}
+
+
+////////////////
+
 pub fn minimum_rotation_matrix<T>(
     v0: nalgebra::Vector3::<T>,
     v1: nalgebra::Vector3::<T>) -> nalgebra::Matrix3::<T>
-where T: nalgebra::RealField + 'static + Copy,
-    f64: num_traits::AsPrimitive<T>
+    where T: nalgebra::RealField + 'static + Copy,
+          f64: num_traits::AsPrimitive<T>
 {
     use crate::vec3::frame_from_z_vector;
 
@@ -64,12 +91,12 @@ pub fn sort_eigen<T>(
     eval: &nalgebra::Vector3<T>,
     evec: &nalgebra::Matrix3<T>,
     is_increasing: bool) -> (nalgebra::Vector3<T>, nalgebra::Matrix3<T>)
-where T: nalgebra::RealField + Copy
+    where T: nalgebra::RealField + Copy
 {
-    let sgn = if is_increasing { T::one() } else {-T::one()};
+    let sgn = if is_increasing { T::one() } else { -T::one() };
     // let cov = evec*nalgebra::Matrix3::<T>::from_diagonal(eval)*evec.transpose();
-    let mut prmt: Vec<usize> = vec!(0,1,2);
-    prmt.sort_by(|&idx, &jdx| (sgn*eval[idx]).partial_cmp(&(sgn*eval[jdx])).unwrap() );
+    let mut prmt: Vec<usize> = vec!(0, 1, 2);
+    prmt.sort_by(|&idx, &jdx| (sgn * eval[idx]).partial_cmp(&(sgn * eval[jdx])).unwrap());
     // dbg!(&prmt,eval);
     let eval1 = nalgebra::Vector3::<T>::new(eval[prmt[0]], eval[prmt[1]], eval[prmt[2]]);
     let evec1 = nalgebra::Matrix3::<T>::from_columns(&[
@@ -82,7 +109,7 @@ where T: nalgebra::RealField + Copy
 /// when SVD of 3x3 matrix a is U*S*V^T, compute U*V^T
 pub fn rotational_component<T>(
     a: &nalgebra::Matrix3::<T>) -> nalgebra::Matrix3::<T>
-where T: nalgebra::RealField + Copy
+    where T: nalgebra::RealField + Copy
 {
     let svd = nalgebra::linalg::SVD::<T, nalgebra::U3, nalgebra::U3>::new(*a, true, true);
     let u = svd.u.unwrap();
