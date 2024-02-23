@@ -3,10 +3,10 @@
 use num_traits::AsPrimitive;
 
 pub fn culling_intersection_<T>(
-    po_s0: &[T;2],
-    po_e0: &[T;2],
-    po_s1: &[T;2],
-    po_e1: &[T;2]) -> bool
+    po_s0: &[T; 2],
+    po_e0: &[T; 2],
+    po_s1: &[T; 2],
+    po_e1: &[T; 2]) -> bool
     where T: num_traits::Float + 'static + Copy,
           f64: num_traits::AsPrimitive<T>
 {
@@ -28,10 +28,10 @@ pub fn culling_intersection_<T>(
 
 
 pub fn intersection_edge2_<T>(
-    po_s0: &[T;2],
-    po_e0: &[T;2],
-    po_s1: &[T;2],
-    po_e1: &[T;2]) -> Option<(T, T)>
+    po_s0: &[T; 2],
+    po_e0: &[T; 2],
+    po_s1: &[T; 2],
+    po_e1: &[T; 2]) -> Option<(T, T)>
     where T: num_traits::Float + 'static + Copy,
           f64: num_traits::AsPrimitive<T>
 {
@@ -47,14 +47,14 @@ pub fn intersection_edge2_<T>(
 }
 
 pub fn winding_number_<T>(
-    ps: &[T;2],
-    pe: &[T;2],
-    po: &[T;2]) -> T
+    ps: &[T; 2],
+    pe: &[T; 2],
+    po: &[T; 2]) -> T
     where T: num_traits::Float + Copy + 'static,
           f64: AsPrimitive<T>
 {
-    let p0 = crate::vec2::sub_(ps,po);
-    let p1 = crate::vec2::sub_(pe,po);
+    let p0 = crate::vec2::sub_(ps, po);
+    let p1 = crate::vec2::sub_(pe, po);
     let y: T = p1[1] * p0[0] - p1[0] * p0[1];
     let x: T = p0[0] * p1[0] + p0[1] * p1[1];
     y.atan2(x) * std::f64::consts::FRAC_1_PI.as_() * 0.5.as_()
@@ -62,6 +62,16 @@ pub fn winding_number_<T>(
 
 // -----------------------------
 // below: use nalgebra
+
+pub fn length_squared<T>(
+    p0: &nalgebra::Vector2<T>,
+    p1: &nalgebra::Vector2<T>) -> T
+    where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + std::ops::Add<Output=T> + Copy
+{
+    let x = p0[0] - p1[0];
+    let y = p0[1] - p1[1];
+    x * x + y * y
+}
 
 pub fn intersect_edge2(
     po_s0: &nalgebra::Vector2<f32>,

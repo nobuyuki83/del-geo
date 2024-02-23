@@ -14,3 +14,9 @@ pub fn to_na<T>(vtx2xyz: &[T], i_vtx: usize) -> nalgebra::Vector2::<T>
 {
     nalgebra::Vector2::<T>::from_row_slice(&vtx2xyz[i_vtx *2..(i_vtx +1)*2])
 }
+
+pub fn norm_squared<T>(v: &nalgebra::Vector2::<T>) -> T
+where T: std::ops::Mul<Output=T> + std::ops::Add<Output = T> + Copy
+{
+    v[0]*v[0] + v[1]*v[1]
+}
