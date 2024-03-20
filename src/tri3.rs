@@ -150,8 +150,8 @@ pub fn emat_cotangent_laplacian<T>(
 
 /// Möller–Trumbore ray-triangle intersection algorithm
 ///
-/// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
-/// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
+/// <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>
+/// <https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection>
 pub fn ray_triangle_intersection_<T>(
     ray_org: &[T; 3],
     ray_dir: &[T; 3],
