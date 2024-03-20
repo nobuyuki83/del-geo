@@ -128,15 +128,21 @@ pub fn cot_<T>(
 pub fn emat_cotangent_laplacian<T>(
     p0: &[T; 3],
     p1: &[T; 3],
-    p2: &[T; 3]) -> [T; 9]
+    p2: &[T; 3]) -> [[[T;1]; 3];3]
     where T: num_traits::Float
 {
     let cots = cot_(p0, p1, p2);
     let half = T::one() / (T::one() + T::one());
     [
-        (cots[1] + cots[2]) * half, -cots[2] * half, -cots[1] * half,
-        -cots[2] * half, (cots[2] + cots[0]) * half, -cots[0] * half,
-        -cots[1] * half, -cots[0] * half, (cots[0] + cots[1]) * half
+        [
+            [(cots[1] + cots[2]) * half], [-cots[2] * half], [-cots[1] * half]
+        ],
+        [
+            [-cots[2] * half], [(cots[2] + cots[0]) * half], [-cots[0] * half]
+        ],
+        [
+            [-cots[1] * half], [-cots[0] * half], [(cots[0] + cots[1]) * half]
+        ]
     ]
 }
 

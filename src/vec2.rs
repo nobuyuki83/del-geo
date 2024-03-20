@@ -8,6 +8,12 @@ pub fn sub_<T>(
     [a[0] - b[0], a[1] - b[1]]
 }
 
+// -------------------------------
+pub fn rotate90<T>(v: &nalgebra::Vector2::<T>) -> nalgebra::Vector2::<T>
+    where T: nalgebra::RealField + Copy
+{
+    nalgebra::Vector2::<T>::new(-v[1], v[0])
+}
 
 pub fn to_na<T>(vtx2xyz: &[T], i_vtx: usize) -> nalgebra::Vector2::<T>
     where T: Copy + nalgebra::RealField
