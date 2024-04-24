@@ -10,7 +10,7 @@ fn quadratic_root<T>(
     c1: T,
     c2: T) -> Option<(T, T)>
     where T: num_traits::Float + 'static + Copy + std::fmt::Debug,
-          i64: num_traits::AsPrimitive<T>
+          i64: AsPrimitive<T>
 {
     assert_ne!(c2, T::zero());
     let det = c1 * c1 - 4.as_() * c2 * c0;
@@ -52,7 +52,7 @@ fn test_quadratic_root() {
         assert!((x0 - y0).abs() < 1.0e-8);
         assert!((x1 - y1).abs() < 1.0e-8);
         //
-        let c0 = c2 * (x0 * x0 + rng.gen::<f64>() + std::f64::EPSILON);
+        let c0 = c2 * (x0 * x0 + rng.gen::<f64>() + f64::EPSILON);
         let c1 = -2. * x0 * c2;
         let res = quadratic_root(c0, c1, c2);
         assert!(res.is_none());
@@ -76,27 +76,25 @@ fn cubic_roots_in_range_zero_to_t<T>(
     let f0 = c0;
     let ft = eval_f(t);
     if c3.abs() < T::epsilon() { // lesser than cubic function
-        if c2.abs() < T::epsilon() { // lesser than quadratic function
+        return if c2.abs() < T::epsilon() { // lesser than quadratic function
             if c1.abs() < T::epsilon() { // lesser than linear function
                 // constant function
                 if c0.abs() < T::epsilon() { result.push(T::zero()); }
-                return result;
-            }
-            else { // linear function
+                result
+            } else { // linear function
                 if (f0 <= T::zero() && ft >= T::zero()) || (f0 >= T::zero() && ft <= T::zero()) {
-                    assert_ne!(f0,ft);
+                    assert_ne!(f0, ft);
                     result.push(f0 / (f0 - ft));
                 }
-                return result;
+                result
             }
-        }
-        else { // quadratic function
-            if let Some((e0,e1)) = quadratic_root(c0,c1,c2) {
+        } else { // quadratic function
+            if let Some((e0, e1)) = quadratic_root(c0, c1, c2) {
                 let (e0, e1) = if e0 < e1 { (e0, e1) } else { (e1, e0) };
                 if e0 >= T::zero() && e0 <= t { result.push(e0); }
                 if e1 >= T::zero() && e1 <= t { result.push(e1); }
             }
-            return result;
+            result
         }
     }
     //
@@ -108,7 +106,7 @@ fn cubic_roots_in_range_zero_to_t<T>(
             return None;
         }
         if xs == xe {
-          if fs == T::zero() { return Some(xs); } else { return None };
+          return if fs == T::zero() { Some(xs) } else { None };
         }
         assert_ne!(fs,fe,"hoge {} {} {} {} {} {}", xs, xe, c0, c1, c2, c3);
         let mut r = (fs * xe - fe * xs) / (fs - fe);
@@ -162,7 +160,7 @@ fn test_cubic_root() {
         let c1: f64 = 4. * rng.gen::<f64>() - 2.;
         let c2: f64 = 4. * rng.gen::<f64>() - 2.;
         let c3: f64 = 4. * rng.gen::<f64>() - 2.;
-        let list_time = crate::ccd::cubic_roots_in_range_zero_to_t(
+        let list_time = cubic_roots_in_range_zero_to_t(
             c0, c1, c2, c3,1.0,eps);
         for t in list_time {
             let fr: f64 = c0 + c1 * t + c2 * t * t + c3 * t * t * t;
@@ -171,18 +169,18 @@ fn test_cubic_root() {
     }
 }
 
-/// compute time where four points gets co-planar
+/// compute time when four points gets co-planar
 fn coplanar_time<T>(
-    s0: &nalgebra::Vector3::<T>,
-    s1: &nalgebra::Vector3::<T>,
-    s2: &nalgebra::Vector3::<T>,
-    s3: &nalgebra::Vector3::<T>,
-    e0: &nalgebra::Vector3::<T>,
-    e1: &nalgebra::Vector3::<T>,
-    e2: &nalgebra::Vector3::<T>,
-    e3: &nalgebra::Vector3::<T>,
+    s0: &nalgebra::Vector3<T>,
+    s1: &nalgebra::Vector3<T>,
+    s2: &nalgebra::Vector3<T>,
+    s3: &nalgebra::Vector3<T>,
+    e0: &nalgebra::Vector3<T>,
+    e1: &nalgebra::Vector3<T>,
+    e2: &nalgebra::Vector3<T>,
+    e3: &nalgebra::Vector3<T>,
     epsilon: T) -> Vec<T>
-    where T: nalgebra::RealField + std::marker::Copy + num_traits::Float,
+    where T: nalgebra::RealField + Copy + num_traits::Float,
           i64: AsPrimitive<T>
 {
     let x1 = s1 - s0;
@@ -208,14 +206,14 @@ fn coplanar_time<T>(
 }
 
 pub fn intersecting_time_fv<T>(
-    f0s: &nalgebra::Vector3::<T>,
-    f1s: &nalgebra::Vector3::<T>,
-    f2s: &nalgebra::Vector3::<T>,
-    vs: &nalgebra::Vector3::<T>,
-    f0e: &nalgebra::Vector3::<T>,
-    f1e: &nalgebra::Vector3::<T>,
-    f2e: &nalgebra::Vector3::<T>,
-    ve: &nalgebra::Vector3::<T>,
+    f0s: &nalgebra::Vector3<T>,
+    f1s: &nalgebra::Vector3<T>,
+    f2s: &nalgebra::Vector3<T>,
+    vs: &nalgebra::Vector3<T>,
+    f0e: &nalgebra::Vector3<T>,
+    f1e: &nalgebra::Vector3<T>,
+    f2e: &nalgebra::Vector3<T>,
+    ve: &nalgebra::Vector3<T>,
     epsilon: T) -> Option<T>
     where T: nalgebra::RealField + Copy + num_traits::Float,
           i64: AsPrimitive<T>,
@@ -240,14 +238,14 @@ pub fn intersecting_time_fv<T>(
 }
 
 pub fn intersecting_time_ee<T>(
-    a0s: &nalgebra::Vector3::<T>,
-    a1s: &nalgebra::Vector3::<T>,
-    b0s: &nalgebra::Vector3::<T>,
-    b1s: &nalgebra::Vector3::<T>,
-    a0e: &nalgebra::Vector3::<T>,
-    a1e: &nalgebra::Vector3::<T>,
-    b0e: &nalgebra::Vector3::<T>,
-    b1e: &nalgebra::Vector3::<T>,
+    a0s: &nalgebra::Vector3<T>,
+    a1s: &nalgebra::Vector3<T>,
+    b0s: &nalgebra::Vector3<T>,
+    b1s: &nalgebra::Vector3<T>,
+    a0e: &nalgebra::Vector3<T>,
+    a1e: &nalgebra::Vector3<T>,
+    b0e: &nalgebra::Vector3<T>,
+    b1e: &nalgebra::Vector3<T>,
     epsilon: T) -> Option<T>
     where T: nalgebra::RealField + Copy + num_traits::Float,
           i64: AsPrimitive<T>,

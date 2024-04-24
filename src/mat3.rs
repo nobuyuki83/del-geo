@@ -26,8 +26,9 @@ pub fn inverse_<T>(gd: [[T; 3]; 3]) -> [[T; 3]; 3]
     gu
 }
 
-
-////////////////
+// above: no dependency
+// ------------------------------
+// below: dependency with nalgebra
 
 pub fn minimum_rotation_matrix<T>(
     v0: nalgebra::Vector3::<T>,
@@ -121,6 +122,25 @@ pub fn rotational_component<T>(
         u * v_t
     };
     u_vt
+}
+
+pub fn skew<T>(
+    v: &nalgebra::Vector3::<T>) -> nalgebra::Matrix3::<T>
+where T: nalgebra::RealField + Copy
+{
+    nalgebra::Matrix3::new(
+        T::zero(), -v[2], v[1],
+        v[2], T::zero(), -v[0],
+        -v[1], v[0], T::zero())
+}
+
+#[test]
+fn test_skew() {
+    let v0 = nalgebra::Vector3::<f64>::new(1.1, 3.1, 2.5);
+    let v1 = nalgebra::Vector3::<f64>::new(2.1, 0.1, 4.5);
+    let c0 = v0.cross(&v1);
+    let c1 = skew(&v0)*v1;
+    assert!((c0-c1).norm()<1.0e-10);
 }
 
 /*

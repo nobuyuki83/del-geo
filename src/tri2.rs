@@ -1,7 +1,5 @@
 //! methods for 2D triangle
 
-use num_traits::AsPrimitive;
-
 pub fn area_<T>(
     p0: &[T; 2],
     p1: &[T; 2],
@@ -24,12 +22,12 @@ pub fn dldx_<T>(
     p0: &[T; 2],
     p1: &[T; 2],
     p2: &[T; 2]) -> ([[T; 3]; 2], [T; 3])
-    where T: num_traits::Float + Copy + 'static,
-          f64: AsPrimitive<T>
+    where T: num_traits::Float
 {
     assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
+    let half = T::one() / (T::one() + T::one());
     let a0 = area_(p0, p1, p2);
-    let tmp1: T = 0.5.as_() / a0;
+    let tmp1: T = half / a0;
     (
         [
             [
@@ -62,7 +60,7 @@ pub fn area<T>(
 pub fn circumcenter<T>(
     p0: &nalgebra::Vector2<T>,
     p1: &nalgebra::Vector2<T>,
-    p2: &nalgebra::Vector2<T>) -> nalgebra::Vector2::<T>
+    p2: &nalgebra::Vector2<T>) -> nalgebra::Vector2<T>
     where T: nalgebra::RealField + Copy + std::fmt::Debug,
 {
     let a0 = (p1 - p2).norm_squared();
@@ -97,7 +95,7 @@ fn test_circumcenter() {
 pub fn wdw_circumcenter<T>(
     p0: &nalgebra::Vector2<T>,
     p1: &nalgebra::Vector2<T>,
-    p2: &nalgebra::Vector2<T>) -> (nalgebra::Vector2::<T>, [nalgebra::Matrix2::<T>; 3])
+    p2: &nalgebra::Vector2<T>) -> (nalgebra::Vector2<T>, [nalgebra::Matrix2<T>; 3])
     where T: nalgebra::RealField + Copy + std::fmt::Debug + num_traits::Float,
 {
     let a0 = (p1 - p2).norm_squared();
