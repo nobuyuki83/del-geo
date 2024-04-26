@@ -16,10 +16,13 @@ pub mod line3;
 pub mod edge;
 pub mod edge2;
 pub mod edge3;
+pub mod bezier_quadratic;
+pub mod bezier_cubic;
 pub mod plane;
 pub mod tri2;
 pub mod tri3;
 pub mod tet;
 pub mod vec2;
 pub mod ccd;
+
 
