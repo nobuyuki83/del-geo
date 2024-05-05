@@ -12,6 +12,7 @@ pub mod aabb2;
 pub mod aabb3;
 //
 pub mod line;
+pub mod line2;
 pub mod line3;
 pub mod edge;
 pub mod edge2;
@@ -22,7 +23,10 @@ pub mod plane;
 pub mod tri2;
 pub mod tri3;
 pub mod tet;
+pub mod sphere;
 pub mod vec2;
 pub mod ccd;
+
+
 
 
