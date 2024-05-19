@@ -50,14 +50,14 @@ pub fn winding_number_<T>(
     ps: &[T; 2],
     pe: &[T; 2],
     po: &[T; 2]) -> T
-    where T: num_traits::Float + Copy + 'static,
-          f64: AsPrimitive<T>
+    where T: num_traits::Float + num_traits::FloatConst,
 {
+    let half = T::one() / (T::one() + T::one());
     let p0 = crate::vec2::sub_(ps, po);
     let p1 = crate::vec2::sub_(pe, po);
     let y: T = p1[1] * p0[0] - p1[0] * p0[1];
     let x: T = p0[0] * p1[0] + p0[1] * p1[1];
-    y.atan2(x) * std::f64::consts::FRAC_1_PI.as_() * 0.5.as_()
+    y.atan2(x) * T::FRAC_1_PI() * half
 }
 
 // -----------------------------
