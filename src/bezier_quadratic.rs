@@ -2,8 +2,10 @@ pub fn eval<Real, const N: usize>(
     p0: &nalgebra::SVector<Real, N>,
     p1: &nalgebra::SVector<Real, N>,
     p2: &nalgebra::SVector<Real, N>,
-    t0: Real) -> nalgebra::SVector<Real, N>
-where Real: nalgebra::RealField + Copy
+    t0: Real,
+) -> nalgebra::SVector<Real, N>
+where
+    Real: nalgebra::RealField + Copy,
 {
     let one = Real::one();
     let two = one + one;

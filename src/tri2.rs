@@ -1,10 +1,8 @@
 //! methods for 2D triangle
 
-pub fn area_<T>(
-    p0: &[T; 2],
-    p1: &[T; 2],
-    p2: &[T; 2]) -> T
-    where T: num_traits::Float
+pub fn area_<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> T
+where
+    T: num_traits::Float,
 {
     assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
     let half = T::one() / (T::one() + T::one());
@@ -18,11 +16,9 @@ pub fn area_<T>(
 /// let (dldx, c) = del_geo::tri2::dldx_(&[0., 1.], &[1., 2.], &[3., 4.]);
 /// let a = dldx[0][2]; // x-differentiation of L^2
 /// ```
-pub fn dldx_<T>(
-    p0: &[T; 2],
-    p1: &[T; 2],
-    p2: &[T; 2]) -> ([[T; 3]; 2], [T; 3])
-    where T: num_traits::Float
+pub fn dldx_<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> ([[T; 3]; 2], [T; 3])
+where
+    T: num_traits::Float,
 {
     assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
     let half = T::one() / (T::one() + T::one());
@@ -33,26 +29,27 @@ pub fn dldx_<T>(
             [
                 tmp1 * (p1[1] - p2[1]),
                 tmp1 * (p2[1] - p0[1]),
-                tmp1 * (p0[1] - p1[1])],
+                tmp1 * (p0[1] - p1[1]),
+            ],
             [
                 tmp1 * (p2[0] - p1[0]),
                 tmp1 * (p0[0] - p2[0]),
-                tmp1 * (p1[0] - p0[0])]
+                tmp1 * (p1[0] - p0[0]),
+            ],
         ],
         [
             tmp1 * (p1[0] * p2[1] - p2[0] * p1[1]),
             tmp1 * (p2[0] * p0[1] - p0[0] * p2[1]),
-            tmp1 * (p0[0] * p1[1] - p1[0] * p0[1])]
+            tmp1 * (p0[0] * p1[1] - p1[0] * p0[1]),
+        ],
     )
 }
 
 // ----------------------------
 
-pub fn area<T>(
-    v1: &nalgebra::Vector2<T>,
-    v2: &nalgebra::Vector2<T>,
-    v3: &nalgebra::Vector2<T>) -> T
-    where T: nalgebra::RealField + Copy,
+pub fn area<T>(v1: &nalgebra::Vector2<T>, v2: &nalgebra::Vector2<T>, v3: &nalgebra::Vector2<T>) -> T
+where
+    T: nalgebra::RealField + Copy,
 {
     ((v2[0] - v1[0]) * (v3[1] - v1[1]) - (v3[0] - v1[0]) * (v2[1] - v1[1])) / (T::one() + T::one())
 }
@@ -60,8 +57,10 @@ pub fn area<T>(
 pub fn circumcenter<T>(
     p0: &nalgebra::Vector2<T>,
     p1: &nalgebra::Vector2<T>,
-    p2: &nalgebra::Vector2<T>) -> nalgebra::Vector2<T>
-    where T: nalgebra::RealField + Copy + std::fmt::Debug,
+    p2: &nalgebra::Vector2<T>,
+) -> nalgebra::Vector2<T>
+where
+    T: nalgebra::RealField + Copy + std::fmt::Debug,
 {
     let a0 = (p1 - p2).norm_squared();
     let a1 = (p2 - p0).norm_squared();
@@ -82,8 +81,7 @@ pub fn circumcenter<T>(
 #[test]
 fn test_circumcenter() {
     type VEC = nalgebra::Vector2<f64>;
-    let p0 = [
-        VEC::new(1.3, 2.1), VEC::new(3.2, 2.1), VEC::new(1.5, 2.5)];
+    let p0 = [VEC::new(1.3, 2.1), VEC::new(3.2, 2.1), VEC::new(1.5, 2.5)];
     let cc0 = circumcenter(&p0[0], &p0[1], &p0[2]);
     let d0 = (cc0 - p0[0]).norm_squared();
     let d1 = (cc0 - p0[1]).norm_squared();
@@ -95,8 +93,10 @@ fn test_circumcenter() {
 pub fn wdw_circumcenter<T>(
     p0: &nalgebra::Vector2<T>,
     p1: &nalgebra::Vector2<T>,
-    p2: &nalgebra::Vector2<T>) -> (nalgebra::Vector2<T>, [nalgebra::Matrix2<T>; 3])
-    where T: nalgebra::RealField + Copy + std::fmt::Debug + num_traits::Float,
+    p2: &nalgebra::Vector2<T>,
+) -> (nalgebra::Vector2<T>, [nalgebra::Matrix2<T>; 3])
+where
+    T: nalgebra::RealField + Copy + std::fmt::Debug + num_traits::Float,
 {
     let a0 = (p1 - p2).norm_squared();
     let a1 = (p2 - p0).norm_squared();
@@ -118,20 +118,24 @@ pub fn wdw_circumcenter<T>(
     let db0 = [
         (p0 - p2 + p0 - p1).scale(two * a0),
         (p1 - p0 + p2 - p1).scale(two * a0) + (p1 - p2).scale(two * (a1 + a2 - a0)),
-        (p2 - p0 + p1 - p2).scale(two * a0) + (p2 - p1).scale(two * (a1 + a2 - a0))];
+        (p2 - p0 + p1 - p2).scale(two * a0) + (p2 - p1).scale(two * (a1 + a2 - a0)),
+    ];
     let db1 = [
         (p0 - p1 + p2 - p0).scale(two * a1) + (p0 - p2).scale(two * (a2 + a0 - a1)),
         (p1 - p0 + p1 - p2).scale(two * a1),
-        (p2 - p1 + p0 - p2).scale(two * a1) + (p2 - p0).scale(two * (a2 + a0 - a1))];
+        (p2 - p1 + p0 - p2).scale(two * a1) + (p2 - p0).scale(two * (a2 + a0 - a1)),
+    ];
     let db2 = [
         (p0 - p2 + p1 - p0).scale(two * a2) + (p0 - p1).scale(two * (a0 + a1 - a2)),
         (p1 - p2 + p0 - p1).scale(two * a2) + (p1 - p0).scale(two * (a0 + a1 - a2)),
-        (p2 - p1 + p2 - p0).scale(two * a2)];
+        (p2 - p1 + p2 - p0).scale(two * a2),
+    ];
     let tmp = -T::one() / (sum * sum);
     let dsum_inv = [
         (db0[0] + db1[0] + db2[0]) * tmp,
         (db0[1] + db1[1] + db2[1]) * tmp,
-        (db0[2] + db1[2] + db2[2]) * tmp];
+        (db0[2] + db1[2] + db2[2]) * tmp,
+    ];
     //
     let dcc = [
         nalgebra::Matrix2::<T>::identity() * c0
@@ -145,7 +149,7 @@ pub fn wdw_circumcenter<T>(
         nalgebra::Matrix2::<T>::identity() * c2
             + p0 * (db0[2].scale(sum_inv) + dsum_inv[2].scale(b0)).transpose()
             + p1 * (db1[2].scale(sum_inv) + dsum_inv[2].scale(b1)).transpose()
-            + p2 * (db2[2].scale(sum_inv) + dsum_inv[2].scale(b2)).transpose()
+            + p2 * (db2[2].scale(sum_inv) + dsum_inv[2].scale(b2)).transpose(),
     ];
 
     (cc, dcc)
@@ -154,8 +158,7 @@ pub fn wdw_circumcenter<T>(
 #[test]
 fn test_dw_circumcenter() {
     type VEC = nalgebra::Vector2<f64>;
-    let p0 = [
-        VEC::new(0.1, 0.2), VEC::new(1.3, 0.2), VEC::new(0.3, 1.5)];
+    let p0 = [VEC::new(0.1, 0.2), VEC::new(1.3, 0.2), VEC::new(0.3, 1.5)];
     let (cc0, dcc0) = wdw_circumcenter(&p0[0], &p0[1], &p0[2]);
     let eps = 1.0e-4;
     for i_node in 0..3 {
@@ -172,7 +175,10 @@ fn test_dw_circumcenter() {
             let dcc_ana = dcc0[i_node] * b;
             let diff = (dcc_num - dcc_ana).norm();
             assert!(diff < 1.0e-4);
-            println!("{}, {} --> {:?}, {:?}, {:?}", i_node, i_dim, dcc_num, dcc_ana, diff);
+            println!(
+                "{}, {} --> {:?}, {:?}, {:?}",
+                i_node, i_dim, dcc_num, dcc_ana, diff
+            );
         }
     }
 }

@@ -3,24 +3,24 @@
 use nalgebra::clamp;
 use num_traits::AsPrimitive;
 
-pub fn nearest_point3_<T>(
-    point_pos: &[T;3],
-    edge_pos0: &[T;3],
-    edge_pos1: &[T;3]) -> [T; 3]
-    where T: num_traits::Float + 'static + Copy + PartialOrd,
-          f64: num_traits::AsPrimitive<T>
+pub fn nearest_point3_<T>(point_pos: &[T; 3], edge_pos0: &[T; 3], edge_pos1: &[T; 3]) -> [T; 3]
+where
+    T: num_traits::Float + 'static + Copy + PartialOrd,
+    f64: num_traits::AsPrimitive<T>,
 {
     use crate::vec3;
     let d = [
         edge_pos1[0] - edge_pos0[0],
         edge_pos1[1] - edge_pos0[1],
-        edge_pos1[2] - edge_pos0[2]];
+        edge_pos1[2] - edge_pos0[2],
+    ];
     let t = {
         if vec3::dot_(&d, &d) > 1.0e-20_f64.as_() {
             let ps = [
                 edge_pos0[0] - point_pos[0],
                 edge_pos0[1] - point_pos[1],
-                edge_pos0[2] - point_pos[2]];
+                edge_pos0[2] - point_pos[2],
+            ];
             let a = vec3::dot_(&d, &d);
             let b = vec3::dot_(&d, &ps);
             let mut r: T = -b / a;
@@ -31,9 +31,11 @@ pub fn nearest_point3_<T>(
             0.5_f64.as_()
         }
     };
-    [edge_pos0[0] + t * d[0],
+    [
+        edge_pos0[0] + t * d[0],
         edge_pos0[1] + t * d[1],
-        edge_pos0[2] + t * d[2]]
+        edge_pos0[2] + t * d[2],
+    ]
 }
 
 // above: w/o nalgebra
@@ -44,9 +46,11 @@ pub fn nearest_point3_<T>(
 pub fn nearest_to_point3<T>(
     edge_pos0: &nalgebra::Vector3<T>,
     edge_pos1: &nalgebra::Vector3<T>,
-    point_pos: &nalgebra::Vector3<T>) -> (T, T)
-    where T: nalgebra::RealField + 'static + Copy + PartialOrd,
-          f64: num_traits::AsPrimitive<T>
+    point_pos: &nalgebra::Vector3<T>,
+) -> (T, T)
+where
+    T: nalgebra::RealField + 'static + Copy + PartialOrd,
+    f64: num_traits::AsPrimitive<T>,
 {
     let d = edge_pos1 - edge_pos0;
     let dsq = d.norm_squared();
@@ -60,28 +64,37 @@ pub fn nearest_to_point3<T>(
     (distance, t)
 }
 
-
 /// the two edges need to be co-planar
 pub fn intersection_edge3_when_coplanar<T>(
     p0: &nalgebra::Vector3<T>,
     p1: &nalgebra::Vector3<T>,
     q0: &nalgebra::Vector3<T>,
-    q1: &nalgebra::Vector3<T>) -> Option<(T, T, T, T)>
-    where T: nalgebra::RealField + Copy + 'static,
-          f64: num_traits::AsPrimitive<T>
+    q1: &nalgebra::Vector3<T>,
+) -> Option<(T, T, T, T)>
+where
+    T: nalgebra::RealField + Copy + 'static,
+    f64: num_traits::AsPrimitive<T>,
 {
     let n = {
         let n0 = (p1 - p0).cross(&(q0 - p0));
         let n1 = (p1 - p0).cross(&(q1 - p0));
-        if n0.norm_squared() < n1.norm_squared() { n1 } else { n0 }
+        if n0.norm_squared() < n1.norm_squared() {
+            n1
+        } else {
+            n0
+        }
     };
     let p2 = p0 + n;
     let rq1 = crate::tet::volume(p0, p1, &p2, q0);
     let rq0 = crate::tet::volume(p0, p1, &p2, q1);
     let rp1 = crate::tet::volume(q0, q1, &p2, p0);
     let rp0 = crate::tet::volume(q0, q1, &p2, p1);
-    if (rp0 - rp1).abs() <= T::zero() { return None; }
-    if (rq0 - rq1).abs() <= T::zero() { return None; }
+    if (rp0 - rp1).abs() <= T::zero() {
+        return None;
+    }
+    if (rq0 - rq1).abs() <= T::zero() {
+        return None;
+    }
     let t = T::one() / (rp0 - rp1);
     let (rp0, rp1) = (rp0.scale(t), -rp1.scale(t));
     let t = T::one() / (rq0 - rq1);
@@ -93,20 +106,25 @@ pub fn nearest_to_line3(
     edge_start: &nalgebra::Vector3<f64>,
     edge_end: &nalgebra::Vector3<f64>,
     line_origin: &nalgebra::Vector3<f64>,
-    line_direction: &nalgebra::Vector3<f64>) -> (nalgebra::Vector3<f64>, nalgebra::Vector3<f64>)
-{
-    let (scale, scaled_ratio_edge, _, scaled_nearest_edge, scaled_nearest_line)
-        = crate::line3::nearest_to_line3(
-        edge_start, &(edge_end - edge_start),
-        line_origin, line_direction);
-    if scale.abs() < 1.0e-10 { // pararell
+    line_direction: &nalgebra::Vector3<f64>,
+) -> (nalgebra::Vector3<f64>, nalgebra::Vector3<f64>) {
+    let (scale, scaled_ratio_edge, _, scaled_nearest_edge, scaled_nearest_line) =
+        crate::line3::nearest_to_line3(
+            edge_start,
+            &(edge_end - edge_start),
+            line_origin,
+            line_direction,
+        );
+    if scale.abs() < 1.0e-10 {
+        // pararell
         let nearest_edge = (edge_start + edge_end) * 0.5;
-        let (nearest_line, _) = crate::line::nearest_to_point(
-            &nearest_edge, line_origin, line_direction);
+        let (nearest_line, _) =
+            crate::line::nearest_to_point(&nearest_edge, line_origin, line_direction);
         return (nearest_edge, nearest_line);
     }
     let ratio_edge = scaled_ratio_edge / scale;
-    if ratio_edge > 0_f64 && ratio_edge < 1_f64 { // nearst point is inside the segment
+    if ratio_edge > 0_f64 && ratio_edge < 1_f64 {
+        // nearst point is inside the segment
         let nearest_edge = scaled_nearest_edge / scale;
         let nearest_line = scaled_nearest_line / scale;
         return (nearest_edge, nearest_line);
@@ -127,9 +145,10 @@ pub fn nearest_to_line3(
 }
 
 pub fn wdw_integral_of_inverse_distance_cubic(
-    q: &nalgebra::Vector3::<f64>,
-    p0: &nalgebra::Vector3::<f64>,
-    p1: &nalgebra::Vector3::<f64>) -> (f64, nalgebra::Vector3::<f64>) {
+    q: &nalgebra::Vector3<f64>,
+    p0: &nalgebra::Vector3<f64>,
+    p1: &nalgebra::Vector3<f64>,
+) -> (f64, nalgebra::Vector3<f64>) {
     let len = (p1 - p0).norm();
     let lsinv = 1.0 / (len * len);
     // dist^2 = er^2+2br+c
@@ -149,20 +168,22 @@ pub fn wdw_integral_of_inverse_distance_cubic(
     (v, dv * lsinv)
 }
 
-
 pub fn nearest_to_edge3<T>(
-    p0: &nalgebra::Vector3::<T>,
-    p1: &nalgebra::Vector3::<T>,
-    q0: &nalgebra::Vector3::<T>,
-    q1: &nalgebra::Vector3::<T>) -> (T, T, T)
-    where T: nalgebra::RealField + Copy + 'static,
-          f64: AsPrimitive<T>
+    p0: &nalgebra::Vector3<T>,
+    p1: &nalgebra::Vector3<T>,
+    q0: &nalgebra::Vector3<T>,
+    q1: &nalgebra::Vector3<T>,
+) -> (T, T, T)
+where
+    T: nalgebra::RealField + Copy + 'static,
+    f64: AsPrimitive<T>,
 {
     let vp = p1 - p0;
     let vq = q1 - q0;
     assert!(vp.norm() > T::zero());
     assert!(vq.norm() > T::zero());
-    if vp.cross(&vq).norm() < T::default_epsilon() { // handling parallel edge
+    if vp.cross(&vq).norm() < T::default_epsilon() {
+        // handling parallel edge
         let pq0 = p0 - q0;
         let uvp = vp.normalize();
         // a vector vertical to vp and vq and in the plane of vp and vq
@@ -172,18 +193,20 @@ pub fn nearest_to_edge3<T>(
         let lp1 = p1.dot(&uvp);
         let lq0 = q0.dot(&uvp);
         let lq1 = q1.dot(&uvp);
-        let (lp_min, lp_max, p_min, p_max, rp_min, rp_max)
-            = (lp0, lp1, p0, p1, T::zero(), T::one());
+        let (lp_min, lp_max, p_min, p_max, rp_min, rp_max) =
+            (lp0, lp1, p0, p1, T::zero(), T::one());
         assert!(lp_min < lp_max);
-        let (lq_min, lq_max, q_min, q_max, rq_min, rq_max) =
-            if lq0 < lq1 {
-                (
-                    lq0, lq1, q0, q1, T::zero(), T::one())
-            } else {
-                (lq1, lq0, q1, q0, T::one(), T::zero())
-            };
-        if lp_max < lq_min { return ((p_max - q_min).norm(), rp_max, rq_min); }
-        if lq_max < lp_min { return ((q_max - p_min).norm(), rp_min, rq_max); }
+        let (lq_min, lq_max, q_min, q_max, rq_min, rq_max) = if lq0 < lq1 {
+            (lq0, lq1, q0, q1, T::zero(), T::one())
+        } else {
+            (lq1, lq0, q1, q0, T::one(), T::zero())
+        };
+        if lp_max < lq_min {
+            return ((p_max - q_min).norm(), rp_max, rq_min);
+        }
+        if lq_max < lp_min {
+            return ((q_max - p_min).norm(), rp_min, rq_max);
+        }
         let lm_min = lp_min.max(lq_min);
         let lm_max = lp_max.min(lq_max);
         let lm = (lm_min + lm_max) * 0.5f64.as_();
@@ -191,7 +214,8 @@ pub fn nearest_to_edge3<T>(
         let ratio_q = (lm - lq0) / (lq1 - lq0);
         return (dist, ratio_p, ratio_q);
     }
-    let (rp1,rq1) = { // line-line intersection
+    let (rp1, rq1) = {
+        // line-line intersection
         let t0 = vp.dot(&vp);
         let t1 = vq.dot(&vq);
         let t2 = vp.dot(&vq);
@@ -201,20 +225,23 @@ pub fn nearest_to_edge3<T>(
         let invdet = T::one() / det;
         let rp1 = (t1 * t3 - t2 * t4) * invdet;
         let rq1 = (t2 * t3 - t0 * t4) * invdet;
-        (rp1,rq1)
+        (rp1, rq1)
     };
-    if T::zero() <= rp1 && rp1 <= T::one() && T::zero() <= rq1 && rq1 <= T::one() { // both in range
+    if T::zero() <= rp1 && rp1 <= T::one() && T::zero() <= rq1 && rq1 <= T::one() {
+        // both in range
         let pc = p0 + vp.scale(rp1);
         let qc = q0 + vq.scale(rq1);
         return ((pc - qc).norm(), rp1, rq1);
     }
-    if (T::zero() <= rp1 && rp1 <= T::one()) && (rq1<=T::zero() || T::one()<=rq1) { // p in range
+    if (T::zero() <= rp1 && rp1 <= T::one()) && (rq1 <= T::zero() || T::one() <= rq1) {
+        // p in range
         let rq1 = clamp(rq1, T::zero(), T::one());
         let qc = q0 + vq.scale(rq1);
         let (dist, rp1) = nearest_to_point3(p0, p1, &qc);
         return (dist, rp1, rq1);
     }
-    if (T::zero() <= rq1 && rq1 <= T::one()) && (rp1<=T::zero() || T::one()<=rp1) { // q in range
+    if (T::zero() <= rq1 && rq1 <= T::one()) && (rp1 <= T::zero() || T::one() <= rp1) {
+        // q in range
         let rp1 = clamp(rp1, T::zero(), T::one());
         let pc = p0 + vp.scale(rp1);
         let (dist, rq1) = nearest_to_point3(q0, q1, &pc);
@@ -224,9 +251,9 @@ pub fn nearest_to_edge3<T>(
     let rp1 = clamp(rp1, T::zero(), T::one());
     let pc = p0 + vp.scale(rp1);
     let (_dist, rq1) = nearest_to_point3(q0, q1, &pc);
-    let qc = q0 + (q1-q0).scale(rq1);
+    let qc = q0 + (q1 - q0).scale(rq1);
     let (_dist, rp1) = nearest_to_point3(p0, p1, &qc);
-    let pc = p0 + (p1-p0).scale(rp1);
+    let pc = p0 + (p1 - p0).scale(rp1);
     let (dist, rq1) = nearest_to_point3(q0, q1, &pc);
     (dist, rp1, rq1)
 }
@@ -234,11 +261,12 @@ pub fn nearest_to_edge3<T>(
 #[cfg(test)]
 mod tests {
     fn numerical(
-        q: &nalgebra::Vector3::<f64>,
-        p0: &nalgebra::Vector3::<f64>,
-        p1: &nalgebra::Vector3::<f64>,
+        q: &nalgebra::Vector3<f64>,
+        p0: &nalgebra::Vector3<f64>,
+        p1: &nalgebra::Vector3<f64>,
         n: usize,
-        p: usize) -> f64 {
+        p: usize,
+    ) -> f64 {
         use num_traits::Pow;
         let len = (p1 - p0).norm();
         let mut ret = 0.;
@@ -266,10 +294,18 @@ mod tests {
             let q = crate::vec3::sample_unit_cube();
             let len = (p0 - p1).norm();
             let height = crate::tri3::height(&p0, &p1, &q);
-            if height < 0.1 { continue; }
-            if len < 0.1 { continue; }
-            if (p0 - q).norm() < 0.1 { continue; }
-            if (p1 - q).norm() < 0.1 { continue; }
+            if height < 0.1 {
+                continue;
+            }
+            if len < 0.1 {
+                continue;
+            }
+            if (p0 - q).norm() < 0.1 {
+                continue;
+            }
+            if (p1 - q).norm() < 0.1 {
+                continue;
+            }
             // dbg!(numerical(&q, &p0, &p1, 10, 3));
             // dbg!(numerical(&q, &p0, &p1, 100, 3));
             // dbg!(numerical(&q, &p0, &p1, 1000, 3));

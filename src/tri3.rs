@@ -4,74 +4,72 @@ use num_traits::AsPrimitive;
 
 /// clamp barycentric coordinates inside a triangle
 pub fn clamp<T>(r0: T, r1: T, r2: T) -> (T, T, T)
-    where T: num_traits::Float
+where
+    T: num_traits::Float,
 {
     // vertex projection
-    if r0 <= T::zero() && r1 <= T::zero() { return (T::zero(), T::zero(), T::one()); }
-    if r1 <= T::zero() && r2 <= T::zero() { return (T::one(), T::zero(), T::zero()); }
-    if r2 <= T::zero() && r0 <= T::zero() { return (T::zero(), T::one(), T::zero()); }
+    if r0 <= T::zero() && r1 <= T::zero() {
+        return (T::zero(), T::zero(), T::one());
+    }
+    if r1 <= T::zero() && r2 <= T::zero() {
+        return (T::one(), T::zero(), T::zero());
+    }
+    if r2 <= T::zero() && r0 <= T::zero() {
+        return (T::zero(), T::one(), T::zero());
+    }
     // edge projection
-    if r0 <= T::zero() { return (T::zero(), r1 / (r1 + r2), r2 / (r1 + r2)); }
-    if r1 <= T::zero() { return (r0 / (r0 + r2), T::zero(), r2 / (r0 + r2)); }
-    if r2 <= T::zero() { return (r0 / (r0 + r1), r1 / (r0 + r1), T::zero()); }
+    if r0 <= T::zero() {
+        return (T::zero(), r1 / (r1 + r2), r2 / (r1 + r2));
+    }
+    if r1 <= T::zero() {
+        return (r0 / (r0 + r2), T::zero(), r2 / (r0 + r2));
+    }
+    if r2 <= T::zero() {
+        return (r0 / (r0 + r1), r1 / (r0 + r1), T::zero());
+    }
     (r0, r1, r2)
 }
 
 // ----------------------
 
 /// normal vector of a 3D triangle (coordinates given by stack-allocated arrays)
-pub fn normal_<T>(
-    v1: &[T; 3],
-    v2: &[T; 3],
-    v3: &[T; 3]) -> [T; 3]
-    where T: std::ops::Sub<Output=T> + std::ops::Mul<Output=T> + std::ops::Sub + Copy
+pub fn normal_<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> [T; 3]
+where
+    T: std::ops::Sub<Output = T> + std::ops::Mul<Output = T> + std::ops::Sub + Copy,
 {
     [
         (v2[1] - v1[1]) * (v3[2] - v1[2]) - (v2[2] - v1[2]) * (v3[1] - v1[1]),
         (v2[2] - v1[2]) * (v3[0] - v1[0]) - (v2[0] - v1[0]) * (v3[2] - v1[2]),
-        (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0])]
+        (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0]),
+    ]
 }
 
 /// area of a 3D triangle (coordinates given by stack-allocated arrays)
-pub fn area_<T>(
-    v1: &[T; 3],
-    v2: &[T; 3],
-    v3: &[T; 3]) -> T
-    where T: num_traits::Float
+pub fn area_<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> T
+where
+    T: num_traits::Float,
 {
     let na = normal_(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
     crate::vec3::squared_norm_(&na).sqrt() * half
 }
 
-pub fn unit_normal_area_<T>(
-    v1: &[T; 3],
-    v2: &[T; 3],
-    v3: &[T; 3]) -> ([T; 3], T)
-    where T: num_traits::Float
+pub fn unit_normal_area_<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> ([T; 3], T)
+where
+    T: num_traits::Float,
 {
     use crate::vec3;
-    let n = normal_(
-        v1, v2, v3);
+    let n = normal_(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
     let a = vec3::norm_(&n) * half;
     let invlen: T = half / a;
-    (
-        [
-            n[0] * invlen,
-            n[1] * invlen,
-            n[2] * invlen,
-        ],
-        a
-    )
+    ([n[0] * invlen, n[1] * invlen, n[2] * invlen], a)
 }
 
 /// compute cotangents of the three angles of a triangle
-pub fn cot_<T>(
-    p0: &[T; 3],
-    p1: &[T; 3],
-    p2: &[T; 3]) -> [T; 3]
-    where T: num_traits::Float
+pub fn cot_<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [T; 3]
+where
+    T: num_traits::Float,
 {
     use crate::vec3;
     assert!(p0.len() == 3 && p1.len() == 3 && p2.len() == 3);
@@ -84,7 +82,8 @@ pub fn cot_<T>(
         let na = [
             v1[1] * v2[2] - v2[1] * v1[2],
             v1[2] * v2[0] - v2[2] * v1[0],
-            v1[0] * v2[1] - v2[0] * v1[1]];
+            v1[0] * v2[1] - v2[0] * v1[1],
+        ];
         vec3::squared_norm_(&na).sqrt() * half
     };
     let tmp: T = onefourth / area;
@@ -94,29 +93,32 @@ pub fn cot_<T>(
     [
         (l1 + l2 - l0) * tmp, // cot0 = cos0/sin0 = {(l1*l1+l2*l2-l0*l0)/(2*l1*l2)} / {2*area/(l1*l2)}
         (l2 + l0 - l1) * tmp, // cot1 = cos1/sin1 = {(l2*l2+l0*l0-l1*l1)/(2*l2*l0)} / {2*area/(l2*l0)}
-        (l0 + l1 - l2) * tmp  // cot2 = cos2/sin2 = {(l0*l0+l1*l1-l2*l2)/(2*l0*l1)} / {2*area/(l0*l1)}
+        (l0 + l1 - l2) * tmp, // cot2 = cos2/sin2 = {(l0*l0+l1*l1-l2*l2)/(2*l0*l1)} / {2*area/(l0*l1)}
     ]
 }
 
-
-pub fn emat_cotangent_laplacian<T>(
-    p0: &[T; 3],
-    p1: &[T; 3],
-    p2: &[T; 3]) -> [[[T; 1]; 3]; 3]
-    where T: num_traits::Float
+pub fn emat_cotangent_laplacian<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [[[T; 1]; 3]; 3]
+where
+    T: num_traits::Float,
 {
     let cots = cot_(p0, p1, p2);
     let half = T::one() / (T::one() + T::one());
     [
         [
-            [(cots[1] + cots[2]) * half], [-cots[2] * half], [-cots[1] * half]
+            [(cots[1] + cots[2]) * half],
+            [-cots[2] * half],
+            [-cots[1] * half],
         ],
         [
-            [-cots[2] * half], [(cots[2] + cots[0]) * half], [-cots[0] * half]
+            [-cots[2] * half],
+            [(cots[2] + cots[0]) * half],
+            [-cots[0] * half],
         ],
         [
-            [-cots[1] * half], [-cots[0] * half], [(cots[0] + cots[1]) * half]
-        ]
+            [-cots[1] * half],
+            [-cots[0] * half],
+            [(cots[0] + cots[1]) * half],
+        ],
     ]
 }
 
@@ -131,9 +133,11 @@ pub fn ray_triangle_intersection_<T>(
     ray_dir: &[T; 3],
     p0: &[T; 3],
     p1: &[T; 3],
-    p2: &[T; 3]) -> Option<T>
-    where T: num_traits::Float + Copy + 'static,
-          f64: AsPrimitive<T>
+    p2: &[T; 3],
+) -> Option<T>
+where
+    T: num_traits::Float + Copy + 'static,
+    f64: AsPrimitive<T>,
 {
     use crate::vec3;
     let eps: T = T::epsilon();
@@ -141,14 +145,20 @@ pub fn ray_triangle_intersection_<T>(
     let edge2 = vec3::sub_(p2, p0);
     let pvec = vec3::cross_(ray_dir, &edge2);
     let det = vec3::dot_(&edge1, &pvec);
-    if det > -eps && det < eps { return None; }
+    if det > -eps && det < eps {
+        return None;
+    }
     let invdet = T::one() / det;
     let tvec = vec3::sub_(ray_org, p0);
     let u = invdet * vec3::dot_(&tvec, &pvec);
-    if u < T::zero() || u > T::one() { return None; }
+    if u < T::zero() || u > T::one() {
+        return None;
+    }
     let qvec = vec3::cross_(&tvec, &edge1);
     let v = invdet * vec3::dot_(ray_dir, &qvec);
-    if v < T::zero() || u + v > T::one() { return None; }
+    if v < T::zero() || u + v > T::one() {
+        return None;
+    }
     // At this stage we can compute t to find out where the intersection point is on the line.
     let t = invdet * vec3::dot_(&edge2, &qvec);
     Some(t)
@@ -162,9 +172,11 @@ pub fn ray_triangle_intersection_<T>(
 pub fn height<T>(
     p0: &nalgebra::Vector3<T>,
     p1: &nalgebra::Vector3<T>,
-    p2: &nalgebra::Vector3<T>) -> T
-    where T: nalgebra::RealField + 'static + Copy + num_traits::Float,
-          f64: AsPrimitive<T>
+    p2: &nalgebra::Vector3<T>,
+) -> T
+where
+    T: nalgebra::RealField + 'static + Copy + num_traits::Float,
+    f64: AsPrimitive<T>,
 {
     let a = area(p2, p0, p1);
     a * 2.0.as_() / (p0 - p1).norm()
@@ -174,8 +186,10 @@ pub fn height<T>(
 pub fn normal<T>(
     p0: &nalgebra::Vector3<T>,
     p1: &nalgebra::Vector3<T>,
-    p2: &nalgebra::Vector3<T>) -> nalgebra::Vector3<T>
-    where T: nalgebra::RealField
+    p2: &nalgebra::Vector3<T>,
+) -> nalgebra::Vector3<T>
+where
+    T: nalgebra::RealField,
 {
     (p1 - p0).cross(&(p2 - p0))
 }
@@ -183,24 +197,27 @@ pub fn normal<T>(
 pub fn dw_normal<T>(
     p0: &nalgebra::Vector3<T>,
     p1: &nalgebra::Vector3<T>,
-    p2: &nalgebra::Vector3<T>) -> [nalgebra::Matrix3<T>;3]
-where T: nalgebra::RealField + Copy
+    p2: &nalgebra::Vector3<T>,
+) -> [nalgebra::Matrix3<T>; 3]
+where
+    T: nalgebra::RealField + Copy,
 {
     [
-        crate::mat3::skew(&(p2-p1)),
-        crate::mat3::skew(&(p0-p2)),
-        crate::mat3::skew(&(p1-p0))
+        crate::mat3::skew(&(p2 - p1)),
+        crate::mat3::skew(&(p0 - p2)),
+        crate::mat3::skew(&(p1 - p0)),
     ]
 }
 
 #[test]
 fn test_normal() {
-    type V3 = nalgebra::Vector3::<f64>;
+    type V3 = nalgebra::Vector3<f64>;
     {
         let p0 = [
             V3::new(0.0, 0.0, 0.0),
             V3::new(1.0, 0.0, 0.0),
-            V3::new(0.0, 1.0, 0.0) ];
+            V3::new(0.0, 1.0, 0.0),
+        ];
         let pn = normal(&p0[0], &p0[1], &p0[2]);
         assert!((pn - V3::new(0., 0., 1.)).norm() < 1.0e-10);
     }
@@ -209,15 +226,16 @@ fn test_normal() {
         let p1 = V3::new(1.2, 0.3, 0.2);
         let p2 = V3::new(0.3, 1.4, 0.1);
         let pn = normal(&p0, &p1, &p2);
-        assert!( (p0-p1).dot(&pn) < 1.0e-10 );
-        assert!( (p1-p2).dot(&pn) < 1.0e-10 );
-        assert!( (p2-p0).dot(&pn) < 1.0e-10 );
+        assert!((p0 - p1).dot(&pn) < 1.0e-10);
+        assert!((p1 - p2).dot(&pn) < 1.0e-10);
+        assert!((p2 - p0).dot(&pn) < 1.0e-10);
     }
     {
         let p0 = [
             V3::new(0.1, 0.4, 0.2),
             V3::new(1.2, 0.3, 0.7),
-            V3::new(0.3, 1.5, 0.3) ];
+            V3::new(0.3, 1.5, 0.3),
+        ];
         let cc0 = normal(&p0[0], &p0[1], &p0[2]);
         let dcc = dw_normal(&p0[0], &p0[1], &p0[2]);
         let eps = 1.0e-5;
@@ -235,7 +253,10 @@ fn test_normal() {
                 let dcc_ana = dcc[i_node] * b;
                 let diff = (dcc_num - dcc_ana).norm();
                 assert!(diff < 1.0e-4);
-                println!("normal {}, {} --> {:?}, {:?}, {:?}", i_node, i_dim, dcc_num, dcc_ana, diff);
+                println!(
+                    "normal {}, {} --> {:?}, {:?}, {:?}",
+                    i_node, i_dim, dcc_num, dcc_ana, diff
+                );
             }
         }
     }
@@ -245,19 +266,19 @@ fn test_normal() {
 pub fn unit_normal<T>(
     p0: &nalgebra::Vector3<T>,
     p1: &nalgebra::Vector3<T>,
-    p2: &nalgebra::Vector3<T>) -> nalgebra::Vector3<T>
-    where T: nalgebra::RealField
+    p2: &nalgebra::Vector3<T>,
+) -> nalgebra::Vector3<T>
+where
+    T: nalgebra::RealField,
 {
     let n = (p1 - p0).cross(&(p2 - p0));
     n.normalize()
 }
 
-pub fn area<T>(
-    p0: &nalgebra::Vector3<T>,
-    p1: &nalgebra::Vector3<T>,
-    p2: &nalgebra::Vector3<T>) -> T
-    where T: nalgebra::RealField + 'static + Copy,
-          f64: AsPrimitive<T>
+pub fn area<T>(p0: &nalgebra::Vector3<T>, p1: &nalgebra::Vector3<T>, p2: &nalgebra::Vector3<T>) -> T
+where
+    T: nalgebra::RealField + 'static + Copy,
+    f64: AsPrimitive<T>,
 {
     (p1 - p0).cross(&(p2 - p0)).norm() * 0.5_f64.as_()
 }
@@ -266,10 +287,11 @@ pub fn nearest_to_point3<T>(
     q0: &nalgebra::Vector3<T>,
     q1: &nalgebra::Vector3<T>,
     q2: &nalgebra::Vector3<T>,
-    ps: &nalgebra::Vector3<T>)
-    -> (nalgebra::Vector3<T>, T, T)
-    where T: nalgebra::RealField + Copy + 'static,
-          f64: AsPrimitive<T>
+    ps: &nalgebra::Vector3<T>,
+) -> (nalgebra::Vector3<T>, T, T)
+where
+    T: nalgebra::RealField + Copy + 'static,
+    f64: AsPrimitive<T>,
 {
     let n012 = unit_normal(q0, q1, q2);
     let pe = ps + n012;
@@ -298,12 +320,14 @@ pub fn nearest_to_point3<T>(
     let r20 = q2 + (q0 - q2).scale(r20.1);
     let r01 = q0 + (q1 - q0).scale(r01.1);
     if d12 < d20 {
-        if d12 < d01 { // 12 is the smallest
+        if d12 < d01 {
+            // 12 is the smallest
             let r0 = T::zero();
             let r1 = (r12 - q2).norm() / (q1 - q2).norm();
             return (r12, r0, r1);
         }
-    } else if d20 < d01 { // d20 is the smallest
+    } else if d20 < d01 {
+        // d20 is the smallest
         let r0 = (r20 - q2).norm() / (q0 - q2).norm();
         let r1 = T::zero();
         return (r20, r0, r1);
@@ -341,14 +365,18 @@ fn test_triangle_point_nearest() {
 
 fn wdw_inverse_distance_cubic_integrated_over_wedge(
     x: nalgebra::Vector3<f64>,
-    b: f64) -> (f64, nalgebra::Vector3<f64>)
-{
+    b: f64,
+) -> (f64, nalgebra::Vector3<f64>) {
     let l = x.norm();
     let c = 1. / (b * 0.5).tan();
     let a = (l - x.x) * c - x.y;
     let t = {
         let t = (x.z.abs() / a).atan();
-        if t > 0. { t } else { t + core::f64::consts::PI }
+        if t > 0. {
+            t
+        } else {
+            t + core::f64::consts::PI
+        }
     };
     let signz = if x.z < 0. { -1. } else { 1. };
     let w = t * 2. / x.z.abs();
@@ -356,15 +384,18 @@ fn wdw_inverse_distance_cubic_integrated_over_wedge(
     let dwdx = 2. * (1. - x.x / l) * c * d;
     let dwdy = 2. * (1. - x.y * c / l) * d;
     let dwdz = -t / (x.z * x.z) + a * d / x.z.abs() - x.z.abs() * c * d / l;
-    (w, nalgebra::Vector3::<f64>::new(dwdx, dwdy, dwdz * signz * 2.))
+    (
+        w,
+        nalgebra::Vector3::<f64>::new(dwdx, dwdy, dwdz * signz * 2.),
+    )
 }
 
 pub fn wdw_integral_of_inverse_distance_cubic(
     p0: &nalgebra::Vector3<f64>,
     p1: &nalgebra::Vector3<f64>,
     p2: &nalgebra::Vector3<f64>,
-    q: &nalgebra::Vector3<f64>) -> (f64, nalgebra::Vector3<f64>)
-{
+    q: &nalgebra::Vector3<f64>,
+) -> (f64, nalgebra::Vector3<f64>) {
     let vz = unit_normal(p0, p1, p2);
     let z = (q - p0).dot(&vz);
     let u10 = (p0 - p1).normalize();
@@ -391,8 +422,7 @@ pub fn wdw_integral_of_inverse_distance_cubic(
     //
     let w = core::f64::consts::PI * 2_f64 / z.abs() - w0 - w1 - w2;
     let signz = if z < 0. { -1. } else { 1. };
-    let dw = -vz.scale(signz * core::f64::consts::PI * 2_f64 / (z * z))
-        - dw0dq - dw1dq - dw2dq;
+    let dw = -vz.scale(signz * core::f64::consts::PI * 2_f64 / (z * z)) - dw0dq - dw1dq - dw2dq;
     (w, dw)
 }
 
@@ -401,8 +431,10 @@ pub fn numerical_integration<F>(
     p1: &nalgebra::Vector3<f64>,
     p2: &nalgebra::Vector3<f64>,
     integrand: F,
-    n: usize) -> f64
-    where F: Fn(f64, f64) -> f64
+    n: usize,
+) -> f64
+where
+    F: Fn(f64, f64) -> f64,
 {
     let area = area(p0, p1, p2);
     let jacobian = area / (n * n) as f64;
@@ -421,7 +453,9 @@ pub fn numerical_integration<F>(
                     let u = (j0 + 1) * 2 + j0;
                     (u, v)
                 }
-                _ => { panic!(); }
+                _ => {
+                    panic!();
+                }
             };
             let (u, v) = (u as f64 / (n * 3) as f64, v as f64 / (n * 3) as f64);
             let dist = integrand(u, v);
@@ -437,7 +471,8 @@ pub fn is_intersection_tri3_sat(
     p2: &nalgebra::Vector3<f32>,
     q0: &nalgebra::Vector3<f32>,
     q1: &nalgebra::Vector3<f32>,
-    q2: &nalgebra::Vector3<f32>) -> bool {
+    q2: &nalgebra::Vector3<f32>,
+) -> bool {
     let ps = nalgebra::Matrix3::<f32>::from_columns(&[*p0, *p1, *p2]);
     let qs = nalgebra::Matrix3::<f32>::from_columns(&[*q0, *q1, *q2]);
     let sep = |dir: nalgebra::Vector3<f32>| {
@@ -445,17 +480,39 @@ pub fn is_intersection_tri3_sat(
         let prj1 = dir.transpose() * qs;
         prj0.min() > prj1.max() || prj0.max() < prj1.min()
     };
-    if sep((p1 - p0).cross(&(p2 - p0))) { return false; }
-    if sep((q1 - q0).cross(&(q2 - q0))) { return false; }
-    if sep((p0 - p1).cross(&(q0 - q1))) { return false; }
-    if sep((p0 - p1).cross(&(q1 - q2))) { return false; }
-    if sep((p0 - p1).cross(&(q2 - q0))) { return false; }
-    if sep((p1 - p2).cross(&(q0 - q1))) { return false; }
-    if sep((p1 - p2).cross(&(q1 - q2))) { return false; }
-    if sep((p1 - p2).cross(&(q2 - q0))) { return false; }
-    if sep((p2 - p0).cross(&(q0 - q1))) { return false; }
-    if sep((p2 - p0).cross(&(q1 - q2))) { return false; }
-    if sep((p2 - p0).cross(&(q2 - q0))) { return false; }
+    if sep((p1 - p0).cross(&(p2 - p0))) {
+        return false;
+    }
+    if sep((q1 - q0).cross(&(q2 - q0))) {
+        return false;
+    }
+    if sep((p0 - p1).cross(&(q0 - q1))) {
+        return false;
+    }
+    if sep((p0 - p1).cross(&(q1 - q2))) {
+        return false;
+    }
+    if sep((p0 - p1).cross(&(q2 - q0))) {
+        return false;
+    }
+    if sep((p1 - p2).cross(&(q0 - q1))) {
+        return false;
+    }
+    if sep((p1 - p2).cross(&(q1 - q2))) {
+        return false;
+    }
+    if sep((p1 - p2).cross(&(q2 - q0))) {
+        return false;
+    }
+    if sep((p2 - p0).cross(&(q0 - q1))) {
+        return false;
+    }
+    if sep((p2 - p0).cross(&(q1 - q2))) {
+        return false;
+    }
+    if sep((p2 - p0).cross(&(q2 - q0))) {
+        return false;
+    }
     true
 }
 
@@ -466,20 +523,24 @@ pub fn is_intersection_tri3<T>(
     p2: &nalgebra::Vector3<T>,
     q0: &nalgebra::Vector3<T>,
     q1: &nalgebra::Vector3<T>,
-    q2: &nalgebra::Vector3<T>)
-    -> Option<(nalgebra::Vector3<T>, nalgebra::Vector3<T>)>
-    where T: nalgebra::RealField + Copy
+    q2: &nalgebra::Vector3<T>,
+) -> Option<(nalgebra::Vector3<T>, nalgebra::Vector3<T>)>
+where
+    T: nalgebra::RealField + Copy,
 {
-    let sec = |p0: &nalgebra::Vector3<T>,
-               p1: &nalgebra::Vector3<T>,
-               dp0: T,
-               dp1: T| {
+    let sec = |p0: &nalgebra::Vector3<T>, p1: &nalgebra::Vector3<T>, dp0: T, dp1: T| {
         let r1 = dp0 / (dp0 - dp1);
         let r0 = T::one() - r1;
         p0.scale(r0) + p1.scale(r1)
     };
     let sgn = |v: T| {
-        if v == T::zero() { 1 } else if v < T::zero() { 0 } else { 2 }
+        if v == T::zero() {
+            1
+        } else if v < T::zero() {
+            0
+        } else {
+            2
+        }
     };
     let nq = normal(q0, q1, q2);
     // heights of (p0,p1,p2) against the plane span by (q0,q1,q2)
@@ -492,11 +553,19 @@ pub fn is_intersection_tri3<T>(
         let dp1 = (p1 - q0).dot(&nq);
         let dp2 = (p2 - q0).dot(&nq);
         let (sp0, sp1, sp2) = (sgn(dp0), sgn(dp1), sgn(dp2));
-        if sp0 == 0 && sp1 == 0 && sp2 == 0 { return None; } // all negative side
-        if sp0 == 2 && sp1 == 2 && sp2 == 2 { return None; } // all positive side
-        if sp0 + sp1 + sp2 == 1 || sp0 + sp1 + sp2 == 5 { return None; } // sharing point but not intersecting
-        if sp0 == 1 && sp1 == 1 && sp2 == 1 { return None; } // degenerate case inside same plane
-        // intersection of the lines connecting (p0,p1),(p1,p2),(p2,p0) and the plane span by (q0,q1,q2)
+        if sp0 == 0 && sp1 == 0 && sp2 == 0 {
+            return None;
+        } // all negative side
+        if sp0 == 2 && sp1 == 2 && sp2 == 2 {
+            return None;
+        } // all positive side
+        if sp0 + sp1 + sp2 == 1 || sp0 + sp1 + sp2 == 5 {
+            return None;
+        } // sharing point but not intersecting
+        if sp0 == 1 && sp1 == 1 && sp2 == 1 {
+            return None;
+        } // degenerate case inside same plane
+          // intersection of the lines connecting (p0,p1),(p1,p2),(p2,p0) and the plane span by (q0,q1,q2)
         let mut ap = Vec::<nalgebra::Vector3<T>>::with_capacity(2);
         if (sp0 == 0 && sp1 == 2) || (sp0 == 2 && sp1 == 0) {
             ap.push(sec(p0, p1, dp0, dp1));
@@ -507,26 +576,45 @@ pub fn is_intersection_tri3<T>(
         if (sp2 == 0 && sp0 == 2) || (sp2 == 2 && sp0 == 0) {
             ap.push(sec(p2, p0, dp2, dp0));
         }
-        if sp0 == 1 { ap.push(*p0); }
-        if sp1 == 1 { ap.push(*p1); }
-        if sp2 == 1 { ap.push(*p2); }
+        if sp0 == 1 {
+            ap.push(*p0);
+        }
+        if sp1 == 1 {
+            ap.push(*p1);
+        }
+        if sp2 == 1 {
+            ap.push(*p2);
+        }
         assert_eq!(ap.len(), 2);
         (ap[0], ap[1])
     };
     let zps = ps.dot(&vz);
     let zpe = pe.dot(&vz);
-    let (ps, pe, zps, zpe) = if zps > zpe { (pe, ps, zpe, zps) } else { (ps, pe, zps, zpe) };
+    let (ps, pe, zps, zpe) = if zps > zpe {
+        (pe, ps, zpe, zps)
+    } else {
+        (ps, pe, zps, zpe)
+    };
     assert!(zps <= zpe);
-//
-    let (qs, qe) = { // intersection line between triangle p and plane span by (q0,q1,q2)
+    //
+    let (qs, qe) = {
+        // intersection line between triangle p and plane span by (q0,q1,q2)
         let dq0 = (q0 - p0).dot(&np); // projection of q0
         let dq1 = (q1 - p0).dot(&np); // projection of q1
         let dq2 = (q2 - p0).dot(&np); // projection of q2
         let (sq0, sq1, sq2) = (sgn(dq0), sgn(dq1), sgn(dq2));
-        if sq0 == 0 && sq1 == 0 && sq2 == 0 { return None; }
-        if sq0 == 2 && sq1 == 2 && sq2 == 2 { return None; }
-        if sq0 + sq1 + sq2 == 1 || sq0 + sq1 + sq2 == 5 { return None; } // sharing point
-        if sq0 == 1 && sq1 == 1 && sq2 == 1 { return None; }
+        if sq0 == 0 && sq1 == 0 && sq2 == 0 {
+            return None;
+        }
+        if sq0 == 2 && sq1 == 2 && sq2 == 2 {
+            return None;
+        }
+        if sq0 + sq1 + sq2 == 1 || sq0 + sq1 + sq2 == 5 {
+            return None;
+        } // sharing point
+        if sq0 == 1 && sq1 == 1 && sq2 == 1 {
+            return None;
+        }
         // intersection of the lines connecting (q0,q1),(q1,q2),(q2,q0) and the plane span by (p0,p1,p2)
         let mut aq = Vec::<nalgebra::Vector3<T>>::with_capacity(2);
         if (sq0 == 0 && sq1 == 2) || (sq0 == 2 && sq1 == 0) {
@@ -538,18 +626,30 @@ pub fn is_intersection_tri3<T>(
         if (sq2 == 0 && sq0 == 2) || (sq2 == 2 && sq0 == 0) {
             aq.push(sec(q2, q0, dq2, dq0));
         }
-        if sq0 == 1 { aq.push(*q0); }
-        if sq1 == 1 { aq.push(*q1); }
-        if sq2 == 1 { aq.push(*q2); }
+        if sq0 == 1 {
+            aq.push(*q0);
+        }
+        if sq1 == 1 {
+            aq.push(*q1);
+        }
+        if sq2 == 1 {
+            aq.push(*q2);
+        }
         assert_eq!(aq.len(), 2);
         (aq[0], aq[1])
     };
     let zqs = qs.dot(&vz);
     let zqe = qe.dot(&vz);
-    let (qs, qe, zqs, zqe) = if zqs > zqe { (qe, qs, zqe, zqs) } else { (qs, qe, zqs, zqe) };
+    let (qs, qe, zqs, zqe) = if zqs > zqe {
+        (qe, qs, zqe, zqs)
+    } else {
+        (qs, qe, zqs, zqe)
+    };
     assert!(zqs <= zqe);
-//
-    if zps >= zqe || zqs >= zpe { return None; } // no overlap or overlap at point
+    //
+    if zps >= zqe || zqs >= zpe {
+        return None;
+    } // no overlap or overlap at point
     let s = if zps < zqs { qs } else { ps };
     let e = if zpe < zqe { pe } else { qe };
     Some((s, e))
@@ -561,11 +661,15 @@ fn test_triangle_intersection() {
         let p0 = crate::vec3::sample_unit_cube();
         let p1 = crate::vec3::sample_unit_cube();
         let p2 = crate::vec3::sample_unit_cube();
-        if area(&p0, &p1, &p2) < 1.0e-2 { continue; }
+        if area(&p0, &p1, &p2) < 1.0e-2 {
+            continue;
+        }
         let q0 = crate::vec3::sample_unit_cube();
         let q1 = crate::vec3::sample_unit_cube();
         let q2 = crate::vec3::sample_unit_cube();
-        if area(&q0, &q1, &q2) < 1.0e-2 { continue; }
+        if area(&q0, &q1, &q2) < 1.0e-2 {
+            continue;
+        }
         let res = is_intersection_tri3(&p0, &p1, &p2, &q0, &q1, &q2);
         {
             let res_sat = is_intersection_tri3_sat(&p0, &p1, &p2, &q0, &q1, &q2);
@@ -595,9 +699,11 @@ pub fn barycentric<T>(
     p0: &nalgebra::Vector3<T>,
     p1: &nalgebra::Vector3<T>,
     p2: &nalgebra::Vector3<T>,
-    q: &nalgebra::Vector3<T>) -> nalgebra::Vector3<T>
-    where T: nalgebra::RealField + Copy,
-          f64: AsPrimitive<T>
+    q: &nalgebra::Vector3<T>,
+) -> nalgebra::Vector3<T>
+where
+    T: nalgebra::RealField + Copy,
+    f64: AsPrimitive<T>,
 {
     let n = (p1 - p0).cross(&(p2 - p0));
     let s = q + n;
@@ -608,20 +714,23 @@ pub fn barycentric<T>(
     nalgebra::Vector3::<T>::new(r0 * tmp, r1 * tmp, r2 * tmp)
 }
 
-
 // -----------------------------------
 
 #[cfg(test)]
 mod tests {
     use rand::Rng;
 
-    use crate::tri3::{area, barycentric, numerical_integration, wdw_integral_of_inverse_distance_cubic};
+    use crate::tri3::{
+        area, barycentric, numerical_integration, wdw_integral_of_inverse_distance_cubic,
+    };
 
     #[test]
     fn test_w_inverse_distance_cubic_integrated_over_wedge() {
         for _ in 0..1000 {
             let x = crate::vec3::sample_unit_cube::<f64>() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
-            if x.z.abs() < 0.1 { continue; }
+            if x.z.abs() < 0.1 {
+                continue;
+            }
             let b = core::f64::consts::PI * 0.5; // 90 degree
             let n_r = 200;
             let n_t = 100;
@@ -648,7 +757,9 @@ mod tests {
         use crate::tri3::wdw_inverse_distance_cubic_integrated_over_wedge;
         for _ in 0..100000 {
             let x0 = crate::vec3::sample_unit_cube::<f64>() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
-            if x0.z.abs() < 0.2 { continue; }
+            if x0.z.abs() < 0.2 {
+                continue;
+            }
             let b = core::f64::consts::PI * (rand::thread_rng().gen::<f64>() * 0.8 + 0.1); // 90 degree
             let eps = 1.0e-4_f64;
             let (w0, dw) = wdw_inverse_distance_cubic_integrated_over_wedge(x0, b);
@@ -677,11 +788,17 @@ mod tests {
                 let h1 = crate::tri3::height(&p2, &p0, &p1);
                 let h2 = crate::tri3::height(&p0, &p1, &p2);
                 // dbg!(area, h0, h1, h2);
-                if area < 0.1 || h0 < 0.1 || h1 < 0.1 || h2 < 0.1 { continue; }
+                if area < 0.1 || h0 < 0.1 || h1 < 0.1 || h2 < 0.1 {
+                    continue;
+                }
                 let height = crate::tet::height(&p0, &p1, &p2, &q);
-                if height.abs() < 0.1 { continue; }
+                if height.abs() < 0.1 {
+                    continue;
+                }
             }
-            if q.z.abs() < 0.2 { continue; }
+            if q.z.abs() < 0.2 {
+                continue;
+            }
             let (val_anly, _) = wdw_integral_of_inverse_distance_cubic(&p0, &p1, &p2, &q);
             let integrand = |u: f64, v: f64| {
                 let p = (1. - u - v) * p0 + u * p1 + v * p2;
@@ -706,11 +823,17 @@ mod tests {
                 let h0 = crate::tri3::height(&p1, &p2, &p0);
                 let h1 = crate::tri3::height(&p2, &p0, &p1);
                 let h2 = crate::tri3::height(&p0, &p1, &p2);
-                if area < 0.1 || h0 < 0.1 || h1 < 0.1 || h2 < 0.1 { continue; }
+                if area < 0.1 || h0 < 0.1 || h1 < 0.1 || h2 < 0.1 {
+                    continue;
+                }
                 let h = crate::tet::height(&p0, &p1, &p2, &q0);
-                if h.abs() < 0.1 { continue; }
+                if h.abs() < 0.1 {
+                    continue;
+                }
                 let b = barycentric(&p0, &p1, &p2, &q0);
-                if b.abs().min() < 1.0e-2 { continue; }
+                if b.abs().min() < 1.0e-2 {
+                    continue;
+                }
             }
             // dbg!(p0-q0,p1-q0,p2-q0);
             let (w0, dw) = wdw_integral_of_inverse_distance_cubic(&p0, &p1, &p2, &q0);

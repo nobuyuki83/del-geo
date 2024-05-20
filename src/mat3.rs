@@ -3,8 +3,10 @@
 use num_traits::AsPrimitive;
 
 pub fn inverse_<T>(gd: [[T; 3]; 3]) -> [[T; 3]; 3]
-    where T: num_traits::Float
-{ // contravariant basis vectors
+where
+    T: num_traits::Float,
+{
+    // contravariant basis vectors
     let mut gu = [[T::zero(); 3]; 3];
     crate::vec3::cross_mut_(&mut gu[0], &gd[1], &gd[2]);
     let invtmp1 = T::one() / crate::vec3::dot_(&gu[0], &gd[0]);
@@ -31,10 +33,12 @@ pub fn inverse_<T>(gd: [[T; 3]; 3]) -> [[T; 3]; 3]
 // below: dependency with nalgebra
 
 pub fn minimum_rotation_matrix<T>(
-    v0: nalgebra::Vector3::<T>,
-    v1: nalgebra::Vector3::<T>) -> nalgebra::Matrix3::<T>
-    where T: nalgebra::RealField + 'static + Copy,
-          f64: num_traits::AsPrimitive<T>
+    v0: nalgebra::Vector3<T>,
+    v1: nalgebra::Vector3<T>,
+) -> nalgebra::Matrix3<T>
+where
+    T: nalgebra::RealField + 'static + Copy,
+    f64: num_traits::AsPrimitive<T>,
 {
     use crate::vec3::frame_from_z_vector;
 
@@ -45,8 +49,9 @@ pub fn minimum_rotation_matrix<T>(
     let ct = ep.dot(&eq);
     let half = 0.5_f64.as_();
 
-    if st2 < 1.0e-8_f64.as_() { // very small angle or n is zero
-// inifinitesimal rotation
+    if st2 < 1.0e-8_f64.as_() {
+        // very small angle or n is zero
+        // inifinitesimal rotation
         if ct > 0.99_f64.as_() {
             return nalgebra::Matrix3::<T>::new(
                 T::one() + half * (n.x * n.x - st2),
@@ -64,15 +69,21 @@ pub fn minimum_rotation_matrix<T>(
             let eqx = epx - eq.scale(eq.dot(&epx)); // vector orthogonal to eq
             let eqy = eq.cross(&eqx);
             return nalgebra::Matrix3::<T>::new(
-                eqx.dot(&epx), eqy.dot(&epx), eq.dot(&epx),
-                eqx.dot(&epy), eqy.dot(&epy), eq.dot(&epy),
-                eqx.dot(&ep), eqy.dot(&ep), eq.dot(&ep),
+                eqx.dot(&epx),
+                eqy.dot(&epx),
+                eq.dot(&epx),
+                eqx.dot(&epy),
+                eqy.dot(&epy),
+                eq.dot(&epy),
+                eqx.dot(&ep),
+                eqy.dot(&ep),
+                eq.dot(&ep),
             );
         }
     }
     let st = st2.sqrt();
     let n = n.normalize();
-// Rodoriguez's rotation formula
+    // Rodoriguez's rotation formula
     nalgebra::Matrix3::<T>::new(
         ct + (T::one() - ct) * n.x * n.x,
         -n.z * st + (T::one() - ct) * n.x * n.y,
@@ -91,32 +102,38 @@ pub fn minimum_rotation_matrix<T>(
 pub fn sort_eigen<T>(
     eval: &nalgebra::Vector3<T>,
     evec: &nalgebra::Matrix3<T>,
-    is_increasing: bool) -> (nalgebra::Vector3<T>, nalgebra::Matrix3<T>)
-    where T: nalgebra::RealField + Copy
+    is_increasing: bool,
+) -> (nalgebra::Vector3<T>, nalgebra::Matrix3<T>)
+where
+    T: nalgebra::RealField + Copy,
 {
     let sgn = if is_increasing { T::one() } else { -T::one() };
     // let cov = evec*nalgebra::Matrix3::<T>::from_diagonal(eval)*evec.transpose();
-    let mut prmt: Vec<usize> = vec!(0, 1, 2);
+    let mut prmt: Vec<usize> = vec![0, 1, 2];
     prmt.sort_by(|&idx, &jdx| (sgn * eval[idx]).partial_cmp(&(sgn * eval[jdx])).unwrap());
     // dbg!(&prmt,eval);
     let eval1 = nalgebra::Vector3::<T>::new(eval[prmt[0]], eval[prmt[1]], eval[prmt[2]]);
     let evec1 = nalgebra::Matrix3::<T>::from_columns(&[
-        evec.column(prmt[0]), evec.column(prmt[1]), evec.column(prmt[2])]);
+        evec.column(prmt[0]),
+        evec.column(prmt[1]),
+        evec.column(prmt[2]),
+    ]);
     //let cov1 = evec1*nalgebra::Matrix3::<T>::from_diagonal(&eval1)*evec1.transpose();
     (eval1, evec1)
 }
 
-
 /// when SVD of 3x3 matrix a is U*S*V^T, compute U*V^T
-pub fn rotational_component<T>(
-    a: &nalgebra::Matrix3::<T>) -> nalgebra::Matrix3::<T>
-    where T: nalgebra::RealField + Copy
+pub fn rotational_component<T>(a: &nalgebra::Matrix3<T>) -> nalgebra::Matrix3<T>
+where
+    T: nalgebra::RealField + Copy,
 {
     let svd = nalgebra::linalg::SVD::<T, nalgebra::U3, nalgebra::U3>::new(*a, true, true);
     let u = svd.u.unwrap();
     let v_t = svd.v_t.unwrap();
     let u_vt = u * v_t;
-    let u_vt = if u_vt.determinant() > T::zero() { u_vt } else {
+    let u_vt = if u_vt.determinant() > T::zero() {
+        u_vt
+    } else {
         let mut v_t = v_t;
         v_t.row_mut(0).scale_mut(-T::one());
         u * v_t
@@ -124,14 +141,21 @@ pub fn rotational_component<T>(
     u_vt
 }
 
-pub fn skew<T>(
-    v: &nalgebra::Vector3::<T>) -> nalgebra::Matrix3::<T>
-where T: nalgebra::RealField + Copy
+pub fn skew<T>(v: &nalgebra::Vector3<T>) -> nalgebra::Matrix3<T>
+where
+    T: nalgebra::RealField + Copy,
 {
     nalgebra::Matrix3::new(
-        T::zero(), -v[2], v[1],
-        v[2], T::zero(), -v[0],
-        -v[1], v[0], T::zero())
+        T::zero(),
+        -v[2],
+        v[1],
+        v[2],
+        T::zero(),
+        -v[0],
+        -v[1],
+        v[0],
+        T::zero(),
+    )
 }
 
 #[test]
@@ -139,8 +163,8 @@ fn test_skew() {
     let v0 = nalgebra::Vector3::<f64>::new(1.1, 3.1, 2.5);
     let v1 = nalgebra::Vector3::<f64>::new(2.1, 0.1, 4.5);
     let c0 = v0.cross(&v1);
-    let c1 = skew(&v0)*v1;
-    assert!((c0-c1).norm()<1.0e-10);
+    let c1 = skew(&v0) * v1;
+    assert!((c0 - c1).norm() < 1.0e-10);
 }
 
 /*

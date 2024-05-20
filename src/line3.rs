@@ -4,9 +4,10 @@ pub fn nearest_to_line3<T>(
     line_org_a: &nalgebra::Vector3<T>,
     line_dir_a: &nalgebra::Vector3<T>,
     line_org_b: &nalgebra::Vector3<T>,
-    line_dir_b: &nalgebra::Vector3<T>)
-    -> (T, T, T, nalgebra::Vector3<T>, nalgebra::Vector3<T>)
-    where T: nalgebra::RealField + Copy
+    line_dir_b: &nalgebra::Vector3<T>,
+) -> (T, T, T, nalgebra::Vector3<T>, nalgebra::Vector3<T>)
+where
+    T: nalgebra::RealField + Copy,
 {
     let xaa = line_dir_a.dot(line_dir_a);
     let xab = line_dir_b.dot(line_dir_a);
