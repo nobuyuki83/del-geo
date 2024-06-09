@@ -61,3 +61,23 @@ where
     }
     aabb
 }
+
+pub fn center<T>(aabb: &[T; 4]) -> [T; 2]
+    where
+        T: num_traits::Float
+{
+    let half = T::one() / (T::one() + T::one());
+    [
+        (aabb[0] + aabb[2]) * half,
+        (aabb[1] + aabb[3]) * half,
+    ]
+}
+
+pub fn max_edge_size<T>(aabb: &[T; 4]) -> T
+    where
+        T: num_traits::Float,
+{
+    let lx = aabb[2] - aabb[0];
+    let ly = aabb[3] - aabb[1];
+    if lx > ly { lx } else {ly}
+}

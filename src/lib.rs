@@ -4,11 +4,14 @@ line -> ray -> edge ->
 plane -> tri -> quad ->
 tet
 */
-pub mod aabb2;
-pub mod aabb3;
+
+pub mod vec2;
+pub mod vec3;
 pub mod mat2;
 pub mod mat3;
-pub mod vec3;
+pub mod aabb;
+pub mod aabb2;
+pub mod aabb3;
 //
 pub mod bezier_cubic;
 pub mod bezier_quadratic;
@@ -24,4 +27,4 @@ pub mod sphere;
 pub mod tet;
 pub mod tri2;
 pub mod tri3;
-pub mod vec2;
+

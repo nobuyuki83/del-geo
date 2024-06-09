@@ -85,7 +85,7 @@ where
     let half = Real::one() / two;
     let a = (p0 + p1) * half;
     let b = crate::vec2::rotate90(&(p1 - p0));
-    let (r, drda, drdb) = dw_intersection(&ls, &ld, &a, &b);
+    let (r, drda, drdb) = dw_intersection(ls, ld, &a, &b);
     let dbdp0 = nalgebra::Matrix2::<Real>::new(zero, one, -one, zero);
     let dbdp1 = nalgebra::Matrix2::<Real>::new(zero, -one, one, zero);
     let drdp0 = drda.scale(half) + drdb * dbdp0;
