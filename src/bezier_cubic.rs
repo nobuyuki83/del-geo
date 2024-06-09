@@ -88,6 +88,7 @@ pub fn sample_uniform_length<Real, const N: usize>(
         if is_include_endpoint_start {
             if ret.len() == ndiv_out { break; }
         } else if ret.len() == ndiv_out - 1 { break; }
+        if i_div == ps.len() - 1 { break; }
         let len_edge = (ps[i_div + 1] - ps[i_div]).norm();
         // println!("{} {} {} {} {}", i_div, len_to_go, traveled_len_in_edge, elen, len_edge);
         assert!(len_edge > traveled_len_in_edge);
