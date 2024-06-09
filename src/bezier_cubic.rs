@@ -78,7 +78,7 @@ pub fn sample_uniform_length<Real, const N: usize>(
         true, true);
     assert_eq!(ps.len(), ndiv_sample + 1);
     let len = arclength_from_vtx2vecn(&ps);
-    let ndiv_out: usize = (len / target_edge_length).as_();
+    let ndiv_out: usize = (len / target_edge_length).ceil().as_();
     let elen: Real = len / ndiv_out.as_();
     // dbg!(len, ndiv_out, elen, target_edge_length);
     let mut len_to_go = elen;
@@ -129,6 +129,6 @@ fn test() {
         let elen = (q0 - q1).norm();
         let dev = (elen-elen_trg).abs();
         // println!("{} {}", ip, dev);
-        assert!(dev<0.002,"{}",dev);
+        assert!(dev<0.006,"{}",dev);
     }
 }
