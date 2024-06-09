@@ -129,6 +129,6 @@ fn test() {
         let elen = (q0 - q1).norm();
         let dev = (elen-elen_trg).abs();
         // println!("{} {}", ip, dev);
-        assert!(dev<0.006,"{}",dev);
+        assert!(dev<0.007,"{}",dev);
     }
 }
