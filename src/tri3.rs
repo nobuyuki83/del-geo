@@ -165,7 +165,7 @@ where
 }
 
 // above: w/o nalgebra
-/* ------------------------------------ */
+/* --------------------------------------------------------------------------------------- */
 // below: w/ nalgebra
 
 /// height of triangle vertex `p2` against the edge connecting `p0` and `p1`

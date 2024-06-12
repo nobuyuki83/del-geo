@@ -2,7 +2,7 @@
 
 use num_traits::AsPrimitive;
 
-pub fn inverse_<T>(gd: [[T; 3]; 3]) -> [[T; 3]; 3]
+pub fn inverse_array_of_array<T>(gd: &[[T; 3]; 3]) -> [[T; 3]; 3]
 where
     T: num_traits::Float,
 {
@@ -26,6 +26,42 @@ where
     gu[2][1] = gu[2][1] * invtmp3;
     gu[2][2] = gu[2][2] * invtmp3;
     gu
+}
+
+pub fn inverse<T>(b: &[T; 9]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    let det = b[0] * b[4] * b[8] + b[3] * b[7] * b[2] + b[6] * b[1] * b[5]
+        - b[0] * b[7] * b[5]
+        - b[6] * b[4] * b[2]
+        - b[3] * b[1] * b[8];
+    let inv_det = T::one() / det;
+    [
+        inv_det * (b[4] * b[8] - b[5] * b[7]),
+        inv_det * (b[2] * b[7] - b[1] * b[8]),
+        inv_det * (b[1] * b[5] - b[2] * b[4]),
+        inv_det * (b[5] * b[6] - b[3] * b[8]),
+        inv_det * (b[0] * b[8] - b[2] * b[6]),
+        inv_det * (b[2] * b[3] - b[0] * b[5]),
+        inv_det * (b[3] * b[7] - b[4] * b[6]),
+        inv_det * (b[1] * b[6] - b[0] * b[7]),
+        inv_det * (b[0] * b[4] - b[1] * b[3]),
+    ]
+}
+
+pub fn transform_homogeneous<Real>(transform: &[Real; 9], x: &[Real; 2]) -> Option<[Real; 2]>
+where
+    Real: num_traits::Float,
+{
+    let y2 = transform[2] * x[0] + transform[5] * x[1] + transform[8];
+    if y2.is_zero() {
+        return None;
+    }
+    //
+    let y0 = transform[0] * x[0] + transform[3] * x[1] + transform[6];
+    let y1 = transform[1] * x[0] + transform[4] * x[1] + transform[7];
+    Some([y0 / y2, y1 / y2])
 }
 
 // above: no dependency

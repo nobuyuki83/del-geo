@@ -7,6 +7,16 @@ where
     [a[0] - b[0], a[1] - b[1]]
 }
 
+pub fn from_homogeneous<Real>(v: &[Real; 3]) -> Option<[Real; 2]>
+where
+    Real: num_traits::Float,
+{
+    if v[2].is_zero() {
+        return None;
+    }
+    Some([v[0] / v[2], v[0] / v[2]])
+}
+
 // -------------------------------
 pub fn rotate90<T>(v: &nalgebra::Vector2<T>) -> nalgebra::Vector2<T>
 where

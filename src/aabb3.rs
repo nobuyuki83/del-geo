@@ -4,8 +4,8 @@ use num_traits::AsPrimitive;
 
 #[allow(clippy::identity_op)]
 pub fn from_vtx2xyz<T>(vtx2xyz: &[T], eps: T) -> [T; 6]
-    where
-        T: num_traits::Float,
+where
+    T: num_traits::Float,
 {
     assert!(!vtx2xyz.is_empty());
     let mut aabb = [T::zero(); 6];
@@ -75,8 +75,8 @@ pub fn from_vtx2xyz<T>(vtx2xyz: &[T], eps: T) -> [T; 6]
 
 #[allow(clippy::identity_op)]
 pub fn from_list_of_vertices<T>(idx2vtx: &[usize], vtx2xyz: &[T], eps: T) -> [T; 6]
-    where
-        T: num_traits::Float,
+where
+    T: num_traits::Float,
 {
     assert!(!idx2vtx.is_empty());
     let mut aabb = [T::zero(); 6];
@@ -146,9 +146,9 @@ pub fn from_list_of_vertices<T>(idx2vtx: &[usize], vtx2xyz: &[T], eps: T) -> [T;
 }
 
 pub fn center<T>(aabb: &[T; 6]) -> [T; 3]
-    where
-        T: num_traits::Float + 'static + Copy,
-        f64: AsPrimitive<T>,
+where
+    T: num_traits::Float + 'static + Copy,
+    f64: AsPrimitive<T>,
 {
     [
         (aabb[0] + aabb[3]) * 0.5f64.as_(),
@@ -158,8 +158,8 @@ pub fn center<T>(aabb: &[T; 6]) -> [T; 3]
 }
 
 pub fn max_edge_size<T>(aabb: &[T; 6]) -> T
-    where
-        T: num_traits::Float,
+where
+    T: num_traits::Float,
 {
     let lx = aabb[3] - aabb[0];
     let ly = aabb[4] - aabb[1];
@@ -179,8 +179,8 @@ pub fn max_edge_size<T>(aabb: &[T; 6]) -> T
 
 #[allow(clippy::identity_op)]
 pub fn from_two_aabbs_slice6<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
-    where
-        T: num_traits::Float,
+where
+    T: num_traits::Float,
 {
     assert_eq!(i0.len(), 6);
     assert_eq!(i1.len(), 6);
@@ -201,15 +201,15 @@ pub fn from_two_aabbs_slice6<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
 }
 
 pub fn is_active<T>(i0: &[T; 6]) -> bool
-    where
-        T: std::cmp::PartialOrd,
+where
+    T: std::cmp::PartialOrd,
 {
     i0[0] <= i0[3]
 }
 
 pub fn is_intersect<T>(i0: &[T; 6], i1: &[T; 6]) -> bool
-    where
-        T: std::cmp::PartialOrd,
+where
+    T: std::cmp::PartialOrd,
 {
     assert_eq!(i0.len(), 6);
     assert_eq!(i1.len(), 6);
@@ -239,4 +239,3 @@ pub fn is_intersect<T>(i0: &[T; 6], i1: &[T; 6]) -> bool
     }
     true
 }
-

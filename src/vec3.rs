@@ -56,6 +56,10 @@ where
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 }
 
+/// substracting two 3d vectors
+/// * `a` - 3d vector
+/// * `b` - 3d vector
+/// return a-b
 pub fn sub_<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
 where
     T: std::ops::Sub<Output = T> + Copy,
@@ -90,7 +94,30 @@ where
     v0 + v1 + v2
 }
 
+pub fn axpy_<Real>(alpha: Real, x: &[Real; 3], y: &[Real; 3]) -> [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    [
+        alpha * x[0] + y[0],
+        alpha * x[1] + y[1],
+        alpha * x[2] + y[2],
+    ]
+}
+
+pub fn to_array_from_vtx2xyz<T>(vtx2xyz: &[T], i_vtx: usize) -> [T; 3]
+where
+    T: Copy,
+{
+    [
+        vtx2xyz[i_vtx * 3 + 0],
+        vtx2xyz[i_vtx * 3 + 1],
+        vtx2xyz[i_vtx * 3 + 2],
+    ]
+}
+
 // -------------------
+// below: interface includes nalgebra
 
 pub fn scalar_triple_product<T>(
     a: &nalgebra::Vector3<T>,
@@ -145,4 +172,18 @@ where
     T: Copy + nalgebra::RealField,
 {
     nalgebra::Vector3::<T>::from_row_slice(&vtx2xyz[i_vtx * 3..(i_vtx + 1) * 3])
+}
+
+pub fn from_homogeneous<T>(v: &nalgebra::Vector4<T>) -> Option<nalgebra::Vector3<T>>
+where
+    T: Copy + nalgebra::RealField,
+{
+    if v[3].is_zero() {
+        return None;
+    }
+    Some(nalgebra::Vector3::<T>::new(
+        v[0] / v[3],
+        v[1] / v[3],
+        v[2] / v[3],
+    ))
 }
