@@ -148,7 +148,9 @@ fn test() {
     let p2 = nalgebra::Vector2::<f32>::new(1.1, 1.3);
     let p3 = nalgebra::Vector2::<f32>::new(1.3, 0.8);
     let elen_trg = 0.1;
-    let ps = sample_uniform_length(&p0, &p1, &p2, &p3, elen_trg, true, true, 30);
+    let ps = sample_uniform_length(
+        ControlPoints{p0: &p0, p1: &p1, p2: &p2, p3: &p3},
+        elen_trg, true, true, 30);
     for ip in 0..ps.len() - 1 {
         let q0 = ps[ip];
         let q1 = ps[ip + 1];
