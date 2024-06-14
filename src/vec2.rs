@@ -20,15 +20,12 @@ where
 }
 
 pub fn to_array_from_vtx2xy<T, Index>(vtx2xyz: &[T], i_vtx: Index) -> [T; 2]
-    where
-        T: Copy,
-        Index: AsPrimitive<usize>
+where
+    T: Copy,
+    Index: AsPrimitive<usize>,
 {
     let i_vtx: usize = i_vtx.as_();
-    [
-        vtx2xyz[i_vtx * 2],
-        vtx2xyz[i_vtx * 2 + 1],
-    ]
+    [vtx2xyz[i_vtx * 2], vtx2xyz[i_vtx * 2 + 1]]
 }
 
 // -------------------------------

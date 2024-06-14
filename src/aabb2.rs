@@ -74,12 +74,9 @@ where
     from_vtx2xy(&[p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]])
 }
 
-
 /// transform aabb to unit square (0,1)^2 while preserving aspect ratio
 /// return 3x3 homogeneous transformation matrix in **column major** order
-pub fn transform_world2unit_ortho_preserve_asp(
-    aabb_world: &[f32; 4],
-) -> [f32; 9] {
+pub fn transform_world2unit_ortho_preserve_asp(aabb_world: &[f32; 4]) -> [f32; 9] {
     let width_world = aabb_world[2] - aabb_world[0];
     let height_world = aabb_world[3] - aabb_world[1];
     let cntr_world = [
@@ -111,12 +108,11 @@ pub fn transform_world2unit_ortho_preserve_asp(
     [a, 0., 0., 0., b, 0., c, d, 1.]
 }
 
-
 #[allow(clippy::identity_op)]
 pub fn from_list_of_vertices<Index, T>(idx2vtx: &[Index], vtx2xy: &[T], eps: T) -> [T; 4]
-    where
-        T: num_traits::Float,
-        Index: AsPrimitive<usize>
+where
+    T: num_traits::Float,
+    Index: AsPrimitive<usize>,
 {
     assert!(!idx2vtx.is_empty());
     let mut aabb = [T::zero(); 4];
@@ -169,8 +165,8 @@ pub fn from_list_of_vertices<Index, T>(idx2vtx: &[Index], vtx2xy: &[T], eps: T) 
 
 #[allow(clippy::identity_op)]
 pub fn from_two_aabbs<T>(i0: &[T; 4], i1: &[T; 4]) -> [T; 4]
-    where
-        T: num_traits::Float,
+where
+    T: num_traits::Float,
 {
     let mut o = [T::zero(); 4];
     for i in 0..2 {

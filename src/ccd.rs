@@ -187,7 +187,7 @@ fn test_cubic_root() {
     }
 }
 
-pub struct FourPoints<'a, T>{
+pub struct FourPoints<'a, T> {
     pub p0: &'a nalgebra::Vector3<T>,
     pub p1: &'a nalgebra::Vector3<T>,
     pub p2: &'a nalgebra::Vector3<T>,
@@ -195,11 +195,7 @@ pub struct FourPoints<'a, T>{
 }
 
 /// compute time when four points gets co-planar
-fn coplanar_time<T>(
-    s: FourPoints<T>,
-    e: FourPoints<T>,
-    epsilon: T,
-) -> Vec<T>
+fn coplanar_time<T>(s: FourPoints<T>, e: FourPoints<T>, epsilon: T) -> Vec<T>
 where
     T: nalgebra::RealField + Copy + num_traits::Float,
     i64: AsPrimitive<T>,
@@ -224,27 +220,34 @@ where
     cubic_roots_in_range_zero_to_t(k0, k1, k2, k3, T::one(), epsilon)
 }
 
-pub struct FaceVertex<'a, T>{
+pub struct FaceVertex<'a, T> {
     pub f0: &'a nalgebra::Vector3<T>,
     pub f1: &'a nalgebra::Vector3<T>,
     pub f2: &'a nalgebra::Vector3<T>,
     pub v: &'a nalgebra::Vector3<T>,
 }
 
-pub fn intersecting_time_fv<T>(
-    s: FaceVertex<T>,
-    e: FaceVertex<T>,
-    epsilon: T,
-) -> Option<T>
+pub fn intersecting_time_fv<T>(s: FaceVertex<T>, e: FaceVertex<T>, epsilon: T) -> Option<T>
 where
     T: nalgebra::RealField + Copy + num_traits::Float,
     i64: AsPrimitive<T>,
     f64: AsPrimitive<T>,
 {
     let list_te = coplanar_time(
-        FourPoints{ p0: s.f0, p1: s.f1, p2: s.f2, p3: s.v},
-        FourPoints{ p0: e.f0, p1: e.f1, p2: e.f2, p3: e.v},
-        epsilon);
+        FourPoints {
+            p0: s.f0,
+            p1: s.f1,
+            p2: s.f2,
+            p3: s.v,
+        },
+        FourPoints {
+            p0: e.f0,
+            p1: e.f1,
+            p2: e.f2,
+            p3: e.v,
+        },
+        epsilon,
+    );
     for te in list_te {
         let ts = T::one() - te;
         let f0 = s.f0.scale(ts) + e.f0.scale(te);
@@ -259,26 +262,34 @@ where
     None
 }
 
-pub struct EdgeEdge<'a, T>{
+pub struct EdgeEdge<'a, T> {
     pub a0: &'a nalgebra::Vector3<T>,
     pub a1: &'a nalgebra::Vector3<T>,
     pub b0: &'a nalgebra::Vector3<T>,
     pub b1: &'a nalgebra::Vector3<T>,
 }
 
-pub fn intersecting_time_ee<T>(
-    s: EdgeEdge<T>,
-    e: EdgeEdge<T>,
-    epsilon: T,
-) -> Option<T>
+pub fn intersecting_time_ee<T>(s: EdgeEdge<T>, e: EdgeEdge<T>, epsilon: T) -> Option<T>
 where
     T: nalgebra::RealField + Copy + num_traits::Float,
     i64: AsPrimitive<T>,
     f64: AsPrimitive<T>,
 {
     let list_te = coplanar_time(
-        FourPoints{p0: s.a0, p1: s.a1, p2: s.b0, p3: s.b1},
-        FourPoints{p0: e.a0, p1: e.a1, p2: e.b0, p3: e.b1}, epsilon);
+        FourPoints {
+            p0: s.a0,
+            p1: s.a1,
+            p2: s.b0,
+            p3: s.b1,
+        },
+        FourPoints {
+            p0: e.a0,
+            p1: e.a1,
+            p2: e.b0,
+            p3: e.b1,
+        },
+        epsilon,
+    );
     for te in list_te {
         let ts = T::one() - te;
         let a0 = s.a0.scale(ts) + e.a0.scale(te);

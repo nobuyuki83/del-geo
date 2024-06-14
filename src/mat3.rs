@@ -36,7 +36,9 @@ where
         - b[0] * b[7] * b[5]
         - b[6] * b[4] * b[2]
         - b[3] * b[1] * b[8];
-    if det.is_zero() { return None; }
+    if det.is_zero() {
+        return None;
+    }
     let inv_det = T::one() / det;
     Some([
         inv_det * (b[4] * b[8] - b[5] * b[7]),
@@ -65,14 +67,13 @@ where
     Some([y0 / y2, y1 / y2])
 }
 
-pub fn identity<T>() -> [T;9]
-where T: num_traits::Float
+pub fn identity<T>() -> [T; 9]
+where
+    T: num_traits::Float,
 {
     let zero = T::zero();
     let one = T::one();
-    [one, zero, zero,
-    zero, one, zero,
-    zero, zero, one]
+    [one, zero, zero, zero, one, zero, zero, zero, one]
 }
 
 // above: no dependency
