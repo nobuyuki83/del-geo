@@ -1,5 +1,7 @@
 //! methods for 2D vector
 
+use num_traits::AsPrimitive;
+
 pub fn sub_<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
 where
     T: std::ops::Sub<Output = T> + Copy,
@@ -15,6 +17,18 @@ where
         return None;
     }
     Some([v[0] / v[2], v[0] / v[2]])
+}
+
+pub fn to_array_from_vtx2xy<T, Index>(vtx2xyz: &[T], i_vtx: Index) -> [T; 2]
+    where
+        T: Copy,
+        Index: AsPrimitive<usize>
+{
+    let i_vtx: usize = i_vtx.as_();
+    [
+        vtx2xyz[i_vtx * 2],
+        vtx2xyz[i_vtx * 2 + 1],
+    ]
 }
 
 // -------------------------------

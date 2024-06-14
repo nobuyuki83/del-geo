@@ -19,3 +19,18 @@ pub fn is_intersect_ray<const NDIM: usize, const SIZE_AABB: usize>(
     }
     tmax >= tmin && tmax >= 0.0
 }
+
+pub fn is_include_point<Real, const NDIM: usize, const SIZE_AABB: usize>(
+    aabb: &[Real; SIZE_AABB],
+    point: &[Real; NDIM],
+) -> bool
+where Real: num_traits::Float
+{
+    assert_eq!(NDIM * 2, SIZE_AABB);
+    for i_dim in 0..NDIM {
+        if point[i_dim] < aabb[i_dim] || point[i_dim] > aabb[i_dim + NDIM] {
+            return false;
+        }
+    }
+    true
+}

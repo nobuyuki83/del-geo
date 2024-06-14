@@ -28,7 +28,7 @@ where
     gu
 }
 
-pub fn inverse<T>(b: &[T; 9]) -> [T; 9]
+pub fn try_inverse<T>(b: &[T; 9]) -> Option<[T; 9]>
 where
     T: num_traits::Float,
 {
@@ -36,8 +36,9 @@ where
         - b[0] * b[7] * b[5]
         - b[6] * b[4] * b[2]
         - b[3] * b[1] * b[8];
+    if det.is_zero() { return None; }
     let inv_det = T::one() / det;
-    [
+    Some([
         inv_det * (b[4] * b[8] - b[5] * b[7]),
         inv_det * (b[2] * b[7] - b[1] * b[8]),
         inv_det * (b[1] * b[5] - b[2] * b[4]),
@@ -47,7 +48,7 @@ where
         inv_det * (b[3] * b[7] - b[4] * b[6]),
         inv_det * (b[1] * b[6] - b[0] * b[7]),
         inv_det * (b[0] * b[4] - b[1] * b[3]),
-    ]
+    ])
 }
 
 pub fn transform_homogeneous<Real>(transform: &[Real; 9], x: &[Real; 2]) -> Option<[Real; 2]>
@@ -62,6 +63,16 @@ where
     let y0 = transform[0] * x[0] + transform[3] * x[1] + transform[6];
     let y1 = transform[1] * x[0] + transform[4] * x[1] + transform[7];
     Some([y0 / y2, y1 / y2])
+}
+
+pub fn identity<T>() -> [T;9]
+where T: num_traits::Float
+{
+    let zero = T::zero();
+    let one = T::one();
+    [one, zero, zero,
+    zero, one, zero,
+    zero, zero, one]
 }
 
 // above: no dependency

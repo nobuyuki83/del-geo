@@ -178,7 +178,7 @@ where
 }
 
 #[allow(clippy::identity_op)]
-pub fn from_two_aabbs_slice6<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
+pub fn from_two_aabbs<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
 where
     T: num_traits::Float,
 {

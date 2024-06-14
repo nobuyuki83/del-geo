@@ -1,5 +1,12 @@
 use num_traits::AsPrimitive;
 
+pub struct ControlPoints<'a, Real, const N: usize>{
+    pub p0: &'a nalgebra::SVector<Real, N>,
+    pub p1: &'a nalgebra::SVector<Real, N>,
+    pub p2: &'a nalgebra::SVector<Real, N>,
+    pub p3: &'a nalgebra::SVector<Real, N>,
+}
+
 pub fn eval<Real, const N: usize>(
     p0: &nalgebra::SVector<Real, N>,
     p1: &nalgebra::SVector<Real, N>,
@@ -63,10 +70,7 @@ where
 }
 
 pub fn sample_uniform_length<Real, const N: usize>(
-    p0: &nalgebra::SVector<Real, N>,
-    p1: &nalgebra::SVector<Real, N>,
-    p2: &nalgebra::SVector<Real, N>,
-    p3: &nalgebra::SVector<Real, N>,
+    cps: ControlPoints<Real, N>,
     target_edge_length: Real,
     is_include_endpoint_start: bool,
     is_include_endpoint_end: bool,
@@ -79,9 +83,9 @@ where
 {
     let mut ret: Vec<nalgebra::SVector<Real, N>> = vec![];
     if is_include_endpoint_start {
-        ret.push(*p0);
+        ret.push(*cps.p0);
     }
-    let ps = sample_uniform_param(ndiv_sample, p0, p1, p2, p3, true, true);
+    let ps = sample_uniform_param(ndiv_sample, cps.p0, cps.p1, cps.p2, cps.p3, true, true);
     assert_eq!(ps.len(), ndiv_sample + 1);
     let len = arclength_from_vtx2vecn(&ps);
     let ndiv_out: usize = (len / target_edge_length).ceil().as_();
@@ -121,7 +125,7 @@ where
                     r0
                 );
                 assert!(t > Real::zero(), "t={}", t);
-                let q = eval(p0, p1, p2, p3, t);
+                let q = eval(cps.p0, cps.p1, cps.p2, cps.p3, t);
                 ret.push(q);
             }
         } else {
@@ -132,7 +136,7 @@ where
         }
     }
     if is_include_endpoint_end {
-        ret.push(*p3);
+        ret.push(*cps.p3);
     }
     ret
 }

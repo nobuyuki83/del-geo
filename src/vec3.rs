@@ -110,7 +110,7 @@ where
     T: Copy,
 {
     [
-        vtx2xyz[i_vtx * 3 + 0],
+        vtx2xyz[i_vtx * 3],
         vtx2xyz[i_vtx * 3 + 1],
         vtx2xyz[i_vtx * 3 + 2],
     ]

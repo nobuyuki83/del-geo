@@ -9,6 +9,32 @@ where
     half * ((p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]))
 }
 
+pub fn is_inside<Real>(
+    p0: &[Real; 2],
+    p1: &[Real; 2],
+    p2: &[Real; 2],
+    q: &[Real; 2],
+    sign: Real,
+) -> Option<(Real, Real)>
+where
+    Real: num_traits::Float,
+{
+    let a0 = crate::tri2::area_(q, p1, p2) * sign;
+    if a0 < Real::zero() {
+        return None;
+    }
+    let a1 = crate::tri2::area_(q, p2, p0) * sign;
+    if a1 < Real::zero() {
+        return None;
+    }
+    let a2 = crate::tri2::area_(q, p0, p1) * sign;
+    if a2 < Real::zero() {
+        return None;
+    }
+    let sum_area_inv = Real::one() / (a0 + a1 + a2);
+    Some((a0 * sum_area_inv, a1 * sum_area_inv))
+}
+
 /// shape function's derivative in x- and y-direction and the constant term
 ///
 /// # Example
