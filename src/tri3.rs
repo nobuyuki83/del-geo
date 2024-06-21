@@ -1,6 +1,6 @@
 //! methods for 3d triangle
 
-use num_traits::AsPrimitive;
+use num_traits::{AsPrimitive, Zero};
 
 /// clamp barycentric coordinates inside a triangle
 pub fn clamp<T>(r0: T, r1: T, r2: T) -> (T, T, T)
@@ -122,8 +122,6 @@ where
     ]
 }
 
-// ----------
-
 /// Möller–Trumbore ray-triangle intersection algorithm
 ///
 /// <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>
@@ -167,6 +165,167 @@ where
 // above: w/o nalgebra
 /* --------------------------------------------------------------------------------------- */
 // below: w/ nalgebra
+
+pub struct RayTriangleIntersectionData {
+    inv_det: f32,
+    n_dot_c: f32,
+    n_dot_dir: f32,
+    r_dot_e2: f32,
+    r_dot_e1: f32,
+    c: nalgebra::Vector3<f32>,
+    n: nalgebra::Vector3<f32>,
+    r: nalgebra::Vector3<f32>,
+    e1: nalgebra::Vector3<f32>,
+    e2: nalgebra::Vector3<f32>,
+    dir: nalgebra::Vector3<f32>,
+}
+
+/// ray triangle intersection.
+/// * `dir` - any nonzero vector (not necessary to be a unit vector)
+/// t, u, v: org + t * dir = (1 - u - v) * p0 + u * p1 + v * p2
+pub fn ray_triangle_intersection(
+    org: &nalgebra::Vector3<f32>,
+    dir: &nalgebra::Vector3<f32>,
+    p0: &nalgebra::Vector3<f32>,
+    p1: &nalgebra::Vector3<f32>,
+    p2: &nalgebra::Vector3<f32>,
+) -> Option<(f32, f32, f32, RayTriangleIntersectionData)> {
+
+
+    let e1 = p0 - p1;
+    let e2 = p2 - p0;
+    let n = e1.cross(&e2);
+    let n_dot_dir = n.dot(dir);
+    if n_dot_dir.is_zero() {
+        return None;
+    }
+    let inv_det = 1f32 / n_dot_dir;
+    let c = p0 - org;
+    let n_dot_c = n.dot(&c);
+    let t_ = inv_det * n_dot_c;
+    if t_ < 0f32 {
+        return None;
+    }
+    let r = dir.cross(&c);
+    //
+    let r_dot_e2 = r.dot(&e2);
+    let u_ = inv_det * r_dot_e2;
+    if u_ < 0f32 {
+        return None;
+    }
+    //
+    let r_dot_e1 = r.dot(&e1);
+    let v_ = inv_det * r_dot_e1;
+    if v_ < 0f32 {
+        return None;
+    }
+
+    if u_ + v_ >= 1f32 {
+        return None;
+    }
+    Some((
+        t_,
+        u_,
+        v_,
+        RayTriangleIntersectionData {
+            inv_det,
+            n_dot_c,
+            n_dot_dir,
+            r_dot_e2,
+            r_dot_e1,
+            c,
+            n,
+            r,
+            e1,
+            e2,
+            dir: dir.clone(),
+        },
+    ))
+}
+
+pub fn dw_ray_triangle_intersection_(
+    d_t: f32,
+    d_u: f32,
+    d_v: f32,
+    data: &RayTriangleIntersectionData,
+) -> (
+    nalgebra::Vector3<f32>,
+    nalgebra::Vector3<f32>,
+    nalgebra::Vector3<f32>,
+) {
+    let d_n_dot_c = d_t * data.inv_det;
+    let d_r_dot_e2 = d_u * data.inv_det;
+    let d_r_dot_e1 = d_v * data.inv_det;
+    let d_inv_det = d_t * data.n_dot_c + d_u * data.r_dot_e2 + d_v * data.r_dot_e1;
+
+    let mut d_n = d_n_dot_c * data.c;
+    let mut d_c = d_n_dot_c * data.n;
+    let mut d_e2 = d_r_dot_e2 * data.r;
+    let mut d_e1 = d_r_dot_e1 * data.r;
+    let d_r = d_r_dot_e2 * data.e2 + d_r_dot_e1 * data.e1;
+
+    let d_n_dot_dir = -d_inv_det / data.n_dot_dir / data.n_dot_dir;
+    d_n += d_n_dot_dir * data.dir;
+    d_c += d_r.cross(&data.dir);
+    d_e2 += d_n.cross(&data.e1);
+    d_e1 += data.e2.cross(&d_n);
+
+    let d_p0 = d_e1 - d_e2 + d_c;
+    let d_p1 = -d_e1;
+    let d_p2 = d_e2;
+    (d_p0, d_p1, d_p2)
+}
+
+#[test]
+fn test_ray_triangle_intersection() {
+    let p0 = [
+        nalgebra::Vector3::<f32>::new(-1f32, -0.5f32, 0.5f32),
+        nalgebra::Vector3::<f32>::new(1f32, -0.5f32, 0.5f32),
+        nalgebra::Vector3::<f32>::new(0f32, 1f32, -0.5f32) ];
+
+    let origin = nalgebra::Vector3::<f32>::new(1f32, 1f32, 1f32);
+    let target = nalgebra::Vector3::<f32>::new(0f32, 0f32, 0f32);
+    let dir: nalgebra::Vector3<f32> = target - origin;
+
+    let Some((t0, u0, v0, data))
+        = ray_triangle_intersection(&origin, &dir, &p0[0], &p0[1], &p0[2]) else {
+        panic!()
+    };
+
+    let ha: nalgebra::Vector3::<f32> = (1f32 - u0 - v0) * p0[0] + u0 * p0[1] + v0 * p0[2];
+    assert!(crate::tet::volume(&p0[0], &p0[1], &p0[2], &ha).abs()<1.0e-8);
+    let hb: nalgebra::Vector3::<f32> = origin + t0 * dir;
+    assert!((ha - hb).norm()<1.0e-6);
+
+    // d_t, d_u, d_u are back-propagated from the loss
+    let d_t = 1f32;
+    let d_u = 1f32;
+    let d_v = 1f32;
+
+    let dp = dw_ray_triangle_intersection_(d_t, d_u, d_v, &data);
+    let dp = [dp.0, dp.1, dp.2];
+    // dbg!(&d_p0, &d_p1, &d_p2);
+
+    let eps = 1.0e-3;
+    for i_node in 0..3 {
+        for i_dim in 0..3 {
+            let p1 = {
+                let mut p1 = p0.clone();
+                p1[i_node][i_dim] += eps;
+                p1
+            };
+            let Some((t1, u1, v1, _data))
+                = ray_triangle_intersection(&origin, &dir, &p1[0], &p1[1], &p1[2]) else {
+                panic!()
+            };
+            let dloss = ((t1-t0)*d_t + (u1-u0)*d_u + (v1-v0)*d_v)/eps;
+            let dloss_analytic = dp[i_node][i_dim];
+            assert!((dloss-dloss_analytic).abs()<6.0e-4,
+                    "{} {} {}", dloss_analytic, dloss, dloss-dloss_analytic);
+        }
+    }
+
+}
 
 /// height of triangle vertex `p2` against the edge connecting `p0` and `p1`
 pub fn height<T>(

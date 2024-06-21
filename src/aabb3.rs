@@ -2,7 +2,6 @@
 
 use num_traits::AsPrimitive;
 
-#[allow(clippy::identity_op)]
 pub fn from_vtx2xyz<T>(vtx2xyz: &[T], eps: T) -> [T; 6]
 where
     T: num_traits::Float,
@@ -28,7 +27,7 @@ where
     }
     for i_vtx in 1..vtx2xyz.len() / 3 {
         {
-            let cgx = vtx2xyz[i_vtx * 3 + 0];
+            let cgx = vtx2xyz[i_vtx * 3];
             aabb[0] = if cgx - eps < aabb[0] {
                 cgx - eps
             } else {
@@ -73,17 +72,21 @@ where
     aabb
 }
 
-#[allow(clippy::identity_op)]
-pub fn from_list_of_vertices<T>(idx2vtx: &[usize], vtx2xyz: &[T], eps: T) -> [T; 6]
+pub fn from_list_of_vertices<Index, Real>(
+    idx2vtx: &[Index],
+    vtx2xyz: &[Real],
+    eps: Real,
+) -> [Real; 6]
 where
-    T: num_traits::Float,
+    Real: num_traits::Float,
+    Index: AsPrimitive<usize>,
 {
     assert!(!idx2vtx.is_empty());
-    let mut aabb = [T::zero(); 6];
+    let mut aabb = [Real::zero(); 6];
     {
-        let i_vtx = idx2vtx[0];
+        let i_vtx: usize = idx2vtx[0].as_();
         {
-            let cgx = vtx2xyz[i_vtx * 3 + 0];
+            let cgx = vtx2xyz[i_vtx * 3];
             aabb[0] = cgx - eps;
             aabb[3] = cgx + eps;
         }
@@ -99,8 +102,9 @@ where
         }
     }
     for &i_vtx in idx2vtx.iter().skip(1) {
+        let i_vtx: usize = i_vtx.as_();
         {
-            let cgx = vtx2xyz[i_vtx * 3 + 0];
+            let cgx = vtx2xyz[i_vtx * 3];
             aabb[0] = if cgx - eps < aabb[0] {
                 cgx - eps
             } else {
@@ -177,7 +181,6 @@ where
     lz
 }
 
-#[allow(clippy::identity_op)]
 pub fn from_two_aabbs<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
 where
     T: num_traits::Float,
@@ -186,11 +189,7 @@ where
     assert_eq!(i1.len(), 6);
     let mut o = [T::zero(); 6];
     for i in 0..3 {
-        o[i + 0] = if i0[i + 0] < i1[i + 0] {
-            i0[i + 0]
-        } else {
-            i1[i + 0]
-        };
+        o[i] = if i0[i] < i1[i] { i0[i] } else { i1[i] };
         o[i + 3] = if i0[i + 3] > i1[i + 3] {
             i0[i + 3]
         } else {
@@ -238,4 +237,20 @@ where
         return false;
     }
     true
+}
+
+/// transform aabb to unit square (0,1)^3 while preserving aspect ratio
+/// return 4x4 homogeneous transformation matrix in **column major** order
+pub fn to_transformation_world2unit_ortho_preserve_asp(aabb_world: &[f32; 6]) -> [f32; 16] {
+    let cntr = [
+        (aabb_world[0] + aabb_world[3]) * 0.5,
+        (aabb_world[1] + aabb_world[4]) * 0.5,
+        (aabb_world[2] + aabb_world[5]) * 0.5,
+    ];
+    let size = max_edge_size(aabb_world);
+    let a = 1f32 / size;
+    let b = -a * cntr[0] + 0.5;
+    let c = -a * cntr[1] + 0.5;
+    let d = -a * cntr[2] + 0.5;
+    [a, 0., 0., 0., 0., a, 0., 0., 0., 0., a, 0., b, c, d, 1.]
 }

@@ -12,3 +12,14 @@ where
     let y2 = transform[2] * x[0] + transform[6] * x[1] + transform[10] * x[2] + transform[14];
     Some([y0 / y3, y1 / y3, y2 / y3])
 }
+
+pub fn identity<Real>() -> [Real; 16]
+where
+    Real: num_traits::Zero + num_traits::One + Copy,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    [
+        one, zero, zero, zero, zero, one, zero, zero, zero, zero, one, zero, zero, zero, zero, one,
+    ]
+}

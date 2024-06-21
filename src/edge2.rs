@@ -106,7 +106,7 @@ where
     y.atan2(x) * T::FRAC_1_PI() * half
 }
 
-// -----------------------------
+// --------------------------------------------------
 // below: use nalgebra
 
 pub fn length_squared<T>(p0: &nalgebra::Vector2<T>, p1: &nalgebra::Vector2<T>) -> T

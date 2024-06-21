@@ -71,6 +71,25 @@ where
     )
 }
 
+pub fn barycentric_coords<Real>(
+    p0: &[Real; 2],
+    p1: &[Real; 2],
+    p2: &[Real; 2],
+    q: &[Real; 2],
+) -> Option<(Real, Real, Real)>
+where
+    Real: num_traits::Float,
+{
+    let a0 = crate::tri2::area_(q, p1, p2);
+    let a1 = crate::tri2::area_(q, p2, p0);
+    let a2 = crate::tri2::area_(q, p0, p1);
+    if (a0 + a1 + a2).is_zero() {
+        return None;
+    }
+    let sum_area_inv = Real::one() / (a0 + a1 + a2);
+    Some((a0 * sum_area_inv, a1 * sum_area_inv, a2 * sum_area_inv))
+}
+
 // ----------------------------
 
 pub fn area<T>(v1: &nalgebra::Vector2<T>, v2: &nalgebra::Vector2<T>, v3: &nalgebra::Vector2<T>) -> T

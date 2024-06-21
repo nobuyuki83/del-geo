@@ -1,7 +1,5 @@
 //! methods for 2D vector
 
-use num_traits::AsPrimitive;
-
 pub fn sub_<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
 where
     T: std::ops::Sub<Output = T> + Copy,
@@ -19,14 +17,6 @@ where
     Some([v[0] / v[2], v[0] / v[2]])
 }
 
-pub fn to_array_from_vtx2xy<T, Index>(vtx2xyz: &[T], i_vtx: Index) -> [T; 2]
-where
-    T: Copy,
-    Index: AsPrimitive<usize>,
-{
-    let i_vtx: usize = i_vtx.as_();
-    [vtx2xyz[i_vtx * 2], vtx2xyz[i_vtx * 2 + 1]]
-}
 
 // -------------------------------
 pub fn rotate90<T>(v: &nalgebra::Vector2<T>) -> nalgebra::Vector2<T>
@@ -34,13 +24,6 @@ where
     T: nalgebra::RealField + Copy,
 {
     nalgebra::Vector2::<T>::new(-v[1], v[0])
-}
-
-pub fn to_na<T>(vtx2xyz: &[T], i_vtx: usize) -> nalgebra::Vector2<T>
-where
-    T: Copy + nalgebra::RealField,
-{
-    nalgebra::Vector2::<T>::from_row_slice(&vtx2xyz[i_vtx * 2..(i_vtx + 1) * 2])
 }
 
 pub fn norm_squared<T>(v: &nalgebra::Vector2<T>) -> T

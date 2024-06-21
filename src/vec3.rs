@@ -105,16 +105,6 @@ where
     ]
 }
 
-pub fn to_array_from_vtx2xyz<T>(vtx2xyz: &[T], i_vtx: usize) -> [T; 3]
-where
-    T: Copy,
-{
-    [
-        vtx2xyz[i_vtx * 3],
-        vtx2xyz[i_vtx * 3 + 1],
-        vtx2xyz[i_vtx * 3 + 2],
-    ]
-}
 
 // -------------------
 // below: interface includes nalgebra
@@ -165,13 +155,6 @@ where
         *v = rng.gen();
     }
     p0
-}
-
-pub fn to_na<T>(vtx2xyz: &[T], i_vtx: usize) -> nalgebra::Vector3<T>
-where
-    T: Copy + nalgebra::RealField,
-{
-    nalgebra::Vector3::<T>::from_row_slice(&vtx2xyz[i_vtx * 3..(i_vtx + 1) * 3])
 }
 
 pub fn from_homogeneous<T>(v: &nalgebra::Vector4<T>) -> Option<nalgebra::Vector3<T>>
