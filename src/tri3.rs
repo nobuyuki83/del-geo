@@ -122,6 +122,15 @@ where
     ]
 }
 
+pub fn emat_graph_laplacian<T>(l: T) -> [[[T; 1]; 3]; 3]
+where
+    T: num_traits::Float,
+{
+    let vo = -T::one() * l;
+    let vd = (T::one() + T::one()) * l;
+    [[[vd], [vo], [vo]], [[vo], [vd], [vo]], [[vo], [vo], [vd]]]
+}
+
 /// Möller–Trumbore ray-triangle intersection algorithm
 ///
 /// <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>
@@ -190,8 +199,6 @@ pub fn ray_triangle_intersection(
     p1: &nalgebra::Vector3<f32>,
     p2: &nalgebra::Vector3<f32>,
 ) -> Option<(f32, f32, f32, RayTriangleIntersectionData)> {
-
-
     let e1 = p0 - p1;
     let e2 = p2 - p0;
     let n = e1.cross(&e2);
@@ -238,7 +245,7 @@ pub fn ray_triangle_intersection(
             r,
             e1,
             e2,
-            dir: dir.clone(),
+            dir: *dir,
         },
     ))
 }
@@ -281,21 +288,22 @@ fn test_ray_triangle_intersection() {
     let p0 = [
         nalgebra::Vector3::<f32>::new(-1f32, -0.5f32, 0.5f32),
         nalgebra::Vector3::<f32>::new(1f32, -0.5f32, 0.5f32),
-        nalgebra::Vector3::<f32>::new(0f32, 1f32, -0.5f32) ];
+        nalgebra::Vector3::<f32>::new(0f32, 1f32, -0.5f32),
+    ];
 
     let origin = nalgebra::Vector3::<f32>::new(1f32, 1f32, 1f32);
     let target = nalgebra::Vector3::<f32>::new(0f32, 0f32, 0f32);
     let dir: nalgebra::Vector3<f32> = target - origin;
 
-    let Some((t0, u0, v0, data))
-        = ray_triangle_intersection(&origin, &dir, &p0[0], &p0[1], &p0[2]) else {
+    let Some((t0, u0, v0, data)) = ray_triangle_intersection(&origin, &dir, &p0[0], &p0[1], &p0[2])
+    else {
         panic!()
     };
 
-    let ha: nalgebra::Vector3::<f32> = (1f32 - u0 - v0) * p0[0] + u0 * p0[1] + v0 * p0[2];
-    assert!(crate::tet::volume(&p0[0], &p0[1], &p0[2], &ha).abs()<1.0e-8);
-    let hb: nalgebra::Vector3::<f32> = origin + t0 * dir;
-    assert!((ha - hb).norm()<1.0e-6);
+    let ha: nalgebra::Vector3<f32> = (1f32 - u0 - v0) * p0[0] + u0 * p0[1] + v0 * p0[2];
+    assert!(crate::tet::volume(&p0[0], &p0[1], &p0[2], &ha).abs() < 1.0e-8);
+    let hb: nalgebra::Vector3<f32> = origin + t0 * dir;
+    assert!((ha - hb).norm() < 1.0e-6);
 
     // d_t, d_u, d_u are back-propagated from the loss
     let d_t = 1f32;
@@ -314,17 +322,22 @@ fn test_ray_triangle_intersection() {
                 p1[i_node][i_dim] += eps;
                 p1
             };
-            let Some((t1, u1, v1, _data))
-                = ray_triangle_intersection(&origin, &dir, &p1[0], &p1[1], &p1[2]) else {
+            let Some((t1, u1, v1, _data)) =
+                ray_triangle_intersection(&origin, &dir, &p1[0], &p1[1], &p1[2])
+            else {
                 panic!()
             };
-            let dloss = ((t1-t0)*d_t + (u1-u0)*d_u + (v1-v0)*d_v)/eps;
+            let dloss = ((t1 - t0) * d_t + (u1 - u0) * d_u + (v1 - v0) * d_v) / eps;
             let dloss_analytic = dp[i_node][i_dim];
-            assert!((dloss-dloss_analytic).abs()<6.0e-4,
-                    "{} {} {}", dloss_analytic, dloss, dloss-dloss_analytic);
+            assert!(
+                (dloss - dloss_analytic).abs() < 6.0e-4,
+                "{} {} {}",
+                dloss_analytic,
+                dloss,
+                dloss - dloss_analytic
+            );
         }
     }
-
 }
 
 /// height of triangle vertex `p2` against the edge connecting `p0` and `p1`

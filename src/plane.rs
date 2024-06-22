@@ -16,9 +16,9 @@ where
 }
 
 pub fn intersection_ray3<T>(
-    o: &nalgebra::Vector3<T>, // one point on plane
+    o: &nalgebra::Vector3<T>, // one point on a plane
     n: &nalgebra::Vector3<T>, // plane normal
-    s: &nalgebra::Vector3<T>, // one point on line
+    s: &nalgebra::Vector3<T>, // one point on a line
     d: &nalgebra::Vector3<T>,
 ) -> Option<T>
 where
@@ -55,7 +55,7 @@ pub fn intersection_line3_triplane3<T>(
 ) -> Option<(nalgebra::Vector3<T>, T, T, T)>
 where
     T: nalgebra::RealField + 'static + Copy,
-    f64: num_traits::AsPrimitive<T>,
+    f64: AsPrimitive<T>,
 {
     let mut r0 = crate::tet::volume(src, &(src + dir), q1, q2);
     let mut r1 = crate::tet::volume(src, &(src + dir), q2, q0);

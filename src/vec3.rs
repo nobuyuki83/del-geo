@@ -105,7 +105,6 @@ where
     ]
 }
 
-
 // -------------------
 // below: interface includes nalgebra
 

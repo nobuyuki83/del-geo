@@ -9,7 +9,7 @@ pub fn nearest_to_point<T, const X: usize>(
 ) -> (nalgebra::base::SVector<T, X>, T)
 where
     T: nalgebra::RealField + 'static + Copy,
-    f64: num_traits::AsPrimitive<T>,
+    f64: AsPrimitive<T>,
 {
     if d.dot(d) < 1.0e-20_f64.as_() {
         return (*s, 0_f64.as_());

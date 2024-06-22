@@ -52,7 +52,7 @@ pub fn sample_uniform_param<Real, const N: usize>(
 ) -> Vec<nalgebra::SVector<Real, N>>
 where
     Real: Copy + 'static + nalgebra::RealField,
-    usize: num_traits::AsPrimitive<Real>,
+    usize: AsPrimitive<Real>,
 {
     let mut ret: Vec<nalgebra::SVector<Real, N>> = vec![];
     if is_include_endpoint_start {
@@ -78,8 +78,8 @@ pub fn sample_uniform_length<Real, const N: usize>(
 ) -> Vec<nalgebra::SVector<Real, N>>
 where
     Real: Copy + 'static + nalgebra::RealField + AsPrimitive<usize>,
-    usize: num_traits::AsPrimitive<Real>,
-    f64: num_traits::AsPrimitive<Real>,
+    usize: AsPrimitive<Real>,
+    f64: AsPrimitive<Real>,
 {
     let mut ret: Vec<nalgebra::SVector<Real, N>> = vec![];
     if is_include_endpoint_start {

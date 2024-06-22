@@ -169,11 +169,7 @@ where
     let ly = aabb[4] - aabb[1];
     let lz = aabb[5] - aabb[2];
     if lx > ly {
-        if lx > lz {
-            return lx;
-        } else {
-            return lz;
-        }
+        return if lx > lz { lx } else { lz };
     }
     if ly > lz {
         return ly;
@@ -201,14 +197,14 @@ where
 
 pub fn is_active<T>(i0: &[T; 6]) -> bool
 where
-    T: std::cmp::PartialOrd,
+    T: PartialOrd,
 {
     i0[0] <= i0[3]
 }
 
 pub fn is_intersect<T>(i0: &[T; 6], i1: &[T; 6]) -> bool
 where
-    T: std::cmp::PartialOrd,
+    T: PartialOrd,
 {
     assert_eq!(i0.len(), 6);
     assert_eq!(i1.len(), 6);

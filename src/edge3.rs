@@ -6,7 +6,7 @@ use num_traits::AsPrimitive;
 pub fn nearest_point3_<T>(point_pos: &[T; 3], edge_pos0: &[T; 3], edge_pos1: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float + 'static + Copy + PartialOrd,
-    f64: num_traits::AsPrimitive<T>,
+    f64: AsPrimitive<T>,
 {
     use crate::vec3;
     let d = [
@@ -50,7 +50,7 @@ pub fn nearest_to_point3<T>(
 ) -> (T, T)
 where
     T: nalgebra::RealField + 'static + Copy + PartialOrd,
-    f64: num_traits::AsPrimitive<T>,
+    f64: AsPrimitive<T>,
 {
     let d = edge_pos1 - edge_pos0;
     let dsq = d.norm_squared();
@@ -73,7 +73,7 @@ pub fn intersection_edge3_when_coplanar<T>(
 ) -> Option<(T, T, T, T)>
 where
     T: nalgebra::RealField + Copy + 'static,
-    f64: num_traits::AsPrimitive<T>,
+    f64: AsPrimitive<T>,
 {
     let n = {
         let n0 = (p1 - p0).cross(&(q0 - p0));

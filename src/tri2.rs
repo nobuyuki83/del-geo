@@ -19,15 +19,15 @@ pub fn is_inside<Real>(
 where
     Real: num_traits::Float,
 {
-    let a0 = crate::tri2::area_(q, p1, p2) * sign;
+    let a0 = area_(q, p1, p2) * sign;
     if a0 < Real::zero() {
         return None;
     }
-    let a1 = crate::tri2::area_(q, p2, p0) * sign;
+    let a1 = area_(q, p2, p0) * sign;
     if a1 < Real::zero() {
         return None;
     }
-    let a2 = crate::tri2::area_(q, p0, p1) * sign;
+    let a2 = area_(q, p0, p1) * sign;
     if a2 < Real::zero() {
         return None;
     }
@@ -80,9 +80,9 @@ pub fn barycentric_coords<Real>(
 where
     Real: num_traits::Float,
 {
-    let a0 = crate::tri2::area_(q, p1, p2);
-    let a1 = crate::tri2::area_(q, p2, p0);
-    let a2 = crate::tri2::area_(q, p0, p1);
+    let a0 = area_(q, p1, p2);
+    let a1 = area_(q, p2, p0);
+    let a2 = area_(q, p0, p1);
     if (a0 + a1 + a2).is_zero() {
         return None;
     }

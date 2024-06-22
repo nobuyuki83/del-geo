@@ -10,7 +10,7 @@ pub fn culling_intersection_<T>(
 ) -> bool
 where
     T: num_traits::Float + 'static + Copy,
-    f64: num_traits::AsPrimitive<T>,
+    f64: AsPrimitive<T>,
 {
     let min0x = if po_s0[0] < po_e0[0] {
         po_s0[0]
@@ -77,7 +77,7 @@ pub fn intersection_edge2_<T>(
 ) -> Option<(T, T)>
 where
     T: num_traits::Float + 'static + Copy,
-    f64: num_traits::AsPrimitive<T>,
+    f64: AsPrimitive<T>,
 {
     let area1 = crate::tri2::area_(po_s0, po_e0, po_s1);
     let area2 = crate::tri2::area_(po_s0, po_e0, po_e1);
@@ -106,6 +106,7 @@ where
     y.atan2(x) * T::FRAC_1_PI() * half
 }
 
+// above: w/o nalgebra
 // --------------------------------------------------
 // below: use nalgebra
 
@@ -147,7 +148,7 @@ pub fn distance_to_edge2<T>(
 ) -> T
 where
     T: num_traits::Float + nalgebra::RealField + 'static + Copy + std::fmt::Debug,
-    f64: num_traits::AsPrimitive<T>,
+    f64: AsPrimitive<T>,
 {
     if intersection_edge2_(
         po_s0.as_ref(),

@@ -17,7 +17,6 @@ where
     Some([v[0] / v[2], v[0] / v[2]])
 }
 
-
 // -------------------------------
 pub fn rotate90<T>(v: &nalgebra::Vector2<T>) -> nalgebra::Vector2<T>
 where
