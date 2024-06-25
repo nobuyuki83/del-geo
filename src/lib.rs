@@ -23,6 +23,7 @@ pub mod edge3;
 pub mod line;
 pub mod line2;
 pub mod line3;
+mod matn;
 pub mod plane;
 pub mod sphere;
 pub mod tet;

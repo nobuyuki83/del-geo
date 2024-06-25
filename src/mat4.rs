@@ -23,3 +23,20 @@ where
         one, zero, zero, zero, zero, one, zero, zero, zero, zero, one, zero, zero, zero, zero, one,
     ]
 }
+
+pub fn diagonal<Real>(m11: Real, m22: Real, m33: Real, m44: Real) -> [Real; 16]
+where
+    Real: num_traits::Zero + Copy,
+{
+    let zero = Real::zero();
+    [
+        m11, zero, zero, zero, zero, m22, zero, zero, zero, zero, m33, zero, zero, zero, zero, m44,
+    ]
+}
+
+pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
+where
+    Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
+{
+    crate::matn::try_inverse::<Real, 4, 16>(b)
+}
