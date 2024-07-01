@@ -33,7 +33,7 @@ where
 // ----------------------
 
 /// normal vector of a 3D triangle (coordinates given by stack-allocated arrays)
-pub fn normal_<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> [T; 3]
+pub fn normal<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> [T; 3]
 where
     T: std::ops::Sub<Output = T> + std::ops::Mul<Output = T> + std::ops::Sub + Copy,
 {
@@ -45,11 +45,11 @@ where
 }
 
 /// area of a 3D triangle (coordinates given by stack-allocated arrays)
-pub fn area_<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> T
+pub fn area<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> T
 where
     T: num_traits::Float,
 {
-    let na = normal_(v1, v2, v3);
+    let na = normal(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
     crate::vec3::squared_norm_(&na).sqrt() * half
 }
@@ -59,7 +59,7 @@ where
     T: num_traits::Float,
 {
     use crate::vec3;
-    let n = normal_(v1, v2, v3);
+    let n = normal(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
     let a = vec3::norm_(&n) * half;
     let invlen: T = half / a;
@@ -148,29 +148,25 @@ where
 {
     use crate::vec3;
     let eps: T = T::epsilon();
-    let edge1 = vec3::sub_(p1, p0);
-    let edge2 = vec3::sub_(p2, p0);
+    let edge1 = vec3::sub(p1, p0);
+    let edge2 = vec3::sub(p2, p0);
     let pvec = vec3::cross_(ray_dir, &edge2);
-    let det = vec3::dot_(&edge1, &pvec);
+    let det = vec3::dot(&edge1, &pvec);
     if det > -eps && det < eps {
         return None;
     }
     let invdet = T::one() / det;
-    let tvec = vec3::sub_(ray_org, p0);
-    let u = invdet * vec3::dot_(&tvec, &pvec);
+    let tvec = vec3::sub(ray_org, p0);
+    let u = invdet * vec3::dot(&tvec, &pvec);
     if u < T::zero() || u > T::one() {
         return None;
     }
     let qvec = vec3::cross_(&tvec, &edge1);
-    let v = invdet * vec3::dot_(ray_dir, &qvec);
+    let v = invdet * vec3::dot(ray_dir, &qvec);
     if v < T::zero() || u + v > T::one() {
         return None;
     }
     // At this stage we can compute t to find out where the intersection point is on the line.
-    let t = invdet * vec3::dot_(&edge2, &qvec);
+    let t = invdet * vec3::dot(&edge2, &qvec);
     Some(t)
 }
-
-// above: w/o nalgebra
-/* --------------------------------------------------------------------------------------- */
-// below: w/ nalgebra

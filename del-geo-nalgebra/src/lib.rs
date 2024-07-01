@@ -8,6 +8,7 @@ pub mod edge3;
 pub mod line;
 pub mod line2;
 pub mod line3;
+pub mod mat2;
 pub mod mat3;
 pub mod tet;
 pub mod tri2;

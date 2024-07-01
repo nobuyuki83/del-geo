@@ -1,6 +1,6 @@
 //! methods for 2D triangle
 
-pub fn area_<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> T
+pub fn area<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> T
 where
     T: num_traits::Float,
 {
@@ -19,15 +19,15 @@ pub fn is_inside<Real>(
 where
     Real: num_traits::Float,
 {
-    let a0 = area_(q, p1, p2) * sign;
+    let a0 = area(q, p1, p2) * sign;
     if a0 < Real::zero() {
         return None;
     }
-    let a1 = area_(q, p2, p0) * sign;
+    let a1 = area(q, p2, p0) * sign;
     if a1 < Real::zero() {
         return None;
     }
-    let a2 = area_(q, p0, p1) * sign;
+    let a2 = area(q, p0, p1) * sign;
     if a2 < Real::zero() {
         return None;
     }
@@ -48,7 +48,7 @@ where
 {
     assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
     let half = T::one() / (T::one() + T::one());
-    let a0 = area_(p0, p1, p2);
+    let a0 = area(p0, p1, p2);
     let tmp1: T = half / a0;
     (
         [
@@ -80,13 +80,12 @@ pub fn barycentric_coords<Real>(
 where
     Real: num_traits::Float,
 {
-    let a0 = area_(q, p1, p2);
-    let a1 = area_(q, p2, p0);
-    let a2 = area_(q, p0, p1);
+    let a0 = area(q, p1, p2);
+    let a1 = area(q, p2, p0);
+    let a2 = area(q, p0, p1);
     if (a0 + a1 + a2).is_zero() {
         return None;
     }
     let sum_area_inv = Real::one() / (a0 + a1 + a2);
     Some((a0 * sum_area_inv, a1 * sum_area_inv, a2 * sum_area_inv))
 }
-

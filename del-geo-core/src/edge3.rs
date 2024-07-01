@@ -14,14 +14,14 @@ where
         edge_pos1[2] - edge_pos0[2],
     ];
     let t = {
-        if vec3::dot_(&d, &d) > 1.0e-20_f64.as_() {
+        if vec3::dot(&d, &d) > 1.0e-20_f64.as_() {
             let ps = [
                 edge_pos0[0] - point_pos[0],
                 edge_pos0[1] - point_pos[1],
                 edge_pos0[2] - point_pos[2],
             ];
-            let a = vec3::dot_(&d, &d);
-            let b = vec3::dot_(&d, &ps);
+            let a = vec3::dot(&d, &d);
+            let b = vec3::dot(&d, &ps);
             let mut r: T = -b / a;
             r = if r < 0_f64.as_() { 0_f64.as_() } else { r };
             r = if r > 1_f64.as_() { 1_f64.as_() } else { r };

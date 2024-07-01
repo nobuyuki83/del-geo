@@ -15,10 +15,10 @@ pub fn intersect_edge2(
     po_s1: &nalgebra::Vector2<f32>,
     po_e1: &nalgebra::Vector2<f32>,
 ) -> bool {
-    let area1 = del_geo_core::tri2::area_(po_s0.as_ref(), po_e0.as_ref(), po_s1.as_ref());
-    let area2 = del_geo_core::tri2::area_(po_s0.as_ref(), po_e0.as_ref(), po_e1.as_ref());
-    let area3 = del_geo_core::tri2::area_(po_s1.as_ref(), po_e1.as_ref(), po_s0.as_ref());
-    let area4 = del_geo_core::tri2::area_(po_s1.as_ref(), po_e1.as_ref(), po_e0.as_ref());
+    let area1 = del_geo_core::tri2::area(po_s0.as_ref(), po_e0.as_ref(), po_s1.as_ref());
+    let area2 = del_geo_core::tri2::area(po_s0.as_ref(), po_e0.as_ref(), po_e1.as_ref());
+    let area3 = del_geo_core::tri2::area(po_s1.as_ref(), po_e1.as_ref(), po_s0.as_ref());
+    let area4 = del_geo_core::tri2::area(po_s1.as_ref(), po_e1.as_ref(), po_e0.as_ref());
     let a12 = area1 * area2;
     if a12 > 0_f32 {
         return false;
@@ -40,7 +40,7 @@ where
     T: num_traits::Float + nalgebra::RealField + 'static + Copy + std::fmt::Debug,
     f64: AsPrimitive<T>,
 {
-    if del_geo_core::edge2::intersection_edge2_(
+    if del_geo_core::edge2::intersection_edge2(
         po_s0.as_ref(),
         po_e0.as_ref(),
         po_s1.as_ref(),

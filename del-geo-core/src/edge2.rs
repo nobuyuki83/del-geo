@@ -2,7 +2,7 @@
 
 use num_traits::AsPrimitive;
 
-pub fn culling_intersection_<T>(
+pub fn culling_intersection<T>(
     po_s0: &[T; 2],
     po_e0: &[T; 2],
     po_s1: &[T; 2],
@@ -69,7 +69,7 @@ where
     true
 }
 
-pub fn intersection_edge2_<T>(
+pub fn intersection_edge2<T>(
     po_s0: &[T; 2],
     po_e0: &[T; 2],
     po_s1: &[T; 2],
@@ -79,10 +79,10 @@ where
     T: num_traits::Float + 'static + Copy,
     f64: AsPrimitive<T>,
 {
-    let area1 = crate::tri2::area_(po_s0, po_e0, po_s1);
-    let area2 = crate::tri2::area_(po_s0, po_e0, po_e1);
-    let area3 = crate::tri2::area_(po_s1, po_e1, po_s0);
-    let area4 = crate::tri2::area_(po_s1, po_e1, po_e0);
+    let area1 = crate::tri2::area(po_s0, po_e0, po_s1);
+    let area2 = crate::tri2::area(po_s0, po_e0, po_e1);
+    let area3 = crate::tri2::area(po_s1, po_e1, po_s0);
+    let area4 = crate::tri2::area(po_s1, po_e1, po_e0);
     if area1 * area2 > 0_f64.as_() {
         return None;
     }
@@ -94,13 +94,13 @@ where
     Some((r0, r1))
 }
 
-pub fn winding_number_<T>(ps: &[T; 2], pe: &[T; 2], po: &[T; 2]) -> T
+pub fn winding_number<T>(ps: &[T; 2], pe: &[T; 2], po: &[T; 2]) -> T
 where
     T: num_traits::Float + num_traits::FloatConst,
 {
     let half = T::one() / (T::one() + T::one());
-    let p0 = crate::vec2::sub_(ps, po);
-    let p1 = crate::vec2::sub_(pe, po);
+    let p0 = crate::vec2::sub(ps, po);
+    let p1 = crate::vec2::sub(pe, po);
     let y: T = p1[1] * p0[0] - p1[0] * p0[1];
     let x: T = p0[0] * p1[0] + p0[1] * p1[1];
     y.atan2(x) * T::FRAC_1_PI() * half

@@ -47,7 +47,7 @@ where
     ]
 }
 
-pub fn dot_<T>(a: &[T; 3], b: &[T; 3]) -> T
+pub fn dot<T>(a: &[T; 3], b: &[T; 3]) -> T
 where
     T: std::ops::Mul<Output = T> + std::ops::Add<Output = T> + Copy,
 {
@@ -58,21 +58,21 @@ where
 /// * `a` - 3d vector
 /// * `b` - 3d vector
 /// return a-b
-pub fn sub_<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
+pub fn sub<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
 where
     T: std::ops::Sub<Output = T> + Copy,
 {
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
-pub fn scale_<T>(a: &[T; 3], s: T) -> [T; 3]
+pub fn scale<T>(a: &[T; 3], s: T) -> [T; 3]
 where
     T: Copy + std::ops::Mul<Output = T>,
 {
     [s * a[0], s * a[1], s * a[2]]
 }
 
-pub fn distance_<T>(p0: &[T; 3], p1: &[T; 3]) -> T
+pub fn distance<T>(p0: &[T; 3], p1: &[T; 3]) -> T
 where
     T: num_traits::Float,
 {
@@ -82,7 +82,7 @@ where
     (v0 * v0 + v1 * v1 + v2 * v2).sqrt()
 }
 
-pub fn scalar_triple_product_<T>(a: &[T; 3], b: &[T; 3], c: &[T; 3]) -> T
+pub fn scalar_triple_product<T>(a: &[T; 3], b: &[T; 3], c: &[T; 3]) -> T
 where
     T: std::ops::Mul<Output = T> + std::ops::Sub<Output = T> + std::ops::Add<Output = T> + Copy,
 {
@@ -92,7 +92,7 @@ where
     v0 + v1 + v2
 }
 
-pub fn axpy_<Real>(alpha: Real, x: &[Real; 3], y: &[Real; 3]) -> [Real; 3]
+pub fn axpy<Real>(alpha: Real, x: &[Real; 3], y: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
 {

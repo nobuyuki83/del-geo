@@ -1,6 +1,6 @@
 //! methods for 2D vector
 
-pub fn sub_<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
+pub fn sub<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
 where
     T: std::ops::Sub<Output = T> + Copy,
 {

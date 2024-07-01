@@ -12,6 +12,6 @@ repository.workspace = true
 
 [dependencies]
 num-traits = {workspace = true}
-nalgebra = {workspace = true}
+# nalgebra = {workspace = true}
 rand = {workspace = true}
 

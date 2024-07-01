@@ -2,7 +2,7 @@
 
 use num_traits::AsPrimitive;
 
-pub fn volume_<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3], v4: &[T; 3]) -> T
+pub fn volume<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3], v4: &[T; 3]) -> T
 where
     T: num_traits::Float + 'static + Copy,
     f64: AsPrimitive<T>,
