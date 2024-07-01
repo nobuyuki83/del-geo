@@ -1,0 +1,17 @@
+[package]
+name = "del-geo-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "2D/3D geometry utility codes"
+documentation.workspace = true
+license.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num-traits = {workspace = true}
+nalgebra = {workspace = true}
+rand = {workspace = true}
+
