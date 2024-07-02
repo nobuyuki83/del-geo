@@ -1,9 +1,9 @@
 [package]
 name = "del-geo-core"
+description = "2D/3D geometry utility codes"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description = "2D/3D geometry utility codes"
 documentation.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -12,6 +12,5 @@ repository.workspace = true
 
 [dependencies]
 num-traits = {workspace = true}
-# nalgebra = {workspace = true}
 rand = {workspace = true}
 

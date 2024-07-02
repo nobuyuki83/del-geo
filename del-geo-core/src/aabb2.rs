@@ -30,6 +30,76 @@ where
     ]
 }
 
+pub fn from_list_of_vertices<Index, T>(idx2vtx: &[Index], vtx2xy: &[T], eps: T) -> [T; 4]
+where
+    T: num_traits::Float,
+    Index: AsPrimitive<usize>,
+{
+    assert!(!idx2vtx.is_empty());
+    let mut aabb = [T::zero(); 4];
+    {
+        let i_vtx: usize = idx2vtx[0].as_();
+        {
+            let cgx = vtx2xy[i_vtx * 2];
+            aabb[0] = cgx - eps;
+            aabb[2] = cgx + eps;
+        }
+        {
+            let cgy = vtx2xy[i_vtx * 2 + 1];
+            aabb[1] = cgy - eps;
+            aabb[3] = cgy + eps;
+        }
+    }
+    for &i_vtx in idx2vtx.iter().skip(1) {
+        let i_vtx = i_vtx.as_();
+        {
+            let cgx = vtx2xy[i_vtx * 2];
+            aabb[0] = if cgx - eps < aabb[0] {
+                cgx - eps
+            } else {
+                aabb[0]
+            };
+            aabb[2] = if cgx + eps > aabb[2] {
+                cgx + eps
+            } else {
+                aabb[2]
+            };
+        }
+        {
+            let cgy = vtx2xy[i_vtx * 2 + 1];
+            aabb[1] = if cgy - eps < aabb[1] {
+                cgy - eps
+            } else {
+                aabb[1]
+            };
+            aabb[3] = if cgy + eps > aabb[3] {
+                cgy + eps
+            } else {
+                aabb[3]
+            };
+        }
+    }
+    assert!(aabb[0] <= aabb[2]);
+    assert!(aabb[1] <= aabb[3]);
+    aabb
+}
+
+pub fn from_two_aabbs<T>(i0: &[T; 4], i1: &[T; 4]) -> [T; 4]
+where
+    T: num_traits::Float,
+{
+    let mut o = [T::zero(); 4];
+    for i in 0..2 {
+        o[i] = if i0[i] < i1[i] { i0[i] } else { i1[i] };
+        o[i + 2] = if i0[i + 2] > i1[i + 2] {
+            i0[i + 2]
+        } else {
+            i1[i + 2]
+        };
+    }
+    o
+}
+
 pub fn rasterize<T>(aabb: &[T; 4], img_size: &(usize, usize)) -> [usize; 4]
 where
     T: num_traits::Float + AsPrimitive<usize> + 'static + Copy,
@@ -108,74 +178,4 @@ fn test_to_transformation_world2unit_ortho_preserve_asp() {
         assert!(q0[0] >= 0.0 && q0[0] <= 1.0);
         assert!(q0[1] >= 0.0 && q0[1] <= 1.0);
     }
-}
-
-pub fn from_list_of_vertices<Index, T>(idx2vtx: &[Index], vtx2xy: &[T], eps: T) -> [T; 4]
-where
-    T: num_traits::Float,
-    Index: AsPrimitive<usize>,
-{
-    assert!(!idx2vtx.is_empty());
-    let mut aabb = [T::zero(); 4];
-    {
-        let i_vtx: usize = idx2vtx[0].as_();
-        {
-            let cgx = vtx2xy[i_vtx * 2];
-            aabb[0] = cgx - eps;
-            aabb[2] = cgx + eps;
-        }
-        {
-            let cgy = vtx2xy[i_vtx * 2 + 1];
-            aabb[1] = cgy - eps;
-            aabb[3] = cgy + eps;
-        }
-    }
-    for &i_vtx in idx2vtx.iter().skip(1) {
-        let i_vtx = i_vtx.as_();
-        {
-            let cgx = vtx2xy[i_vtx * 2];
-            aabb[0] = if cgx - eps < aabb[0] {
-                cgx - eps
-            } else {
-                aabb[0]
-            };
-            aabb[2] = if cgx + eps > aabb[2] {
-                cgx + eps
-            } else {
-                aabb[2]
-            };
-        }
-        {
-            let cgy = vtx2xy[i_vtx * 2 + 1];
-            aabb[1] = if cgy - eps < aabb[1] {
-                cgy - eps
-            } else {
-                aabb[1]
-            };
-            aabb[3] = if cgy + eps > aabb[3] {
-                cgy + eps
-            } else {
-                aabb[3]
-            };
-        }
-    }
-    assert!(aabb[0] <= aabb[2]);
-    assert!(aabb[1] <= aabb[3]);
-    aabb
-}
-
-pub fn from_two_aabbs<T>(i0: &[T; 4], i1: &[T; 4]) -> [T; 4]
-where
-    T: num_traits::Float,
-{
-    let mut o = [T::zero(); 4];
-    for i in 0..2 {
-        o[i] = if i0[i] < i1[i] { i0[i] } else { i1[i] };
-        o[i + 2] = if i0[i + 2] > i1[i + 2] {
-            i0[i + 2]
-        } else {
-            i1[i + 2]
-        };
-    }
-    o
 }

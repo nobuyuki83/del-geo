@@ -39,10 +39,10 @@ where
 ///
 /// # Example
 /// ```
-/// let (dldx, c) = del_geo_core::tri2::dldx_(&[0., 1.], &[1., 2.], &[3., 4.]);
+/// let (dldx, c) = del_geo_core::tri2::dldx(&[0., 1.], &[1., 2.], &[3., 4.]);
 /// let a = dldx[0][2]; // x-differentiation of L^2
 /// ```
-pub fn dldx_<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> ([[T; 3]; 2], [T; 3])
+pub fn dldx<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> ([[T; 3]; 2], [T; 3])
 where
     T: num_traits::Float,
 {
