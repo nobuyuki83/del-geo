@@ -4,20 +4,6 @@ use num_traits::AsPrimitive;
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 
-pub fn from_vtx2xy<Real>(vtx2xy: &[Real]) -> [Real; 4]
-where
-    Real: num_traits::Float,
-{
-    let mut aabb = [vtx2xy[0], vtx2xy[1], vtx2xy[0], vtx2xy[1]];
-    vtx2xy.chunks(2).skip(1).for_each(|v| {
-        aabb[0] = if v[0] < aabb[0] { v[0] } else { aabb[0] };
-        aabb[1] = if v[1] < aabb[1] { v[1] } else { aabb[1] };
-        aabb[2] = if v[0] > aabb[2] { v[0] } else { aabb[2] };
-        aabb[3] = if v[1] > aabb[3] { v[1] } else { aabb[3] };
-    });
-    aabb
-}
-
 pub fn from_two_points<T>(p0: &[T; 2], p1: &[T; 2], rad: T) -> [T; 4]
 where
     T: num_traits::Float,
@@ -28,60 +14,6 @@ where
         (p0[0] + rad).max(p1[0] + rad),
         (p0[1] + rad).max(p1[1] + rad),
     ]
-}
-
-pub fn from_list_of_vertices<Index, T>(idx2vtx: &[Index], vtx2xy: &[T], eps: T) -> [T; 4]
-where
-    T: num_traits::Float,
-    Index: AsPrimitive<usize>,
-{
-    assert!(!idx2vtx.is_empty());
-    let mut aabb = [T::zero(); 4];
-    {
-        let i_vtx: usize = idx2vtx[0].as_();
-        {
-            let cgx = vtx2xy[i_vtx * 2];
-            aabb[0] = cgx - eps;
-            aabb[2] = cgx + eps;
-        }
-        {
-            let cgy = vtx2xy[i_vtx * 2 + 1];
-            aabb[1] = cgy - eps;
-            aabb[3] = cgy + eps;
-        }
-    }
-    for &i_vtx in idx2vtx.iter().skip(1) {
-        let i_vtx = i_vtx.as_();
-        {
-            let cgx = vtx2xy[i_vtx * 2];
-            aabb[0] = if cgx - eps < aabb[0] {
-                cgx - eps
-            } else {
-                aabb[0]
-            };
-            aabb[2] = if cgx + eps > aabb[2] {
-                cgx + eps
-            } else {
-                aabb[2]
-            };
-        }
-        {
-            let cgy = vtx2xy[i_vtx * 2 + 1];
-            aabb[1] = if cgy - eps < aabb[1] {
-                cgy - eps
-            } else {
-                aabb[1]
-            };
-            aabb[3] = if cgy + eps > aabb[3] {
-                cgy + eps
-            } else {
-                aabb[3]
-            };
-        }
-    }
-    assert!(aabb[0] <= aabb[2]);
-    assert!(aabb[1] <= aabb[3]);
-    aabb
 }
 
 pub fn from_two_aabbs<T>(i0: &[T; 4], i1: &[T; 4]) -> [T; 4]
@@ -139,7 +71,14 @@ where
     let p1 = crate::mat3::transform_homogeneous(transform, &[aabb[0], aabb[3]]).unwrap();
     let p2 = crate::mat3::transform_homogeneous(transform, &[aabb[2], aabb[1]]).unwrap();
     let p3 = crate::mat3::transform_homogeneous(transform, &[aabb[2], aabb[3]]).unwrap();
-    from_vtx2xy(&[p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]])
+    let ax = [p0[0], p1[0], p2[0], p3[0]];
+    let ay = [p0[1], p1[1], p2[1], p3[1]];
+    [
+        ax.iter().fold(T::infinity(), |a, &b| a.min(b)),
+        ay.iter().fold(T::infinity(), |a, &b| a.min(b)),
+        ax.iter().fold(-T::infinity(), |a, &b| a.max(b)),
+        ay.iter().fold(-T::infinity(), |a, &b| a.max(b))
+    ]
 }
 
 pub fn sample<Reng, T>(aabb: &[T; 4], reng: &mut Reng) -> [T; 2]
