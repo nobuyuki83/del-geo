@@ -1,3 +1,5 @@
+//! Continuous Collision Detection
+
 use num_traits::AsPrimitive;
 
 pub struct FourPoints<'a, T> {

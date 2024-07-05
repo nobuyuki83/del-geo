@@ -1,3 +1,5 @@
+//! method common in 2D or 3D Axis-Aligned Bounding Box (AABB)
+
 use num_traits::Zero;
 pub fn is_intersect_ray<const NDIM: usize, const SIZE_AABB: usize>(
     aabb: &[f32; SIZE_AABB],

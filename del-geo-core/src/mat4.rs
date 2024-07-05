@@ -1,3 +1,5 @@
+//! methods for 4x4 matrix
+
 pub fn transform_homogeneous<Real>(transform: &[Real; 16], x: &[Real; 3]) -> Option<[Real; 3]>
 where
     Real: num_traits::Float,
@@ -36,7 +38,8 @@ where
 
 pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
 where
-    Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
+    Real: num_traits::Float + std::ops::MulAssign + std::ops
+    ::SubAssign,
 {
     crate::matn::try_inverse::<Real, 4, 16>(b)
 }

@@ -1,3 +1,5 @@
+//! methods for NxN matrix (column major)
+
 pub fn try_inverse<Real, const N: usize, const NN: usize>(b: &[Real; NN]) -> Option<[Real; NN]>
 where
     Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
