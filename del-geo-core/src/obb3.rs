@@ -1,30 +1,29 @@
-//!
+//! 3D Oriented Bounding Box (OBB)
 
-use crate::vec3::cross;
-
-pub fn is_include_point<Real>(obb: &[Real; 12], p: &[Real; 3]) -> bool
+pub fn is_include_point<Real>(obb: &[Real; 12], p: &[Real; 3], eps: Real) -> bool
 where
     Real: num_traits::Float,
 {
+    let s = Real::one() + eps;
     let d = [p[0] - obb[0], p[1] - obb[1], p[2] - obb[2]];
     {
         let lx = obb[3] * obb[3] + obb[4] * obb[4] + obb[5] * obb[5];
         let dx = obb[3] * d[0] + obb[4] * d[1] + obb[5] * d[2];
-        if dx.abs() > lx {
+        if dx.abs() > lx * s {
             return false;
         }
     }
     {
         let ly = obb[6] * obb[6] + obb[7] * obb[7] + obb[8] * obb[8];
         let dy = obb[6] * d[0] + obb[7] * d[1] + obb[8] * d[2];
-        if dy.abs() > ly {
+        if dy.abs() > ly * s {
             return false;
         }
     }
     {
         let lz = obb[9] * obb[9] + obb[10] * obb[10] + obb[11] * obb[11];
         let dz = obb[9] * d[0] + obb[10] * d[1] + obb[11] * d[2];
-        if dz.abs() > lz {
+        if dz.abs() > lz * s {
             return false;
         }
     }
