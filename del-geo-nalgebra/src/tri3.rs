@@ -1,3 +1,5 @@
+//! methods for 3D triangle (parameterized by three corner points)
+
 use num_traits::{AsPrimitive, Zero};
 
 pub struct RayTriangleIntersectionData {

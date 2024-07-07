@@ -1,3 +1,5 @@
+//! functions for 2D Axis-aligned Bounding Box (AABB)
+
 use num_traits::AsPrimitive;
 
 /// signed distance from axis-aligned bounding box

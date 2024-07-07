@@ -1,3 +1,5 @@
+//! methods for 2D triangle (parameterized by three corner points)
+
 pub fn area<T>(v1: &nalgebra::Vector2<T>, v2: &nalgebra::Vector2<T>, v3: &nalgebra::Vector2<T>) -> T
 where
     T: nalgebra::RealField + Copy,

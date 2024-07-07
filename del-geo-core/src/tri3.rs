@@ -61,7 +61,7 @@ where
     use crate::vec3;
     let n = normal(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
-    let a = vec3::norm_(&n) * half;
+    let a = vec3::norm(&n) * half;
     let invlen: T = half / a;
     ([n[0] * invlen, n[1] * invlen, n[2] * invlen], a)
 }
@@ -150,7 +150,7 @@ where
     let eps: T = T::epsilon();
     let edge1 = vec3::sub(p1, p0);
     let edge2 = vec3::sub(p2, p0);
-    let pvec = vec3::cross_(ray_dir, &edge2);
+    let pvec = vec3::cross(ray_dir, &edge2);
     let det = vec3::dot(&edge1, &pvec);
     if det > -eps && det < eps {
         return None;
@@ -161,7 +161,7 @@ where
     if u < T::zero() || u > T::one() {
         return None;
     }
-    let qvec = vec3::cross_(&tvec, &edge1);
+    let qvec = vec3::cross(&tvec, &edge1);
     let v = invdet * vec3::dot(ray_dir, &qvec);
     if v < T::zero() || u + v > T::one() {
         return None;

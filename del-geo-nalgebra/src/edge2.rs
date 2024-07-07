@@ -1,3 +1,5 @@
+//! functions for 2D edge (line segment)
+
 use num_traits::AsPrimitive;
 
 pub fn length_squared<T>(p0: &nalgebra::Vector2<T>, p1: &nalgebra::Vector2<T>) -> T

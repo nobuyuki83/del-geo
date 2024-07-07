@@ -1,3 +1,5 @@
+//! functions for 3D tetrahedron
+
 use num_traits::AsPrimitive;
 
 pub fn volume<T>(
@@ -19,9 +21,7 @@ where
     (a0 + a1 + a2) * 0.166_666_666_666_666_67_f64.as_()
 }
 
-/**
-height of tetrahedron base:v1,v2,v3, top:v4
- */
+/// height of tetrahedron base:v1,v2,v3, top:v4
 pub fn height<T>(
     v1: &nalgebra::Vector3<T>,
     v2: &nalgebra::Vector3<T>,

@@ -1,3 +1,5 @@
+//! functions for quadratic Bezier curve
+
 pub fn eval<Real, const N: usize>(
     p0: &nalgebra::SVector<Real, N>,
     p1: &nalgebra::SVector<Real, N>,

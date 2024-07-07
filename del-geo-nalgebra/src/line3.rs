@@ -1,4 +1,4 @@
-//! methods for 3D line
+//! methods for 3D line (parameterized by origin and direction vector)
 
 pub fn nearest_to_line3<T>(
     line_org_a: &nalgebra::Vector3<T>,

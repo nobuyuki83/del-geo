@@ -10,4 +10,3 @@ where
     }
     x.sqrt()
 }
-

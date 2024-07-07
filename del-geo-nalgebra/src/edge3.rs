@@ -1,3 +1,5 @@
+//! functions for 3D edge (line segment)
+
 use nalgebra::clamp;
 use num_traits::AsPrimitive;
 

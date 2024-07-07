@@ -1,4 +1,4 @@
-
+//! functions for N-dimensional edge (line segment)
 
 use num_traits::AsPrimitive;
 

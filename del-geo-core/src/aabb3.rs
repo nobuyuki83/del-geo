@@ -106,10 +106,10 @@ pub fn to_transformation_world2unit_ortho_preserve_asp(aabb_world: &[f32; 6]) ->
 }
 
 pub fn sample<Reng, T>(aabb: &[T; 6], reng: &mut Reng) -> [T; 3]
-    where
-        Reng: rand::Rng,
-        T: num_traits::Float,
-        Standard: Distribution<T>,
+where
+    Reng: rand::Rng,
+    T: num_traits::Float,
+    Standard: Distribution<T>,
 {
     let r0 = reng.gen::<T>();
     let r1 = reng.gen::<T>();

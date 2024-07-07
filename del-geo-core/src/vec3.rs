@@ -1,5 +1,7 @@
 //! methods for 3D vector
 
+use std::ops::MulAssign;
+
 pub fn squared_norm_<T>(p: &[T; 3]) -> T
 where
     T: std::ops::Mul<Output = T> + std::ops::Add<Output = T> + Copy,
@@ -8,23 +10,34 @@ where
     p[0] * p[0] + p[1] * p[1] + p[2] * p[2]
 }
 
-pub fn norm_<T>(v: &[T; 3]) -> T
+pub fn norm<T>(v: &[T; 3]) -> T
 where
     T: num_traits::Float,
 {
     (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt()
 }
 
-pub fn normalize_<T>(v: &mut [T; 3]) -> T
+/// in-place normalize function
+pub fn normalize<T>(v: &mut [T; 3]) -> T
 where
     T: num_traits::Float + std::ops::MulAssign,
 {
-    let l = norm_(v);
+    let l = norm(v);
     let linv = T::one() / l;
     v[0] *= linv;
     v[1] *= linv;
     v[2] *= linv;
     l
+}
+
+/// in-place normalize function
+pub fn normalized<T>(v: &[T; 3]) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    let l = norm(v);
+    let linv = T::one() / l;
+    [v[0] * linv, v[1] * linv, v[2] * linv]
 }
 
 pub fn cross_mut_<T>(vo: &mut [T; 3], v1: &[T; 3], v2: &[T; 3])
@@ -36,7 +49,7 @@ where
     vo[2] = v1[0] * v2[1] - v2[0] * v1[1];
 }
 
-pub fn cross_<T>(v1: &[T; 3], v2: &[T; 3]) -> [T; 3]
+pub fn cross<T>(v1: &[T; 3], v2: &[T; 3]) -> [T; 3]
 where
     T: std::ops::Mul<Output = T> + std::ops::Sub<Output = T> + Copy,
 {
@@ -65,11 +78,20 @@ where
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
-pub fn scale<T>(a: &[T; 3], s: T) -> [T; 3]
+pub fn scaled<T>(a: &[T; 3], s: T) -> [T; 3]
 where
     T: Copy + std::ops::Mul<Output = T>,
 {
     [s * a[0], s * a[1], s * a[2]]
+}
+
+pub fn scale<T>(a: &mut [T; 3], s: T)
+where
+    T: MulAssign + Copy,
+{
+    a[0] *= s;
+    a[1] *= s;
+    a[2] *= s;
 }
 
 pub fn distance<T>(p0: &[T; 3], p1: &[T; 3]) -> T

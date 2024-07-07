@@ -77,7 +77,7 @@ where
         ax.iter().fold(T::infinity(), |a, &b| a.min(b)),
         ay.iter().fold(T::infinity(), |a, &b| a.min(b)),
         ax.iter().fold(-T::infinity(), |a, &b| a.max(b)),
-        ay.iter().fold(-T::infinity(), |a, &b| a.max(b))
+        ay.iter().fold(-T::infinity(), |a, &b| a.max(b)),
     ]
 }
 

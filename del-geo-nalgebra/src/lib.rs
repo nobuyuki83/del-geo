@@ -1,3 +1,10 @@
+/*
+vec -> mat -> aabb ->
+line -> ray -> edge ->
+plane -> tri -> quad ->
+tet
+*/
+
 pub mod aabb2;
 pub mod bezier_cubic;
 pub mod bezier_quadratic;

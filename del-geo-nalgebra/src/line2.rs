@@ -1,3 +1,5 @@
+//! methods for 2D line (parameterized by origin and direction vector)
+
 pub fn intersection<T>(
     ps: &nalgebra::Vector2<T>, // point
     pd: &nalgebra::Vector2<T>, // point
