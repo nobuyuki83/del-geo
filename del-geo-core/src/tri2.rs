@@ -106,6 +106,6 @@ where
     }
 
     pub fn area(&self) -> Real {
-        area(self.p0, self.p1, self.p1)
+        area(self.p0, self.p1, self.p2)
     }
 }

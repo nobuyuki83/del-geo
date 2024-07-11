@@ -177,9 +177,14 @@ pub struct Tri3<'a, Real> {
 }
 
 impl<'a, Real> Tri3<'a, Real>
-where Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
-    pub fn intersection_against_ray(&self, ray_org: &[Real; 3], ray_dir: &[Real; 3]) -> Option<Real> {
+    pub fn intersection_against_ray(
+        &self,
+        ray_org: &[Real; 3],
+        ray_dir: &[Real; 3],
+    ) -> Option<Real> {
         intersection_against_ray(self.p0, self.p1, self.p2, ray_org, ray_dir)
     }
 
