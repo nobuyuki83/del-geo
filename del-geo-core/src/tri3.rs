@@ -1,7 +1,5 @@
 //! methods for 3d triangle
 
-use num_traits::AsPrimitive;
-
 /// clamp barycentric coordinates inside a triangle
 pub fn clamp<T>(r0: T, r1: T, r2: T) -> (T, T, T)
 where
@@ -54,12 +52,12 @@ where
     crate::vec3::squared_norm_(&na).sqrt() * half
 }
 
-pub fn unit_normal_area_<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> ([T; 3], T)
+pub fn unit_normal_area<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> ([T; 3], T)
 where
     T: num_traits::Float,
 {
     use crate::vec3;
-    let n = normal(v1, v2, v3);
+    let n = normal(p0, p1, p2);
     let half = T::one() / (T::one() + T::one());
     let a = vec3::norm(&n) * half;
     let invlen: T = half / a;
@@ -67,7 +65,7 @@ where
 }
 
 /// compute cotangents of the three angles of a triangle
-pub fn cot_<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [T; 3]
+pub fn cot<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float,
 {
@@ -101,7 +99,7 @@ pub fn emat_cotangent_laplacian<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [[[
 where
     T: num_traits::Float,
 {
-    let cots = cot_(p0, p1, p2);
+    let cots = cot(p0, p1, p2);
     let half = T::one() / (T::one() + T::one());
     [
         [
@@ -135,16 +133,15 @@ where
 ///
 /// <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>
 /// <https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection>
-pub fn ray_triangle_intersection_<T>(
-    ray_org: &[T; 3],
-    ray_dir: &[T; 3],
+pub fn intersection_against_ray<T>(
     p0: &[T; 3],
     p1: &[T; 3],
     p2: &[T; 3],
+    ray_org: &[T; 3],
+    ray_dir: &[T; 3],
 ) -> Option<T>
 where
-    T: num_traits::Float + Copy + 'static,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
     use crate::vec3;
     let eps: T = T::epsilon();
@@ -169,4 +166,24 @@ where
     // At this stage we can compute t to find out where the intersection point is on the line.
     let t = invdet * vec3::dot(&edge2, &qvec);
     Some(t)
+}
+
+// -------------------------
+
+pub struct Tri3<'a, Real> {
+    pub p0: &'a [Real; 3],
+    pub p1: &'a [Real; 3],
+    pub p2: &'a [Real; 3],
+}
+
+impl<'a, Real> Tri3<'a, Real>
+where Real: num_traits::Float
+{
+    pub fn intersection_against_ray(&self, ray_org: &[Real; 3], ray_dir: &[Real; 3]) -> Option<Real> {
+        intersection_against_ray(self.p0, self.p1, self.p2, ray_org, ray_dir)
+    }
+
+    pub fn area(&self) -> Real {
+        area(self.p0, self.p1, self.p2)
+    }
 }

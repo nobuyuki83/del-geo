@@ -4,7 +4,6 @@ pub fn area<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> T
 where
     T: num_traits::Float,
 {
-    assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
     let half = T::one() / (T::one() + T::one());
     half * ((p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]))
 }
@@ -88,4 +87,25 @@ where
     }
     let sum_area_inv = Real::one() / (a0 + a1 + a2);
     Some((a0 * sum_area_inv, a1 * sum_area_inv, a2 * sum_area_inv))
+}
+
+// -------------------------------------------
+
+pub struct Tri2<'a, Real> {
+    pub p0: &'a [Real; 2],
+    pub p1: &'a [Real; 2],
+    pub p2: &'a [Real; 2],
+}
+
+impl<'a, Real> Tri2<'a, Real>
+where
+    Real: num_traits::Float,
+{
+    pub fn is_inside(&self, q: &[Real; 2], sign: Real) -> Option<(Real, Real)> {
+        is_inside(self.p0, self.p1, self.p2, q, sign)
+    }
+
+    pub fn area(&self) -> Real {
+        area(self.p0, self.p1, self.p1)
+    }
 }

@@ -67,7 +67,7 @@ where
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 }
 
-/// substracting two 3d vectors
+/// subtracting two 3d vectors
 /// * `a` - 3d vector
 /// * `b` - 3d vector
 /// return a-b
@@ -123,4 +123,20 @@ where
         alpha * x[1] + y[1],
         alpha * x[2] + y[2],
     ]
+}
+
+// ------------------------------------------
+pub struct XYZ<'a, Real> {
+    pub p: &'a [Real; 3],
+}
+
+impl<'a, Real> XYZ<'a, Real>
+where
+    Real: num_traits::Float,
+{
+    pub fn aabb(&self) -> [Real; 6] {
+        [
+            self.p[0], self.p[1], self.p[2], self.p[0], self.p[1], self.p[2],
+        ]
+    }
 }

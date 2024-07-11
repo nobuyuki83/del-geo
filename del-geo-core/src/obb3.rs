@@ -73,7 +73,7 @@ where
     None
 }
 
-pub fn distance_to_obb3<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> Option<Real>
+pub fn distance_to_obb3<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> Real
 where
     Real: num_traits::Float,
 {
@@ -81,7 +81,7 @@ where
     let axis_size_i = axis_size(obb_i);
     let center_j: [Real; 3] = obb_j[0..3].try_into().unwrap();
     let axis_size_j = axis_size(obb_j);
-    let mut min_dist = Real::max_value();
+    let mut max_dist = Real::zero();
     for i in 0..3 {
         let axis_i = axis_size_i.0[i];
         let lh_i = axis_size_i.1[i];
@@ -89,10 +89,10 @@ where
         let range_i = (c_i - lh_i, c_i + lh_i);
         let range_j = range_axis(obb_j, &axis_i);
         let Some(dist) = distance_range(range_i, range_j) else {
-            return None;
+            continue;
         };
-        if dist < min_dist {
-            min_dist = dist;
+        if dist > max_dist {
+            max_dist = dist;
         }
     }
     for j in 0..3 {
@@ -102,10 +102,10 @@ where
         let range_j = (c_j - lh_j, c_j + lh_j);
         let range_i = range_axis(obb_i, &axis_j);
         let Some(dist) = distance_range(range_i, range_j) else {
-            return None;
+            continue;
         };
-        if dist < min_dist {
-            min_dist = dist;
+        if dist > max_dist {
+            max_dist = dist;
         }
     }
     for i in 0..3 {
@@ -116,12 +116,12 @@ where
             let range_i = range_axis(obb_i, &axis);
             let range_j = range_axis(obb_j, &axis);
             let Some(dist) = distance_range(range_i, range_j) else {
-                return None;
+                continue;
             };
-            if dist < min_dist {
-                min_dist = dist;
+            if dist > max_dist {
+                max_dist = dist;
             }
         }
     }
-    Some(min_dist)
+    max_dist
 }

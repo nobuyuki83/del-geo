@@ -120,3 +120,25 @@ where
         aabb[2] + r2 * (aabb[5] - aabb[2]),
     ]
 }
+
+// --------------------------
+
+pub type AABB3<'a, Real> = crate::aabb::AABB<'a, Real, 3, 6>;
+
+pub fn from_slice<Real>(s: &[Real]) -> AABB3<Real>
+where
+    Real: num_traits::Float,
+{
+    AABB3 {
+        aabb: arrayref::array_ref!(s, 0, 6),
+    }
+}
+
+pub fn from_aabbs<Real>(aabbs: &[Real], i_aabb: usize) -> AABB3<Real>
+where
+    Real: num_traits::Float,
+{
+    AABB3 {
+        aabb: arrayref::array_ref!(aabbs, i_aabb * 6, 6),
+    }
+}

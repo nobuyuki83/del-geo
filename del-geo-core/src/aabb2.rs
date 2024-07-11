@@ -118,3 +118,25 @@ fn test_to_transformation_world2unit_ortho_preserve_asp() {
         assert!(q0[1] >= 0.0 && q0[1] <= 1.0);
     }
 }
+
+// -------------------------------------------------------------------------------
+
+pub type AABB2<'a, Real> = crate::aabb::AABB<'a, Real, 2, 4>;
+
+pub fn from_slice<Real>(s: &[Real]) -> AABB2<Real>
+where
+    Real: num_traits::Float,
+{
+    AABB2 {
+        aabb: arrayref::array_ref!(s, 0, 4),
+    }
+}
+
+pub fn from_aabbs<Real>(aabbs: &[Real], i_aabb: usize) -> AABB2<Real>
+where
+    Real: num_traits::Float,
+{
+    AABB2 {
+        aabb: arrayref::array_ref!(aabbs, i_aabb * 4, 4),
+    }
+}

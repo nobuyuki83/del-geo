@@ -18,3 +18,16 @@ where
 }
 
 // -------------------------------
+
+pub struct XY<'a, Real> {
+    pub p: &'a [Real; 2],
+}
+
+impl<'a, Real> XY<'a, Real>
+where
+    Real: num_traits::Float,
+{
+    pub fn aabb(&self) -> [Real; 4] {
+        [self.p[0], self.p[1], self.p[0], self.p[1]]
+    }
+}

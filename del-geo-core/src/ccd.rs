@@ -65,7 +65,7 @@ where
     i64: AsPrimitive<T>,
 {
     assert!(t > T::zero());
-    let mut result = vec![T::zero(); 0];
+    let mut result = vec![];
     let eval_f = |r| ((c3 * r + c2) * r + c1) * r + c0;
     let f0 = c0;
     let ft = eval_f(t);
