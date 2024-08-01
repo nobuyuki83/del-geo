@@ -2,7 +2,17 @@
 
 use std::ops::MulAssign;
 
-pub fn squared_norm_<T>(p: &[T; 3]) -> T
+pub fn add<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
+where T: num_traits::Float
+{
+    [
+        a[0] + b[0],
+        a[1] + b[1],
+        a[2] + b[2]
+    ]
+}
+
+pub fn squared_norm<T>(p: &[T; 3]) -> T
 where
     T: std::ops::Mul<Output = T> + std::ops::Add<Output = T> + Copy,
 {
@@ -40,7 +50,7 @@ where
     [v[0] * linv, v[1] * linv, v[2] * linv]
 }
 
-pub fn cross_mut_<T>(vo: &mut [T; 3], v1: &[T; 3], v2: &[T; 3])
+pub fn cross_mut<T>(vo: &mut [T; 3], v1: &[T; 3], v2: &[T; 3])
 where
     T: std::ops::Mul<Output = T> + std::ops::Sub<Output = T> + Copy,
 {

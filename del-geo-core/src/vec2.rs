@@ -17,6 +17,12 @@ where
     Some([v[0] / v[2], v[0] / v[2]])
 }
 
+pub fn length<Real>(p: &[Real;2]) -> Real
+where Real: num_traits::Float
+{
+    (p[0]*p[0]+p[1]*p[1]).sqrt()
+}
+
 // -------------------------------
 
 pub struct XY<'a, Real> {

@@ -16,3 +16,6 @@ rand = {workspace = true}
 arrayref = {workspace = true}
 array-macro = {workspace = true}
 
+[dev-dependencies]
+nalgebra = {workspace = true}
+

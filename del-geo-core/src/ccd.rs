@@ -1,5 +1,4 @@
 //! methods related to Continuous Collision Detection (CCD)
-//!
 
 use num_traits::AsPrimitive;
 

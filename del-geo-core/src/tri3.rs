@@ -49,7 +49,7 @@ where
 {
     let na = normal(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
-    crate::vec3::squared_norm_(&na).sqrt() * half
+    crate::vec3::squared_norm(&na).sqrt() * half
 }
 
 pub fn unit_normal_area<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> ([T; 3], T)
@@ -82,12 +82,12 @@ where
             v1[2] * v2[0] - v2[2] * v1[0],
             v1[0] * v2[1] - v2[0] * v1[1],
         ];
-        vec3::squared_norm_(&na).sqrt() * half
+        vec3::squared_norm(&na).sqrt() * half
     };
     let tmp: T = onefourth / area;
-    let l0 = vec3::squared_norm_(&v0);
-    let l1 = vec3::squared_norm_(&v1);
-    let l2 = vec3::squared_norm_(&v2);
+    let l0 = vec3::squared_norm(&v0);
+    let l1 = vec3::squared_norm(&v1);
+    let l2 = vec3::squared_norm(&v2);
     [
         (l1 + l2 - l0) * tmp, // cot0 = cos0/sin0 = {(l1*l1+l2*l2-l0*l0)/(2*l1*l2)} / {2*area/(l1*l2)}
         (l2 + l0 - l1) * tmp, // cot1 = cos1/sin1 = {(l2*l2+l0*l0-l1*l1)/(2*l2*l0)} / {2*area/(l2*l0)}
@@ -190,5 +190,18 @@ where
 
     pub fn area(&self) -> Real {
         area(self.p0, self.p1, self.p2)
+    }
+
+    pub fn normal(&self) -> [Real; 3] {
+        normal(self.p0, self.p1, self.p2)
+    }
+
+    pub fn position_from_barycentric_coordinates(&self, r0: Real, r1: Real) -> [Real;3] {
+        let r2 = Real::one() - r0 - r1;
+        [
+            r0 * self.p0[0] + r1 * self.p1[0] + r2 * self.p2[0],
+            r0 * self.p0[1] + r1 * self.p1[1] + r2 * self.p2[1],
+            r0 * self.p0[2] + r1 * self.p1[2] + r2 * self.p2[2]
+        ]
     }
 }
