@@ -15,7 +15,9 @@ num-traits = {workspace = true}
 rand = {workspace = true}
 arrayref = {workspace = true}
 array-macro = {workspace = true}
+ordered-float = {workspace = true}
 
 [dev-dependencies]
 nalgebra = {workspace = true}
+del-geo-nalgebra = { path="../del-geo-nalgebra"}
 

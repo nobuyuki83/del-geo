@@ -4,16 +4,12 @@ use num_traits::AsPrimitive;
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 
-pub fn from_point<T>(p: &[T;2], rad: T) -> [T;4]
-where T: num_traits::Float
+pub fn from_point<T>(p: &[T; 2], rad: T) -> [T; 4]
+where
+    T: num_traits::Float,
 {
-    assert!(rad>=T::zero());
-    [
-        p[0]-rad,
-        p[1]-rad,
-        p[0]+rad,
-        p[1]+rad,
-    ]
+    assert!(rad >= T::zero());
+    [p[0] - rad, p[1] - rad, p[0] + rad, p[1] + rad]
 }
 
 pub fn from_two_points<T>(p0: &[T; 2], p1: &[T; 2], rad: T) -> [T; 4]
@@ -44,14 +40,15 @@ where
     o
 }
 
-pub fn add_point<T>(aabb2: &mut [T;4], p: &[T;2], rad: T)
-where T: num_traits::Float
+pub fn add_point<T>(aabb2: &mut [T; 4], p: &[T; 2], rad: T)
+where
+    T: num_traits::Float,
 {
-    assert!(rad>=T::zero());
-    aabb2[0] = aabb2[0].min(p[0]-rad);
-    aabb2[1] = aabb2[1].min(p[1]-rad);
-    aabb2[2] = aabb2[2].max(p[0]+rad);
-    aabb2[3] = aabb2[3].max(p[1]+rad);
+    assert!(rad >= T::zero());
+    aabb2[0] = aabb2[0].min(p[0] - rad);
+    aabb2[1] = aabb2[1].min(p[1] - rad);
+    aabb2[2] = aabb2[2].max(p[0] + rad);
+    aabb2[3] = aabb2[3].max(p[1] + rad);
 }
 
 pub fn rasterize<T>(aabb: &[T; 4], img_size: &(usize, usize)) -> [usize; 4]
@@ -145,62 +142,74 @@ fn test_to_transformation_world2unit_ortho_preserve_asp() {
     }
 }
 
-pub fn is_inlcude_point<Real>(aabb: &[Real;4], p: &[Real;2]) -> bool
-    where Real: num_traits::Float
+pub fn is_inlcude_point<Real>(aabb: &[Real; 4], p: &[Real; 2]) -> bool
+where
+    Real: num_traits::Float,
 {
-    if p[0] < aabb[0] { return false; }
-    if p[1] < aabb[1] { return false; }
-    if p[0] > aabb[2] { return false; }
-    if p[1] > aabb[3] { return false; }
-    return true
+    if p[0] < aabb[0] {
+        return false;
+    }
+    if p[1] < aabb[1] {
+        return false;
+    }
+    if p[0] > aabb[2] {
+        return false;
+    }
+    if p[1] > aabb[3] {
+        return false;
+    }
+    return true;
 }
 
 /// https://iquilezles.org/articles/distfunctions2d/
-pub fn sdf<Real>(aabb: &[Real;4], p: &[Real;2]) -> Real
-where Real: num_traits::Float
+pub fn sdf<Real>(aabb: &[Real; 4], p: &[Real; 2]) -> Real
+where
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
     let half = one / (one + one);
     let c = center(&aabb);
-    let b = [(aabb[2]-aabb[0])*half, (aabb[3]-aabb[1])*half];
-    let p = [p[0]-c[0], p[1]-c[1]];
-    let d = [p[0].abs()-b[0],p[1].abs()-b[1]];
-    crate::vec2::length(&[d[0].max(zero),d[1].max(zero)]) + d[0].max(d[1]).min(zero)
+    let b = [(aabb[2] - aabb[0]) * half, (aabb[3] - aabb[1]) * half];
+    let p = [p[0] - c[0], p[1] - c[1]];
+    let d = [p[0].abs() - b[0], p[1].abs() - b[1]];
+    crate::vec2::length(&[d[0].max(zero), d[1].max(zero)]) + d[0].max(d[1]).min(zero)
 }
 
 #[test]
 pub fn test_sdf() {
-    let aabb: [f64;4] = [0.2, 0.4, 3.0, 4.0];
-    assert!( (sdf(&aabb, &[0.2, 0.4])-0.0)<1.0e-8 );
-    assert!( (sdf(&aabb, &[0.0, 0.0])-(0.2f64*0.2+0.4*0.4).sqrt())<1.0e-8 );
-    assert!( (sdf(&aabb, &[1.6, 2.2])+1.4)<1.0e-8 );
-    assert!( sdf(&aabb, &[0.2, 2.0]).abs()<1.0e-8 );
-    assert!( (sdf(&aabb, &[0.4, 2.0])+0.2).abs()<1.0e-8 );
-    assert!( (sdf(&aabb, &[0.0, 2.0])-0.2).abs()<1.0e-8 );
+    let aabb: [f64; 4] = [0.2, 0.4, 3.0, 4.0];
+    assert!((sdf(&aabb, &[0.2, 0.4]) - 0.0) < 1.0e-8);
+    assert!((sdf(&aabb, &[0.0, 0.0]) - (0.2f64 * 0.2 + 0.4 * 0.4).sqrt()) < 1.0e-8);
+    assert!((sdf(&aabb, &[1.6, 2.2]) + 1.4) < 1.0e-8);
+    assert!(sdf(&aabb, &[0.2, 2.0]).abs() < 1.0e-8);
+    assert!((sdf(&aabb, &[0.4, 2.0]) + 0.2).abs() < 1.0e-8);
+    assert!((sdf(&aabb, &[0.0, 2.0]) - 0.2).abs() < 1.0e-8);
 }
 
-pub fn scale<Real>(aabb: &[Real;4], s: Real) -> [Real;4]
-where Real: num_traits::Float
+pub fn scale<Real>(aabb: &[Real; 4], s: Real) -> [Real; 4]
+where
+    Real: num_traits::Float,
 {
     let one = Real::one();
-    let half =  one / (one+one);
+    let half = one / (one + one);
     [
-        (aabb[0]+aabb[2])*half-(aabb[2]-aabb[0])*half*s,
-        (aabb[1]+aabb[3])*half-(aabb[3]-aabb[1])*half*s,
-        (aabb[0]+aabb[2])*half+(aabb[2]-aabb[0])*half*s,
-        (aabb[1]+aabb[3])*half+(aabb[3]-aabb[1])*half*s,
+        (aabb[0] + aabb[2]) * half - (aabb[2] - aabb[0]) * half * s,
+        (aabb[1] + aabb[3]) * half - (aabb[3] - aabb[1]) * half * s,
+        (aabb[0] + aabb[2]) * half + (aabb[2] - aabb[0]) * half * s,
+        (aabb[1] + aabb[3]) * half + (aabb[3] - aabb[1]) * half * s,
     ]
 }
 
-pub fn translate<Real>(aabb: &[Real;4], t: &[Real;2]) -> [Real;4]
-    where Real: num_traits::Float
+pub fn translate<Real>(aabb: &[Real; 4], t: &[Real; 2]) -> [Real; 4]
+where
+    Real: num_traits::Float,
 {
     [
         aabb[0] + t[0],
         aabb[1] + t[1],
         aabb[2] + t[0],
-        aabb[3] + t[1]
+        aabb[3] + t[1],
     ]
 }
 

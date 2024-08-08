@@ -1,5 +1,39 @@
 use num_traits::AsPrimitive;
 
+pub fn from_array<T>(v: &[T; 3]) -> nalgebra::Vector3<T>
+where
+    T: nalgebra::RealField + Copy,
+{
+    nalgebra::Vector3::<T>::new(v[0], v[1], v[2])
+}
+
+pub fn from_homogeneous<T>(v: &nalgebra::Vector4<T>) -> Option<nalgebra::Vector3<T>>
+where
+    T: Copy + nalgebra::RealField,
+{
+    if v[3].is_zero() {
+        return None;
+    }
+    Some(nalgebra::Vector3::<T>::new(
+        v[0] / v[3],
+        v[1] / v[3],
+        v[2] / v[3],
+    ))
+}
+
+pub fn from_basis<T>(idim: usize, mag: T) -> nalgebra::Vector3<T>
+where
+    T: nalgebra::RealField + Copy,
+{
+    let zero = T::zero();
+    match idim {
+        0 => nalgebra::Vector3::<T>::new(mag, zero, zero),
+        1 => nalgebra::Vector3::<T>::new(zero, mag, zero),
+        2 => nalgebra::Vector3::<T>::new(zero, zero, mag),
+        _ => panic!(),
+    }
+}
+
 pub fn scalar_triple_product<T>(
     a: &nalgebra::Vector3<T>,
     b: &nalgebra::Vector3<T>,
@@ -46,18 +80,4 @@ where
         *v = rng.gen();
     }
     p0
-}
-
-pub fn from_homogeneous<T>(v: &nalgebra::Vector4<T>) -> Option<nalgebra::Vector3<T>>
-where
-    T: Copy + nalgebra::RealField,
-{
-    if v[3].is_zero() {
-        return None;
-    }
-    Some(nalgebra::Vector3::<T>::new(
-        v[0] / v[3],
-        v[1] / v[3],
-        v[2] / v[3],
-    ))
 }

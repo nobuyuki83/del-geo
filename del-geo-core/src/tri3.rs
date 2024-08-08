@@ -196,12 +196,12 @@ where
         normal(self.p0, self.p1, self.p2)
     }
 
-    pub fn position_from_barycentric_coordinates(&self, r0: Real, r1: Real) -> [Real;3] {
+    pub fn position_from_barycentric_coordinates(&self, r0: Real, r1: Real) -> [Real; 3] {
         let r2 = Real::one() - r0 - r1;
         [
             r0 * self.p0[0] + r1 * self.p1[0] + r2 * self.p2[0],
             r0 * self.p0[1] + r1 * self.p1[1] + r2 * self.p2[1],
-            r0 * self.p0[2] + r1 * self.p1[2] + r2 * self.p2[2]
+            r0 * self.p0[2] + r1 * self.p1[2] + r2 * self.p2[2],
         ]
     }
 }

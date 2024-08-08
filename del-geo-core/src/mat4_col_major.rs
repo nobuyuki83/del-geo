@@ -5,8 +5,8 @@ use std::ops::AddAssign;
 use num_traits::AsPrimitive;
 
 pub fn transform_homogeneous<Real>(transform: &[Real; 16], x: &[Real; 3]) -> Option<[Real; 3]>
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     let y3 = transform[3] * x[0] + transform[7] * x[1] + transform[11] * x[2] + transform[15];
     if y3.is_zero() {
@@ -20,8 +20,8 @@ pub fn transform_homogeneous<Real>(transform: &[Real; 16], x: &[Real; 3]) -> Opt
 }
 
 pub fn transform_vector<Real>(transform: &[Real; 16], x: &[Real; 3]) -> [Real; 3]
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     let y0 = transform[0] * x[0] + transform[4] * x[1] + transform[8] * x[2];
     let y1 = transform[1] * x[0] + transform[5] * x[1] + transform[9] * x[2];
@@ -30,8 +30,8 @@ pub fn transform_vector<Real>(transform: &[Real; 16], x: &[Real; 3]) -> [Real; 3
 }
 
 pub fn identity<Real>() -> [Real; 16]
-    where
-        Real: num_traits::Zero + num_traits::One + Copy,
+where
+    Real: num_traits::Zero + num_traits::One + Copy,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -41,8 +41,8 @@ pub fn identity<Real>() -> [Real; 16]
 }
 
 pub fn diagonal<Real>(m11: Real, m22: Real, m33: Real, m44: Real) -> [Real; 16]
-    where
-        Real: num_traits::Zero + Copy,
+where
+    Real: num_traits::Zero + Copy,
 {
     let zero = Real::zero();
     [
@@ -51,8 +51,8 @@ pub fn diagonal<Real>(m11: Real, m22: Real, m33: Real, m44: Real) -> [Real; 16]
 }
 
 pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
-    where
-        Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
+where
+    Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
 {
     crate::matn::try_inverse::<Real, 4, 16>(b)
 }
@@ -63,9 +63,9 @@ pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
 /// * near - distancd to the near clipping planne (>0)
 /// * far - distance  to the far clipping plane (>0)
 pub fn camera_perspective_blender<Real>(asp: Real, lens: Real, near: Real, far: Real) -> [Real; 16]
-    where
-        Real: num_traits::Float + 'static,
-        f64: AsPrimitive<Real>,
+where
+    Real: num_traits::Float + 'static,
+    f64: AsPrimitive<Real>,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -104,9 +104,9 @@ pub fn camera_external_blender<Real>(
     cam_rot_y_deg: Real,
     cam_rot_z_deg: Real,
 ) -> [Real; 16]
-    where
-        Real: num_traits::Float + num_traits::FloatConst + 'static + AddAssign,
-        f64: AsPrimitive<Real>,
+where
+    Real: num_traits::Float + num_traits::FloatConst + 'static + AddAssign,
+    f64: AsPrimitive<Real>,
 {
     let deg2rad: Real = Real::PI() / 180.0.as_();
     let transl =
@@ -120,8 +120,8 @@ pub fn camera_external_blender<Real>(
 }
 
 pub fn translate<Real>(v: &[Real; 3]) -> [Real; 16]
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -131,8 +131,8 @@ pub fn translate<Real>(v: &[Real; 3]) -> [Real; 16]
 }
 
 pub fn multmat<Real>(a: &[Real; 16], b: &[Real; 16]) -> [Real; 16]
-    where
-        Real: num_traits::Float + std::ops::AddAssign,
+where
+    Real: num_traits::Float + std::ops::AddAssign,
 {
     let mut o = [Real::zero(); 16];
     for i in 0..4 {
@@ -148,10 +148,8 @@ pub fn multmat<Real>(a: &[Real; 16], b: &[Real; 16]) -> [Real; 16]
 #[test]
 fn test_inverse_multmat() {
     let a: [f64; 16] = [
-        1., 3., 4., 8.,
-        3., 5., 5., 2.,
-        5., 7., 8., 9.,
-        8., 4., 5., 0.];
+        1., 3., 4., 8., 3., 5., 5., 2., 5., 7., 8., 9., 8., 4., 5., 0.,
+    ];
     let ainv = try_inverse(&a).unwrap();
     let ainv_a = multmat(&ainv, &a);
     for i in 0..4 {
@@ -166,8 +164,8 @@ fn test_inverse_multmat() {
 }
 
 pub fn rot_x<Real>(theta: Real) -> [Real; 16]
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -179,8 +177,8 @@ pub fn rot_x<Real>(theta: Real) -> [Real; 16]
 }
 
 pub fn rot_y<Real>(theta: Real) -> [Real; 16]
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -192,8 +190,8 @@ pub fn rot_y<Real>(theta: Real) -> [Real; 16]
 }
 
 pub fn rot_z<Real>(theta: Real) -> [Real; 16]
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -203,4 +201,3 @@ pub fn rot_z<Real>(theta: Real) -> [Real; 16]
         c, s, zero, zero, -s, c, zero, zero, zero, zero, one, zero, zero, zero, zero, one,
     ]
 }
-

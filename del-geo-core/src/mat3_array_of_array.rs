@@ -64,13 +64,13 @@ where
 fn test_inverse_matmul() {
     let a = [[0., 2., 4.], [3., 5., 4.], [6., 7., 8.]];
     let ainv = inverse(&a);
-    let ainv_a: [[f64;3];3] = matmul(&ainv, &a);
+    let ainv_a: [[f64; 3]; 3] = matmul(&ainv, &a);
     for i in 0..3 {
         for j in 0..3 {
             if i == j {
-                assert!((1.0-ainv_a[i][j]).abs()<1.0e-5f64);
+                assert!((1.0 - ainv_a[i][j]).abs() < 1.0e-5f64);
             } else {
-                assert!(ainv_a[i][j].abs()<1.0e-5f64);
+                assert!(ainv_a[i][j].abs() < 1.0e-5f64);
             }
         }
     }
