@@ -158,7 +158,7 @@ where
     if p[1] > aabb[3] {
         return false;
     }
-    return true;
+    true
 }
 
 /// https://iquilezles.org/articles/distfunctions2d/
@@ -169,7 +169,7 @@ where
     let zero = Real::zero();
     let one = Real::one();
     let half = one / (one + one);
-    let c = center(&aabb);
+    let c = center(aabb);
     let b = [(aabb[2] - aabb[0]) * half, (aabb[3] - aabb[1]) * half];
     let p = [p[0] - c[0], p[1] - c[1]];
     let d = [p[0].abs() - b[0], p[1].abs() - b[1]];

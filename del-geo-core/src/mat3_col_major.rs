@@ -10,14 +10,11 @@ where
     [s[0], zero, zero, zero, s[1], zero, zero, zero, s[2]]
 }
 
-pub fn from_column_vectors<Real>(x: &[Real;3], y: &[Real;3], z: &[Real;3]) -> [Real;9]
-where Real: Copy
+pub fn from_column_vectors<Real>(x: &[Real; 3], y: &[Real; 3], z: &[Real; 3]) -> [Real; 9]
+where
+    Real: Copy,
 {
-    [
-        x[0], x[1], x[2],
-        y[0], y[1], y[2],
-        z[0], z[1], z[2]
-    ]
+    [x[0], x[1], x[2], y[0], y[1], y[2], z[0], z[1], z[2]]
 }
 
 pub fn try_inverse<T>(b: &[T; 9]) -> Option<[T; 9]>
@@ -102,8 +99,8 @@ where
 }
 
 pub fn mult_mat_row_major<Real>(a: &[Real; 9], b: &[Real; 9]) -> [Real; 9]
-    where
-        Real: num_traits::Float + AddAssign,
+where
+    Real: num_traits::Float + AddAssign,
 {
     let mut r = [Real::zero(); 9];
     for i in 0..3 {
@@ -145,7 +142,7 @@ where
     let imax = (0usize..4usize)
         .max_by_key(|&a| ordered_float::OrderedFloat(dias[a]))
         .unwrap();
-    assert!(dias[0] <= dias[imax]);
+    assert!(dias[0] <= dias[imax], "{:?} {}", dias, imax);
     assert!(dias[1] <= dias[imax]);
     assert!(dias[2] <= dias[imax]);
     assert!(dias[3] <= dias[imax]);
@@ -159,7 +156,7 @@ where
             quat[k] = smat[imax * 4 + k] * one4th / quat[imax];
         }
     }
-    return quat;
+    quat
 }
 
 #[test]

@@ -1,7 +1,8 @@
 //! symmetric matrix [[a,b],[b,c]] parameterized as [a,b,c]
 
-pub fn mult_mat_sym<Real>(a: &[Real; 3], b: &[Real; 3]) -> [Real;4]
-    where Real: num_traits::Float
+pub fn mult_mat_sym<Real>(a: &[Real; 3], b: &[Real; 3]) -> [Real; 4]
+where
+    Real: num_traits::Float,
 {
     [
         a[0] * b[0] + a[1] * b[1],
@@ -11,34 +12,86 @@ pub fn mult_mat_sym<Real>(a: &[Real; 3], b: &[Real; 3]) -> [Real;4]
     ]
 }
 
-pub fn inverse<Real>(coeff: &[Real; 3]) -> Option<[Real;3]>
-where Real: num_traits::Float
+pub fn inverse<Real>(coeff: &[Real; 3]) -> Option<[Real; 3]>
+where
+    Real: num_traits::Float,
 {
     let a = coeff[0];
     let b = coeff[1];
     let c = coeff[2];
     let det = a * c - b * b;
     if det.is_zero() {
-        return None
+        return None;
     }
     let di = Real::one() / det;
-    Some([di*c,-di*b, di*a])
+    Some([di * c, -di * b, di * a])
 }
 
 #[test]
 fn test_inverse() {
     let a = [2.1, 0.1, 0.5];
     let ai = inverse(&a).unwrap();
-    let aia = mult_mat_sym(&ai,&a);
-    let diff = nalgebra::Vector4::<f32>::from_column_slice(&aia) - nalgebra::Vector4::<f32>::new(1., 0., 0.,1.);
-    assert!(diff.norm()<1.0e-7);
+    let aia = mult_mat_sym(&ai, &a);
+    let diff = nalgebra::Vector4::<f32>::from_column_slice(&aia)
+        - nalgebra::Vector4::<f32>::new(1., 0., 0., 1.);
+    assert!(diff.norm() < 1.0e-7);
 }
 
+pub fn safe_inverse<Real>(coeff: &[Real; 3]) -> [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    let a = coeff[0];
+    let b = coeff[1];
+    let c = coeff[2];
+    let det = a * c - b * b;
+    if det.abs() <= Real::epsilon() {
+        let l = Real::one() / Real::epsilon();
+        let a1 = a + Real::epsilon();
+        let c1 = c + Real::epsilon();
+        return [c1 * l, -b * l, a1 * l];
+    }
+    let di = Real::one() / det;
+    [di * c, -di * b, di * a]
+}
+
+pub fn safe_inverse_preserve_positive_definiteness<Real>(abc: &[Real; 3], eps: Real) -> [Real; 3]
+where
+    Real: num_traits::Float + std::fmt::Display,
+{
+    assert!(
+        abc[0] + abc[2] > Real::zero(),
+        "{} {} {}",
+        abc[0] + abc[2],
+        abc[0],
+        abc[2]
+    );
+    let eig_min = (abc[0] + abc[2]) * eps;
+    if (abc[0] * abc[2] - abc[1] * abc[1]).abs() < eig_min {
+        // one of the eigen value is nearly zero
+        //let one = Real::one();
+        let one = Real::one();
+        let (e, v) = crate::mat2_sym::prinsipal_directions(abc);
+        // println!("　　　sig: {:?} {} {}",e, abc[0]*abc[2]-abc[1]*abc[1], abc[0]+abc[2]);
+        let e0inv = one / (e[0] + eps);
+        let e1inv = one / (e[1] + eps);
+        [
+            e0inv * v[0][0] * v[0][0] + e1inv * v[1][0] * v[1][0],
+            e0inv * v[0][1] * v[0][0] + e1inv * v[1][1] * v[1][0],
+            e0inv * v[0][1] * v[0][1] + e1inv * v[1][1] * v[1][1],
+        ]
+        // let (e,v) = del_geo_core::mat2_sym::prinsipal_directions(&xyz);
+        // println!("　　　siginv: {:?}",e);
+        //xyz
+    } else {
+        crate::mat2_sym::safe_inverse(abc)
+    }
+}
 
 /// ax^2 + 2bxy + cy^2 = 1
 pub fn prinsipal_directions<Real>(coeff: &[Real; 3]) -> ([Real; 2], [[Real; 2]; 2])
 where
-    Real: num_traits::Float + std::fmt::Debug,
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -149,18 +202,22 @@ fn test_prinsipal_directions() {
 /// used for 3D Gaussian splatting
 /// # return
 /// sigma, Dsigma/Ddiarot (3x6)
-pub fn wdw_projected_spd_mat3<Real>(p_mat: &[Real; 6], quat0: &[Real; 4], d: &[Real; 3]) -> ([Real;3], [[Real;6];3])
+pub fn wdw_projected_spd_mat3<Real>(
+    p_mat: &[Real; 6],
+    quat0: &[Real; 4],
+    d: &[Real; 3],
+) -> ([Real; 3], [[Real; 6]; 3])
 where
     Real: num_traits::Float + std::ops::AddAssign,
 {
     let two = Real::one() + Real::one();
     let r = crate::quat::to_mat3_col_major(quat0);
     let pr = crate::mat2x3_col_major::mult_vec3(p_mat, &r);
-    let dd = [d[0]*d[0], d[1]*d[1], d[2]*d[2]];
+    let dd = [d[0] * d[0], d[1] * d[1], d[2] * d[2]];
     let a = pr[0] * pr[0] * dd[0] + pr[2] * pr[2] * dd[1] + pr[4] * pr[4] * dd[2];
     let b = pr[0] * pr[1] * dd[0] + pr[2] * pr[3] * dd[1] + pr[4] * pr[5] * dd[2];
     let c = pr[1] * pr[1] * dd[0] + pr[3] * pr[3] * dd[1] + pr[5] * pr[5] * dd[2];
-    let mut dsdt = [[Real::zero();6];3];
+    let mut dsdt = [[Real::zero(); 6]; 3];
     dsdt[0][0] = pr[0] * pr[0] * two * d[0];
     dsdt[1][0] = pr[0] * pr[1] * two * d[0];
     dsdt[2][0] = pr[1] * pr[1] * two * d[0];
@@ -179,10 +236,11 @@ where
         r[5] * dd[1],
         r[6] * dd[2],
         r[7] * dd[2],
-        r[8] * dd[2] ];
+        r[8] * dd[2],
+    ];
     let rddrt = crate::mat3_col_major::mult_mat_row_major(&rdd, &r);
-    let p0 = [p_mat[0+2*0], p_mat[0+2*1], p_mat[0+2*2]];
-    let p1 = [p_mat[1+2*0], p_mat[1+2*1], p_mat[1+2*2]];
+    let p0 = [p_mat[0], p_mat[2], p_mat[4]];
+    let p1 = [p_mat[1], p_mat[3], p_mat[5]];
     let rddrtp0 = crate::mat3_col_major::mult_vec(&rddrt, &p0);
     let rddrtp1 = crate::mat3_col_major::mult_vec(&rddrt, &p1);
     let p0ddrtp0 = crate::vec3::cross(&p0, &rddrtp0);
@@ -190,11 +248,11 @@ where
     let p1ddrtp0 = crate::vec3::cross(&p1, &rddrtp0);
     let p1ddrtp1 = crate::vec3::cross(&p1, &rddrtp1);
     for i in 0..3 {
-        dsdt[0][3+i] = -two * p0ddrtp0[i];
-        dsdt[1][3+i] = -p1ddrtp0[i] - p0ddrtp1[i];
-        dsdt[2][3+i] = -two * p1ddrtp1[i];
+        dsdt[0][3 + i] = -two * p0ddrtp0[i];
+        dsdt[1][3 + i] = -p1ddrtp0[i] - p0ddrtp1[i];
+        dsdt[2][3 + i] = -two * p1ddrtp1[i];
     }
-    ([a,b,c],dsdt)
+    ([a, b, c], dsdt)
 }
 
 #[test]
@@ -211,9 +269,9 @@ fn test_wdw_projected_spd_mat3() {
     let s0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&s0_mat);
     {
         let sigma0 = p_mat * r0_mat * s0_mat * s0_mat * r0_mat.transpose() * p_mat.transpose();
-        assert!((abc[0]-sigma0.m11).abs()<1.0e-5);
-        assert!((abc[1]-sigma0.m12).abs()<1.0e-5);
-        assert!((abc[2]-sigma0.m22).abs()<1.0e-5);
+        assert!((abc[0] - sigma0.m11).abs() < 1.0e-5);
+        assert!((abc[1] - sigma0.m12).abs() < 1.0e-5);
+        assert!((abc[2] - sigma0.m22).abs() < 1.0e-5);
     }
     let eps: Real = 1.0e-5;
     for i in 0..3 {
@@ -258,25 +316,23 @@ fn test_wdw_projected_spd_mat3() {
         let a_ri_diff = (sigma1.m11 - abc[0]) / eps;
         let b_ri_diff = (sigma1.m12 - abc[1]) / eps;
         let c_ri_diff = (sigma1.m22 - abc[2]) / eps;
-        let a_ri_ana = dabcdt[0][3+i];
-        let b_ri_ana = dabcdt[1][3+i];
-        let c_ri_ana = dabcdt[2][3+i];
+        let a_ri_ana = dabcdt[0][3 + i];
+        let b_ri_ana = dabcdt[1][3 + i];
+        let c_ri_ana = dabcdt[2][3 + i];
         dbg!(a_ri_diff, a_ri_ana);
         dbg!(c_ri_diff, c_ri_ana);
         dbg!(b_ri_diff, b_ri_ana);
     }
 }
 
-
-pub fn wdw_inverse<Real, const N: usize>(abc: &[Real; 3], dabcdt: &[[Real;N];3]) -> ([Real;3], [[Real;N];3])
-    where
-        Real: num_traits::Float + std::ops::AddAssign,
+pub fn wdw_inverse<Real, const N: usize>(dabcdt: &[[Real; N]; 3], xyz: &[Real; 3]) -> [[Real; N]; 3]
+where
+    Real: num_traits::Float + std::ops::AddAssign + std::fmt::Debug,
 {
     let one = Real::one();
     let two = one + one;
-    let xyz = inverse(&abc).unwrap();
-    let (x,y,z) = (xyz[0], xyz[1], xyz[2]);
-    let mut dxyzdt = [[Real::zero();N];3];
+    let (x, y, z) = (xyz[0], xyz[1], xyz[2]);
+    let mut dxyzdt = [[Real::zero(); N]; 3];
     for i in 0..N {
         let da = -dabcdt[0][i];
         let db = -dabcdt[1][i];
@@ -285,9 +341,8 @@ pub fn wdw_inverse<Real, const N: usize>(abc: &[Real; 3], dabcdt: &[[Real;N];3])
         dxyzdt[1][i] = x * da * y + z * db * x + y * db * y + y * dc * z;
         dxyzdt[2][i] = y * da * y + two * z * db * y + z * dc * z;
     }
-    (xyz,dxyzdt)
+    dxyzdt
 }
-
 
 #[test]
 fn test_wdw_inv_projected_spd_mat3() {
@@ -295,8 +350,9 @@ fn test_wdw_inv_projected_spd_mat3() {
     let p_mat = [1., 2., 4., 3., 2., 0.];
     let quat0 = crate::quat::normalized(&[-3., -2., 0., -1.]);
     let s0_mat = [0.1, 3.0, 1.0];
-    let (abc,dabcdt) = wdw_projected_spd_mat3(&p_mat, &quat0, &s0_mat);
-    let (xyz, dxyzdt) = wdw_inverse(&abc, &dabcdt);
+    let (abc, dabcdt) = wdw_projected_spd_mat3(&p_mat, &quat0, &s0_mat);
+    let xyz = safe_inverse(&abc);
+    let dxyzdt = wdw_inverse(&dabcdt, &xyz);
     let p_mat = nalgebra::Matrix2x3::<Real>::from_column_slice(&p_mat);
     let r0_mat = crate::quat::to_mat3_col_major(&quat0);
     let r0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&r0_mat);
@@ -305,9 +361,9 @@ fn test_wdw_inv_projected_spd_mat3() {
     {
         let sigma0 = p_mat * r0_mat * s0_mat * s0_mat * r0_mat.transpose() * p_mat.transpose();
         let sigma0inv = sigma0.try_inverse().unwrap();
-        assert!((xyz[0]-sigma0inv.m11).abs()<1.0e-5);
-        assert!((xyz[1]-sigma0inv.m12).abs()<1.0e-5);
-        assert!((xyz[2]-sigma0inv.m22).abs()<1.0e-5);
+        assert!((xyz[0] - sigma0inv.m11).abs() < 1.0e-5);
+        assert!((xyz[1] - sigma0inv.m12).abs() < 1.0e-5);
+        assert!((xyz[2] - sigma0inv.m22).abs() < 1.0e-5);
     }
     let eps: Real = 1.0e-5;
     for i in 0..3 {
@@ -354,9 +410,9 @@ fn test_wdw_inv_projected_spd_mat3() {
         let x_ri_diff = (sigma1inv.m11 - xyz[0]) / eps;
         let y_ri_diff = (sigma1inv.m12 - xyz[1]) / eps;
         let z_ri_diff = (sigma1inv.m22 - xyz[2]) / eps;
-        let x_ri_ana = dxyzdt[0][3+i];
-        let y_ri_ana = dxyzdt[1][3+i];
-        let z_ri_ana = dxyzdt[2][3+i];
+        let x_ri_ana = dxyzdt[0][3 + i];
+        let y_ri_ana = dxyzdt[1][3 + i];
+        let z_ri_ana = dxyzdt[2][3 + i];
         assert!(
             (x_ri_diff - x_ri_ana).abs() < 1.0e-3,
             "{} {} {}",
@@ -379,4 +435,11 @@ fn test_wdw_inv_projected_spd_mat3() {
             z_ri_diff - z_ri_ana
         );
     }
+}
+
+pub fn mult_vec_from_both_sides<Real>(m: &[Real; 3], b: &[Real; 2], c: &[Real; 2]) -> Real
+where
+    Real: num_traits::Float,
+{
+    m[0] * b[0] * c[0] + m[1] * (b[0] * c[1] + b[1] * c[0]) + m[2] * b[1] * c[1]
 }

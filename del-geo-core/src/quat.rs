@@ -79,3 +79,15 @@ fn hoge() {
     let l = crate::vec3::squared_norm(&x_vec);
     dbg!(&x_vec, l);
 }
+
+pub fn mult_quaternion<Real>(p: &[Real; 4], q: &[Real; 4]) -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
+    [
+        p[3] * q[0] + p[0] * q[3] + p[1] * q[2] - p[2] * q[1],
+        p[3] * q[1] - p[0] * q[2] + p[1] * q[3] + p[2] * q[0],
+        p[3] * q[2] + p[0] * q[1] - p[1] * q[0] + p[2] * q[3],
+        p[3] * q[3] - p[0] * q[0] - p[1] * q[1] - p[2] * q[2],
+    ]
+}
