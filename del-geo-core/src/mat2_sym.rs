@@ -154,7 +154,7 @@ fn test_prinsipal_directions() {
         [4.0, 1.99, 1.0],
     ];
     for mat in mats {
-        let ([lam0, lam1], [evec0, evec1]) = prinsipal_directions::<f32>(&mat);
+        let ([lam0, lam1], [evec0, evec1]) = principal_directions::<f32>(&mat);
         let evec0 = nalgebra::Vector2::<f32>::from_row_slice(&evec0);
         let evec1 = nalgebra::Vector2::<f32>::from_row_slice(&evec1);
         assert!(evec0.norm() > 1.0e-5);
