@@ -71,7 +71,7 @@ where
         // one of the eigen value is nearly zero
         //let one = Real::one();
         let one = Real::one();
-        let (e, v) = crate::mat2_sym::prinsipal_directions(abc);
+        let (e, v) = principal_directions(abc);
         // println!("　　　sig: {:?} {} {}",e, abc[0]*abc[2]-abc[1]*abc[1], abc[0]+abc[2]);
         let e0inv = one / (e[0] + eps);
         let e1inv = one / (e[1] + eps);
@@ -84,12 +84,12 @@ where
         // println!("　　　siginv: {:?}",e);
         //xyz
     } else {
-        crate::mat2_sym::safe_inverse(abc)
+        safe_inverse(abc)
     }
 }
 
 /// ax^2 + 2bxy + cy^2 = 1
-pub fn prinsipal_directions<Real>(coeff: &[Real; 3]) -> ([Real; 2], [[Real; 2]; 2])
+pub fn principal_directions<Real>(coeff: &[Real; 3]) -> ([Real; 2], [[Real; 2]; 2])
 where
     Real: num_traits::Float,
 {
