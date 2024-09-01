@@ -28,3 +28,4 @@ pub mod quat;
 pub mod tet;
 pub mod tri2;
 pub mod tri3;
+pub mod hex;
