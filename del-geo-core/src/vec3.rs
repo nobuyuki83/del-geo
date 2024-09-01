@@ -171,7 +171,7 @@ where
 /// subtracting two 3d vectors
 /// * `a` - 3d vector
 /// * `b` - 3d vector
-/// return a-b
+///   return a-b
 pub fn sub<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
 where
     T: std::ops::Sub<Output = T> + Copy,

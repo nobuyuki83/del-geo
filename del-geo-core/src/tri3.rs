@@ -168,16 +168,13 @@ where
     Some(t)
 }
 
-pub fn barycentric_coords<T>(
-    p0: &[T; 3],
-    p1: &[T; 3],
-    p2: &[T; 3],
-    q: &[T; 3]) -> [T;3]
-where T: num_traits::Float
+pub fn barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
+where
+    T: num_traits::Float,
 {
-    let a0 = area(q,p1,p2);
-    let a1 = area(q,p2,p0);
-    let a2 = area(q,p0,p1);
+    let a0 = area(q, p1, p2);
+    let a1 = area(q, p2, p0);
+    let a2 = area(q, p0, p1);
     let sum_inv = T::one() / (a0 + a1 + a2);
     [a0 * sum_inv, a1 * sum_inv, a2 * sum_inv]
 }

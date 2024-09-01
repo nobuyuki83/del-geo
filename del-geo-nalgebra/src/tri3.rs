@@ -18,7 +18,7 @@ pub struct RayTriangleIntersectionData {
 
 /// ray triangle intersection.
 /// * `dir` - any nonzero vector (not necessary to be a unit vector)
-/// t, u, v: org + t * dir = (1 - u - v) * p0 + u * p1 + v * p2
+///   t, u, v: org + t * dir = (1 - u - v) * p0 + u * p1 + v * p2
 pub fn ray_triangle_intersection(
     org: &nalgebra::Vector3<f32>,
     dir: &nalgebra::Vector3<f32>,
