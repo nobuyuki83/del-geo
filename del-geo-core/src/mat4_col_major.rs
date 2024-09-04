@@ -50,6 +50,17 @@ where
     ]
 }
 
+pub fn scale_uniform<Real>(s: Real) -> [Real; 16]
+    where
+        Real: num_traits::Float
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    [
+        s, zero, zero, zero, zero, s, zero, zero, zero, zero, s, zero, zero, zero, zero, one,
+    ]
+}
+
 pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
 where
     Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
@@ -59,43 +70,63 @@ where
 
 /// perspective transformation matrix (column major) compatible with blender
 /// * asp - aspect ratio (width / height)
-/// * lens - the forcus distance (unit: mm) where the sensor size for longet edge is 18*2 mm.
-/// * near - distancd to the near clipping planne (>0)
+/// * lens - the focus distance (unit: mm) where the sensor size for longest edge is 18*2 mm.
+/// * near - distance to the near clipping plane (>0)
 /// * far - distance  to the far clipping plane (>0)
-pub fn camera_perspective_blender<Real>(asp: Real, lens: Real, near: Real, far: Real) -> [Real; 16]
+/// * proj_direction - projection direction
+///     * true: projection from +Z
+///     * false: projection from -Z
+pub fn camera_perspective_blender<Real>(
+    asp: Real,
+    lens: Real,
+    near: Real,
+    far: Real,
+    proj_direction: bool,
+) -> [Real; 16]
 where
-    Real: num_traits::Float + 'static,
+    Real: num_traits::Float + 'static + std::ops::AddAssign,
     f64: AsPrimitive<Real>,
 {
-    let zero = Real::zero();
-    let one = Real::one();
-    let (a, b) = if asp < one {
-        (one / asp, one)
+    if proj_direction {
+        let zero = Real::zero();
+        let one = Real::one();
+        let (a, b) = if asp < one {
+            (one / asp, one)
+        } else {
+            (one, asp)
+        };
+        let half_theta = 18f64.as_().atan2(lens);
+        let focus = half_theta.cos() / half_theta.sin();
+        let tmp0 = (near + far) / (near - far);
+        let tmp1 = (one + one) * far * near / (near - far);
+        [
+            -a * focus,
+            zero,
+            zero,
+            zero,
+            zero,
+            -b * focus,
+            zero,
+            zero,
+            zero,
+            zero,
+            tmp0,
+            one,
+            zero,
+            zero,
+            tmp1,
+            zero,
+        ]
     } else {
-        (one, asp)
-    };
-    let half_theta = 18f64.as_().atan2(lens);
-    let focus = half_theta.cos() / half_theta.sin();
-    let tmp0 = (near + far) / (near - far);
-    let tmp1 = (one + one) * far * near / (near - far);
-    [
-        -a * focus,
-        zero,
-        zero,
-        zero,
-        zero,
-        -b * focus,
-        zero,
-        zero,
-        zero,
-        zero,
-        tmp0,
-        one,
-        zero,
-        zero,
-        tmp1,
-        zero,
-    ]
+        let one = Real::one();
+        let zero = Real::zero();
+        let t0 = camera_perspective_blender(asp, lens, -far, -near, true);
+        let cam_zflip: [Real; 16] = [
+            -one, zero, zero, zero, zero, -one, zero, zero, zero, zero, -one, zero, zero, zero,
+            zero, one,
+        ];
+        crate::mat4_col_major::multmat(&t0, &cam_zflip)
+    }
 }
 
 pub fn camera_external_blender<Real>(
