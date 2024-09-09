@@ -121,6 +121,70 @@ where
     ]
 }
 
+pub fn set_as_cube<Real>(aabb: &mut [Real;6], xyz: &[Real;3], eps: Real)
+where Real: num_traits::Float
+{
+    {
+        let cgx = xyz[0];
+        aabb[0] = cgx - eps;
+        aabb[3] = cgx + eps;
+    }
+    {
+        let cgy = xyz[1];
+        aabb[1] = cgy - eps;
+        aabb[4] = cgy + eps;
+    }
+    {
+        let cgz = xyz[2];
+        aabb[2] = cgz - eps;
+        aabb[5] = cgz + eps;
+    }
+}
+
+pub fn update<Real>(aabb: &mut [Real;6], xyz: &[Real;3], eps: Real)
+where Real: num_traits::Float
+{
+    {
+        let cgx = xyz[0];
+        aabb[0] = if cgx - eps < aabb[0] {
+            cgx - eps
+        } else {
+            aabb[0]
+        };
+        aabb[3] = if cgx + eps > aabb[3] {
+            cgx + eps
+        } else {
+            aabb[3]
+        };
+    }
+    {
+        let cgy = xyz[1];
+        aabb[1] = if cgy - eps < aabb[1] {
+            cgy - eps
+        } else {
+            aabb[1]
+        };
+        aabb[4] = if cgy + eps > aabb[4] {
+            cgy + eps
+        } else {
+            aabb[4]
+        };
+    }
+    {
+        let cgz = xyz[2];
+        aabb[2] = if cgz - eps < aabb[2] {
+            cgz - eps
+        } else {
+            aabb[2]
+        };
+        aabb[5] = if cgz + eps > aabb[5] {
+            cgz + eps
+        } else {
+            aabb[5]
+        };
+    }
+}
+
 // --------------------------
 
 pub type AABB3<'a, Real> = crate::aabb::AABB<'a, Real, 3, 6>;
