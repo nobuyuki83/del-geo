@@ -201,3 +201,13 @@ where
     let c0 = t0 * half / t0.sin();
     [c0 * (m[5] - m[7]), c0 * (m[6] - m[2]), c0 * (m[1] - m[3])]
 }
+
+pub fn determinant<Real>(b: &[Real; 9]) -> Real
+where Real: num_traits::Float
+{
+    let det = b[0] * b[4] * b[8] + b[3] * b[7] * b[2] + b[6] * b[1] * b[5]
+        - b[0] * b[7] * b[5]
+        - b[6] * b[4] * b[2]
+        - b[3] * b[1] * b[8];
+    det
+}
