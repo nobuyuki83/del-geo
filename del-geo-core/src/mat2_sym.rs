@@ -212,7 +212,7 @@ where
 {
     let two = Real::one() + Real::one();
     let r = crate::quat::to_mat3_col_major(quat0);
-    let pr = crate::mat2x3_col_major::mult_vec3(p_mat, &r);
+    let pr = crate::mat2x3_col_major::mult_mat3_col_major(p_mat, &r);
     let dd = [d[0] * d[0], d[1] * d[1], d[2] * d[2]];
     let a = pr[0] * pr[0] * dd[0] + pr[2] * pr[2] * dd[1] + pr[4] * pr[4] * dd[2];
     let b = pr[0] * pr[1] * dd[0] + pr[2] * pr[3] * dd[1] + pr[4] * pr[5] * dd[2];

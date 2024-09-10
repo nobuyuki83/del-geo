@@ -1,6 +1,16 @@
-pub fn mult_vec3<Real>(a: &[Real; 6], b: &[Real; 9]) -> [Real; 6]
+pub fn mult_vec3<Real>(a: &[Real; 6], b: &[Real; 3]) -> [Real; 2]
 where
     Real: num_traits::Float,
+{
+    [
+        a[0] * b[0] + a[2] * b[1] + a[4] * b[2],
+        a[1] * b[0] + a[3] * b[1] + a[5] * b[2],
+    ]
+}
+
+pub fn mult_mat3_col_major<Real>(a: &[Real; 6], b: &[Real; 9]) -> [Real; 6]
+    where
+        Real: num_traits::Float,
 {
     [
         a[0] * b[0] + a[2] * b[1] + a[4] * b[2],
