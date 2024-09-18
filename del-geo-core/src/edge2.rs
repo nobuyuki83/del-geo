@@ -2,6 +2,14 @@
 
 use num_traits::AsPrimitive;
 
+pub fn length<T>(p0: &[T;2], p1: &[T;2]) -> T
+where T: num_traits::Float
+{
+    let x = p0[0]-p1[0];
+    let y = p0[1]-p1[1];
+    (x*x+y*y).sqrt()
+}
+
 pub fn culling_intersection<T>(
     po_s0: &[T; 2],
     po_e0: &[T; 2],

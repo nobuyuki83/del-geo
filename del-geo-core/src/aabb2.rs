@@ -213,6 +213,35 @@ where
     ]
 }
 
+pub fn overlapping_tiles(
+    aabb: &[f32;4],
+    tile_size: usize,
+    tile_shape: (usize, usize)) -> std::collections::BTreeSet<usize>
+{
+    let ix0 = (aabb[0] / tile_size as f32).floor() as i32;
+    let iy0 = (aabb[1] / tile_size as f32).floor() as i32;
+    let ix1 = (aabb[2] / tile_size as f32).floor() as i32 + 1;
+    let iy1 = (aabb[3] / tile_size as f32).floor() as i32 + 1;
+    let mut tiles = std::collections::BTreeSet::<usize>::new();
+    for ix in ix0..ix1 {
+        assert_ne!(ix, ix1);
+        if ix < 0 || ix >= (tile_shape.0 as i32) {
+            continue;
+        }
+        let ix = ix as usize;
+        for iy in iy0..iy1 {
+            assert_ne!(iy, iy1);
+            if iy < 0 || iy >= (tile_shape.1 as i32) {
+                continue;
+            }
+            let iy = iy as usize;
+            let i_tile = iy * tile_shape.0 + ix;
+            tiles.insert(i_tile);
+        }
+    }
+    tiles
+}
+
 // -------------------------------------------------------------------------------
 
 pub type AABB2<'a, Real> = crate::aabb::AABB<'a, Real, 2, 4>;

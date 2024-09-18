@@ -21,3 +21,14 @@ pub fn mult_mat3_col_major<Real>(a: &[Real; 6], b: &[Real; 9]) -> [Real; 6]
         a[1] * b[6] + a[3] * b[7] + a[5] * b[8],
     ]
 }
+
+pub fn transform_ndc2pix(img_shape: (usize, usize)) -> [f32;6] {
+    [
+        0.5 * (img_shape.0 as f32),
+        0.,
+        0.,
+        -0.5 * (img_shape.1 as f32),
+        0.5 * (img_shape.0 as f32),
+        0.5 * (img_shape.1 as f32),
+    ]
+}

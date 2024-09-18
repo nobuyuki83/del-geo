@@ -1,7 +1,6 @@
 //! methods for 4x4 matrix
 
 use std::ops::AddAssign;
-
 use num_traits::AsPrimitive;
 
 pub fn transform_homogeneous<Real>(transform: &[Real; 16], x: &[Real; 3]) -> Option<[Real; 3]>
@@ -17,6 +16,53 @@ where
     let y1 = transform[1] * x[0] + transform[5] * x[1] + transform[9] * x[2] + transform[13];
     let y2 = transform[2] * x[0] + transform[6] * x[1] + transform[10] * x[2] + transform[14];
     Some([y0 / y3, y1 / y3, y2 / y3])
+}
+
+pub fn jacobian_transform<Real>(
+    t: &[Real; 16],
+    p: &[Real; 3],
+) -> [Real; 9]
+where
+    Real: num_traits::Float + Copy,
+{
+    let a = [
+        t[0], t[1], t[2],
+        t[4], t[5], t[6],
+        t[8], t[9], t[10], ];
+    let b = [t[12], t[13], t[14]];
+    let d = t[15];
+    let c = [t[3], t[7], t[11]];
+    let e = Real::one() / (crate::vec3::dot(&c, &p) + d);
+    let ee = e * e;
+    let f = crate::vec3::add(&crate::mat3_col_major::mult_vec(&a, &p), &b);
+    [
+        a[0] * e - f[0] * c[0] * ee, a[1] * e - f[1] * c[0] * ee, a[2] * e - f[2] * c[0] * ee,
+        a[3] * e - f[0] * c[1] * ee, a[4] * e - f[1] * c[1] * ee, a[5] * e - f[2] * c[1] * ee,
+        a[6] * e - f[0] * c[2] * ee, a[7] * e - f[1] * c[2] * ee, a[8] * e - f[2] * c[2] * ee,
+    ]
+}
+
+#[test]
+fn test_jacobian_transform() {
+    let a: [f64; 16] = [1.1, 2.3, 3.4, 1.4, 1.7, 3.2, -0.5, 0.2, 2.3, -1.3, 1.4, 0.3, 0.6, 2.3, 1.5, -2.3];
+    let p0 = [1.3, 0.3, -0.5];
+    let q0 = transform_homogeneous(&a, &p0).unwrap();
+    let dqdp = jacobian_transform(&a, &p0);
+    let eps = 1.0e-6;
+    for i_dim in 0..3 {
+        let p1 = {
+            let mut p1 = p0;
+            p1[i_dim] += eps;
+            p1
+        };
+        let q1 = transform_homogeneous(&a, &p1).unwrap();
+        for j_dim in 0..3 {
+            let v_num = (q1[j_dim] - q0[j_dim]) / eps;
+            let v_ana = dqdp[i_dim * 3 + j_dim];
+            // dbg!(i_dim, j_dim, v_num, v_ana);
+            assert!((v_num - v_ana).abs() < 9.0e-5);
+        }
+    }
 }
 
 pub fn transform_vector<Real>(transform: &[Real; 16], x: &[Real; 3]) -> [Real; 3]
@@ -51,8 +97,8 @@ where
 }
 
 pub fn scale_uniform<Real>(s: Real) -> [Real; 16]
-    where
-        Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -125,7 +171,7 @@ where
             -one, zero, zero, zero, zero, -one, zero, zero, zero, zero, -one, zero, zero, zero,
             zero, one,
         ];
-        crate::mat4_col_major::multmat(&t0, &cam_zflip)
+        crate::mat4_col_major::mult_mat(&t0, &cam_zflip)
     }
 }
 
@@ -145,9 +191,9 @@ where
     let rot_x = crate::mat4_col_major::rot_x(-cam_rot_x_deg * deg2rad);
     let rot_y = crate::mat4_col_major::rot_y(-cam_rot_y_deg * deg2rad);
     let rot_z = crate::mat4_col_major::rot_z(-cam_rot_z_deg * deg2rad);
-    let rot_yz = crate::mat4_col_major::multmat(&rot_y, &rot_z);
-    let rot_zyx = crate::mat4_col_major::multmat(&rot_x, &rot_yz);
-    crate::mat4_col_major::multmat(&rot_zyx, &transl)
+    let rot_yz = crate::mat4_col_major::mult_mat(&rot_y, &rot_z);
+    let rot_zyx = crate::mat4_col_major::mult_mat(&rot_x, &rot_yz);
+    crate::mat4_col_major::mult_mat(&rot_zyx, &transl)
 }
 
 pub fn translate<Real>(v: &[Real; 3]) -> [Real; 16]
@@ -161,7 +207,7 @@ where
     ]
 }
 
-pub fn multmat<Real>(a: &[Real; 16], b: &[Real; 16]) -> [Real; 16]
+pub fn mult_mat<Real>(a: &[Real; 16], b: &[Real; 16]) -> [Real; 16]
 where
     Real: num_traits::Float + std::ops::AddAssign,
 {
@@ -182,7 +228,7 @@ fn test_inverse_multmat() {
         1., 3., 4., 8., 3., 5., 5., 2., 5., 7., 8., 9., 8., 4., 5., 0.,
     ];
     let ainv = try_inverse(&a).unwrap();
-    let ainv_a = multmat(&ainv, &a);
+    let ainv_a = mult_mat(&ainv, &a);
     for i in 0..4 {
         for j in 0..4 {
             if i == j {

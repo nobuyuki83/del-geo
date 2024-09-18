@@ -19,8 +19,8 @@ impl Perspective {
         let transl =
             crate::mat4_col_major::translate(&[-self.cam_pos[0], -self.cam_pos[1], -self.cam_pos[2]]);
         let scale = crate::mat4_col_major::scale_uniform(self.scale);
-        let ts = crate::mat4_col_major::multmat(&transl, &scale);
-        crate::mat4_col_major::multmat(&cam_projection, &ts)
+        let ts = crate::mat4_col_major::mult_mat(&transl, &scale);
+        crate::mat4_col_major::mult_mat(&cam_projection, &ts)
     }
 
     pub fn camera_translation(
