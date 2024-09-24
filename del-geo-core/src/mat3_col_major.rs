@@ -172,8 +172,8 @@ fn test_to_quaternion() {
         [-1., -2., -1., -4.],
     ];
     for quat0 in quats {
-        let quat0 = crate::quat::normalized(&quat0);
-        let r_mat = crate::quat::to_mat3_col_major(&quat0);
+        let quat0 = crate::quaternion::normalized(&quat0);
+        let r_mat = crate::quaternion::to_mat3_col_major(&quat0);
         let quat1 = to_quaternion(&r_mat);
         let quat0 = nalgebra::Vector4::<f32>::from_row_slice(&quat0);
         let quat1 = nalgebra::Vector4::<f32>::from_row_slice(&quat1);

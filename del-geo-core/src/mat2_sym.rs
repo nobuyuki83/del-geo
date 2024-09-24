@@ -211,7 +211,7 @@ where
     Real: num_traits::Float + std::ops::AddAssign,
 {
     let two = Real::one() + Real::one();
-    let r = crate::quat::to_mat3_col_major(quat0);
+    let r = crate::quaternion::to_mat3_col_major(quat0);
     let pr = crate::mat2x3_col_major::mult_mat3_col_major(p_mat, &r);
     let dd = [d[0] * d[0], d[1] * d[1], d[2] * d[2]];
     let a = pr[0] * pr[0] * dd[0] + pr[2] * pr[2] * dd[1] + pr[4] * pr[4] * dd[2];
@@ -259,11 +259,11 @@ where
 fn test_wdw_projected_spd_mat3() {
     type Real = f64;
     let p_mat = [1., 2., 4., 3., 2., 0.];
-    let quat0 = crate::quat::normalized(&[-3., -2., 0., -1.]);
+    let quat0 = crate::quaternion::normalized(&[-3., -2., 0., -1.]);
     let s0_mat = [0.1, 3.0, 1.0];
     let (abc, dabcdt) = wdw_projected_spd_mat3(&p_mat, &quat0, &s0_mat);
     let p_mat = nalgebra::Matrix2x3::<Real>::from_column_slice(&p_mat);
-    let r0_mat = crate::quat::to_mat3_col_major(&quat0);
+    let r0_mat = crate::quaternion::to_mat3_col_major(&quat0);
     let r0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&r0_mat);
     let s0_mat = crate::mat3_col_major::from_diagonal(&s0_mat);
     let s0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&s0_mat);
@@ -348,13 +348,13 @@ where
 fn test_wdw_inv_projected_spd_mat3() {
     type Real = f64;
     let p_mat = [1., 2., 4., 3., 2., 0.];
-    let quat0 = crate::quat::normalized(&[-3., -2., 0., -1.]);
+    let quat0 = crate::quaternion::normalized(&[-3., -2., 0., -1.]);
     let s0_mat = [0.1, 3.0, 1.0];
     let (abc, dabcdt) = wdw_projected_spd_mat3(&p_mat, &quat0, &s0_mat);
     let xyz = safe_inverse(&abc);
     let dxyzdt = wdw_inverse(&dabcdt, &xyz);
     let p_mat = nalgebra::Matrix2x3::<Real>::from_column_slice(&p_mat);
-    let r0_mat = crate::quat::to_mat3_col_major(&quat0);
+    let r0_mat = crate::quaternion::to_mat3_col_major(&quat0);
     let r0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&r0_mat);
     let s0_mat = crate::mat3_col_major::from_diagonal(&s0_mat);
     let s0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&s0_mat);

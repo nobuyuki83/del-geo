@@ -25,7 +25,7 @@ pub mod edge3;
 pub mod hex;
 pub mod mat2_sym;
 pub mod matn;
-pub mod quat;
+pub mod quaternion;
 pub mod tet;
 pub mod tri2;
 pub mod tri3;
