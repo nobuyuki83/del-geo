@@ -15,4 +15,5 @@ num-traits = {workspace = true}
 nalgebra = {workspace = true}
 rand = {workspace = true}
 # del-geo-core = {path = "../del-geo-core"}
-del-geo-core = "0.1.29"
+# del-geo-core = "0.1.29"
+del-geo-core = {workspace = true}

@@ -5,9 +5,18 @@ use num_traits::AsPrimitive;
 pub fn length<T>(p0: &[T;2], p1: &[T;2]) -> T
 where T: num_traits::Float
 {
-    let x = p0[0]-p1[0];
-    let y = p0[1]-p1[1];
-    (x*x+y*y).sqrt()
+    let dx = p0[0]-p1[0];
+    let dy = p0[1]-p1[1];
+    (dx * dx + dy * dy).sqrt()
+}
+
+pub fn unit_edge_vector<T>(p0: &[T;2], p1: &[T;2]) -> [T;2]
+where T: num_traits::Float
+{
+    let dx = p1[0]-p0[0];
+    let dy = p1[1]-p0[1];
+    let linv: T = T::one()/(dx * dx + dy * dy).sqrt();
+    [dx *linv, dy *linv]
 }
 
 pub fn culling_intersection<T>(

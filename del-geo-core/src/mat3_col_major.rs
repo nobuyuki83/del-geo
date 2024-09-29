@@ -211,3 +211,17 @@ where Real: num_traits::Float
         - b[3] * b[1] * b[8];
     det
 }
+
+pub fn transform_ndc2pix(img_shape: (usize, usize)) -> [f32;9] {
+    [
+        0.5 * (img_shape.0 as f32),
+        0.,
+        0.,
+        0.,
+        -0.5 * (img_shape.1 as f32),
+        0.,
+        0.5 * (img_shape.0 as f32),
+        0.5 * (img_shape.1 as f32),
+        1.
+    ]
+}

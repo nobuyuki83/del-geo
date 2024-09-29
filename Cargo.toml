@@ -21,4 +21,8 @@ arrayref = "0.3.7"
 array-macro = "2.1.8"
 itertools = "0.13.0"
 ordered-float = "4.2.2"
+# internal
+del-geo-nalgebra = { path="del-geo-nalgebra"}
+del-geo-core = { path="del-geo-core"}
+
 
