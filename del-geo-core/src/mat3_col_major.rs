@@ -42,6 +42,42 @@ where
     ])
 }
 
+pub fn from_identity<T>() -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    let zero = T::zero();
+    let one = T::one();
+    [one, zero, zero, zero, one, zero, zero, zero, one]
+}
+
+pub fn from_translate<Real>(v: &[Real; 2]) -> [Real; 9]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    [
+        one, zero, zero, zero, one, zero, v[0], v[1], one,
+    ]
+}
+
+pub fn from_rotate<Real>(theta: Real) -> [Real; 9]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let c = theta.cos();
+    let s = theta.sin();
+    [
+        c, s, zero, -s, c, zero, zero, zero, one
+    ]
+}
+
+// above: from method
+// ---------------------------------------------
+
 pub fn transform_homogeneous<Real>(transform: &[Real; 9], x: &[Real; 2]) -> Option<[Real; 2]>
 where
     Real: num_traits::Float,
@@ -56,13 +92,13 @@ where
     Some([y0 / y2, y1 / y2])
 }
 
-pub fn identity<T>() -> [T; 9]
-where
-    T: num_traits::Float,
+pub fn transform_direction<Real>(transform: &[Real; 9], x: &[Real; 2]) -> [Real;2]
+where Real : num_traits::Float
 {
-    let zero = T::zero();
-    let one = T::one();
-    [one, zero, zero, zero, one, zero, zero, zero, one]
+    [
+        transform[0] * x[0] + transform[3] * x[1] + transform[6],
+        transform[1] * x[0] + transform[4] * x[1] + transform[7]
+    ]
 }
 
 pub fn mult_vec<Real>(a: &[Real; 9], b: &[Real; 3]) -> [Real; 3]
@@ -212,6 +248,8 @@ where Real: num_traits::Float
     det
 }
 
+/// transformation converting normalized device coodinate (NDC) [-1,+1]^2 to pixel coordinate
+/// * `image_shape` - (width, height)
 pub fn transform_ndc2pix(img_shape: (usize, usize)) -> [f32;9] {
     [
         0.5 * (img_shape.0 as f32),
@@ -222,6 +260,22 @@ pub fn transform_ndc2pix(img_shape: (usize, usize)) -> [f32;9] {
         0.,
         0.5 * (img_shape.0 as f32),
         0.5 * (img_shape.1 as f32),
+        1.
+    ]
+}
+
+/// transformation converting unit coodinate (NDC) [0,+1]^2 to pixel coordinate
+/// * `image_shape` - (width, height)
+pub fn transform_unit2pix(img_shape: (usize, usize)) -> [f32;9] {
+    [
+        img_shape.0 as f32,
+        0.,
+        0.,
+        0.,
+        -(img_shape.1 as f32),
+        0.,
+        0.,
+        img_shape.1 as f32,
         1.
     ]
 }

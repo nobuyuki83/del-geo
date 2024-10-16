@@ -102,7 +102,23 @@ where
     Some([v[0] / v[2], v[0] / v[2]])
 }
 
+pub fn rotate(
+    p: &[f32;2],
+    theta: f32) -> [f32;2]
+{
+    let c = theta.cos();
+    let s = theta.sin();
+    [
+        c * p[0] - s * p[1],
+        s * p[0] + c * p[1] ]
+}
 
+pub fn normalize(
+    p: &[f32;2]) -> [f32;2]
+{
+    let invl = 1.0/(p[0]*p[0] + p[1]*p[1]).sqrt();
+    [ p[0] * invl, p[1] * invl ]
+}
 
 // -------------------------------
 

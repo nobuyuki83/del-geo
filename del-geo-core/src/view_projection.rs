@@ -17,8 +17,8 @@ impl Perspective {
             aspect_ratio,
             self.lens, self.near, self.far, self.proj_direction);
         let transl =
-            crate::mat4_col_major::translate(&[-self.cam_pos[0], -self.cam_pos[1], -self.cam_pos[2]]);
-        let scale = crate::mat4_col_major::scale_uniform(self.scale);
+            crate::mat4_col_major::from_translate(&[-self.cam_pos[0], -self.cam_pos[1], -self.cam_pos[2]]);
+        let scale = crate::mat4_col_major::from_scale_uniform(self.scale);
         let ts = crate::mat4_col_major::mult_mat(&transl, &scale);
         crate::mat4_col_major::mult_mat(&cam_projection, &ts)
     }

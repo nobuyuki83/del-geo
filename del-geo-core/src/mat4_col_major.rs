@@ -3,6 +3,92 @@
 use std::ops::AddAssign;
 use num_traits::AsPrimitive;
 
+pub fn from_identity<Real>() -> [Real; 16]
+where
+    Real: num_traits::Zero + num_traits::One + Copy,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    [
+        one, zero, zero, zero, zero, one, zero, zero, zero, zero, one, zero, zero, zero, zero, one,
+    ]
+}
+
+pub fn from_diagonal<Real>(m11: Real, m22: Real, m33: Real, m44: Real) -> [Real; 16]
+where
+    Real: num_traits::Zero + Copy,
+{
+    let zero = Real::zero();
+    [
+        m11, zero, zero, zero, zero, m22, zero, zero, zero, zero, m33, zero, zero, zero, zero, m44,
+    ]
+}
+
+pub fn from_scale_uniform<Real>(s: Real) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    [
+        s, zero, zero, zero, zero, s, zero, zero, zero, zero, s, zero, zero, zero, zero, one,
+    ]
+}
+
+
+pub fn from_translate<Real>(v: &[Real; 3]) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    [
+        one, zero, zero, zero, zero, one, zero, zero, zero, zero, one, zero, v[0], v[1], v[2], one,
+    ]
+}
+
+pub fn from_rot_x<Real>(theta: Real) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let c = theta.cos();
+    let s = theta.sin();
+    [
+        one, zero, zero, zero, zero, c, s, zero, zero, -s, c, zero, zero, zero, zero, one,
+    ]
+}
+
+pub fn from_rot_y<Real>(theta: Real) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let c = theta.cos();
+    let s = theta.sin();
+    [
+        c, zero, -s, zero, zero, one, zero, zero, s, zero, c, zero, zero, zero, zero, one,
+    ]
+}
+
+pub fn from_rot_z<Real>(theta: Real) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let c = theta.cos();
+    let s = theta.sin();
+    [
+        c, s, zero, zero, -s, c, zero, zero, zero, zero, one, zero, zero, zero, zero, one,
+    ]
+}
+
+// above: from method (making 4x4 matrix)
+// ----------------------------------------
+
 pub fn transform_homogeneous<Real>(transform: &[Real; 16], x: &[Real; 3]) -> Option<[Real; 3]>
 where
     Real: num_traits::Float,
@@ -73,38 +159,6 @@ where
     let y1 = transform[1] * x[0] + transform[5] * x[1] + transform[9] * x[2];
     let y2 = transform[2] * x[0] + transform[6] * x[1] + transform[10] * x[2];
     [y0, y1, y2]
-}
-
-pub fn identity<Real>() -> [Real; 16]
-where
-    Real: num_traits::Zero + num_traits::One + Copy,
-{
-    let zero = Real::zero();
-    let one = Real::one();
-    [
-        one, zero, zero, zero, zero, one, zero, zero, zero, zero, one, zero, zero, zero, zero, one,
-    ]
-}
-
-pub fn diagonal<Real>(m11: Real, m22: Real, m33: Real, m44: Real) -> [Real; 16]
-where
-    Real: num_traits::Zero + Copy,
-{
-    let zero = Real::zero();
-    [
-        m11, zero, zero, zero, zero, m22, zero, zero, zero, zero, m33, zero, zero, zero, zero, m44,
-    ]
-}
-
-pub fn scale_uniform<Real>(s: Real) -> [Real; 16]
-where
-    Real: num_traits::Float,
-{
-    let zero = Real::zero();
-    let one = Real::one();
-    [
-        s, zero, zero, zero, zero, s, zero, zero, zero, zero, s, zero, zero, zero, zero, one,
-    ]
 }
 
 pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
@@ -187,23 +241,24 @@ where
 {
     let deg2rad: Real = Real::PI() / 180.0.as_();
     let transl =
-        crate::mat4_col_major::translate(&[-cam_location[0], -cam_location[1], -cam_location[2]]);
-    let rot_x = crate::mat4_col_major::rot_x(-cam_rot_x_deg * deg2rad);
-    let rot_y = crate::mat4_col_major::rot_y(-cam_rot_y_deg * deg2rad);
-    let rot_z = crate::mat4_col_major::rot_z(-cam_rot_z_deg * deg2rad);
+        crate::mat4_col_major::from_translate(&[-cam_location[0], -cam_location[1], -cam_location[2]]);
+    let rot_x = crate::mat4_col_major::from_rot_x(-cam_rot_x_deg * deg2rad);
+    let rot_y = crate::mat4_col_major::from_rot_y(-cam_rot_y_deg * deg2rad);
+    let rot_z = crate::mat4_col_major::from_rot_z(-cam_rot_z_deg * deg2rad);
     let rot_yz = crate::mat4_col_major::mult_mat(&rot_y, &rot_z);
     let rot_zyx = crate::mat4_col_major::mult_mat(&rot_x, &rot_yz);
     crate::mat4_col_major::mult_mat(&rot_zyx, &transl)
 }
 
-pub fn translate<Real>(v: &[Real; 3]) -> [Real; 16]
+pub fn scale<Real>(m: &[Real; 16], s: Real) -> [Real; 16]
 where
-    Real: num_traits::Float,
+    Real: Copy + std::ops::Mul<Output = Real>,
 {
-    let zero = Real::zero();
-    let one = Real::one();
     [
-        one, zero, zero, zero, zero, one, zero, zero, zero, zero, one, zero, v[0], v[1], v[2], one,
+        s * m[0], s * m[1], s * m[2], s * m[3],
+        s * m[4], s * m[5], s * m[6], s * m[7],
+        s * m[8], s * m[9], s * m[10], s * m[11],
+        s * m[12], s * m[13], s * m[14], s * m[15],
     ]
 }
 
@@ -240,41 +295,15 @@ fn test_inverse_multmat() {
     }
 }
 
-pub fn rot_x<Real>(theta: Real) -> [Real; 16]
+pub fn transpose<Real>(m: &[Real; 16]) -> [Real; 16]
 where
-    Real: num_traits::Float,
+    Real: Copy,
 {
-    let zero = Real::zero();
-    let one = Real::one();
-    let c = theta.cos();
-    let s = theta.sin();
     [
-        one, zero, zero, zero, zero, c, s, zero, zero, -s, c, zero, zero, zero, zero, one,
+        m[0], m[4], m[8], m[12],
+        m[1], m[5], m[9], m[13],
+        m[2], m[6], m[10], m[14],
+        m[3], m[7], m[11], m[15],
     ]
 }
 
-pub fn rot_y<Real>(theta: Real) -> [Real; 16]
-where
-    Real: num_traits::Float,
-{
-    let zero = Real::zero();
-    let one = Real::one();
-    let c = theta.cos();
-    let s = theta.sin();
-    [
-        c, zero, -s, zero, zero, one, zero, zero, s, zero, c, zero, zero, zero, zero, one,
-    ]
-}
-
-pub fn rot_z<Real>(theta: Real) -> [Real; 16]
-where
-    Real: num_traits::Float,
-{
-    let zero = Real::zero();
-    let one = Real::one();
-    let c = theta.cos();
-    let s = theta.sin();
-    [
-        c, s, zero, zero, -s, c, zero, zero, zero, zero, one, zero, zero, zero, zero, one,
-    ]
-}
