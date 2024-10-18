@@ -85,7 +85,7 @@ fn test_wdw_angle_between_two_vecs() {
             a1[ino][idim] += eps;
             a1
         };
-        let (t1, dt1) = wdw_angle_between_two_vecs(&a1[0], &a1[1]);
+        let (t1, _dt1) = wdw_angle_between_two_vecs(&a1[0], &a1[1]);
         let v0 = (t1-t0)/eps;
         let v1 = dt0[ino][idim];
         assert!((v0-v1).abs()<1.0e-5);
