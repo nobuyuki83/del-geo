@@ -8,7 +8,7 @@ use core::f32;
 
 use crate::aabb;
 
-/// check if an OBB is intersect with an AABB
+/// check if an OBB is intersect with an AABB. For obb, the first two element is one of its point, and the other are two edge vectors
 pub fn is_intersect_aabb_2d(obb: &[f32;6], aabb: &[f32;4]) -> bool {
     // choose 4 separating axes for obb and aabb
     let axes = [[1.0, 0.0], [0.0, 1.0], [-obb[3], obb[2]], [-obb[5], obb[4]]];
@@ -100,7 +100,7 @@ fn test_is_intersect_obb1() {
 }
 
 #[test]
-fn test_is_intersect_obb2{
+fn test_is_intersect_obb2(){
     let obb1 = [0., 0., 1.0, 0.0, 2.0, 1.0];
     let obb2 = [1.1, 0.0, 1.0, 0.0, 2.0, 1.0];
     assert!(!is_intersect_obb_2d(&obb1, &obb2));
