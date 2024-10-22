@@ -34,3 +34,4 @@ pub mod tri2;
 pub mod tri3;
 pub mod view_projection;
 pub mod view_rotation;
+pub mod spherical_harmonics;
