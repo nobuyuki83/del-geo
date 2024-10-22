@@ -107,13 +107,9 @@ pub fn normalize(p: &[f32; 2]) -> [f32; 2] {
     [p[0] * invl, p[1] * invl]
 }
 
-pub fn orthogonalize(u: &[f32;2], v: &[f32;2]) -> [f32;2]
-{
-    let t = dot(u,v)/dot(u,u);
-    [
-        v[0] - t * u[0],
-        v[1] - t * u[1],
-    ]
+pub fn orthogonalize(u: &[f32; 2], v: &[f32; 2]) -> [f32; 2] {
+    let t = dot(u, v) / dot(u, u);
+    [v[0] - t * u[0], v[1] - t * u[1]]
 }
 
 // -------------------------------

@@ -137,10 +137,7 @@ pub fn svd(m: &[f64; 9], nitr: usize) {
     if lv[2] < 0. {
         lv[2] = 0.0;
     }
-    let mut g = [
-        lv[0].sqrt(),
-        lv[1].sqrt(),
-        lv[2].sqrt() ];
+    let mut g = [lv[0].sqrt(), lv[1].sqrt(), lv[2].sqrt()];
 
     let mut u0 = [
         m[0] * v[0] + m[1] * v[3] + m[2] * v[6],

@@ -164,11 +164,8 @@ where
     true
 }
 
-pub fn nearest_point2(aabb: &[f32;4], p: &[f32;2]) -> [f32;2] {
-    [
-        p[0].clamp(aabb[0],aabb[2]),
-        p[1].clamp(aabb[1],aabb[3])
-    ]
+pub fn nearest_point2(aabb: &[f32; 4], p: &[f32; 2]) -> [f32; 2] {
+    [p[0].clamp(aabb[0], aabb[2]), p[1].clamp(aabb[1], aabb[3])]
 }
 
 /// https://iquilezles.org/articles/distfunctions2d/

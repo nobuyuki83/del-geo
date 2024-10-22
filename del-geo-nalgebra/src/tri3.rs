@@ -338,12 +338,14 @@ where
 
 #[test]
 fn test_triangle_point_nearest() {
+    use rand::SeedableRng;
+    let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     let eps = 1.0 - 5f64;
     for _ in 0..10000 {
-        let q0 = crate::vec3::sample_unit_cube::<f64>();
-        let q1 = crate::vec3::sample_unit_cube::<f64>();
-        let q2 = crate::vec3::sample_unit_cube::<f64>();
-        let ps = crate::vec3::sample_unit_cube::<f64>();
+        let q0 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+        let q1 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+        let q2 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+        let ps = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
         let (qs, r0, r1) = nearest_to_point3(&q0, &q1, &q2, &ps);
         let dist0 = (qs - ps).norm();
         use del_geo_core::tri3::clamp;
@@ -656,16 +658,18 @@ where
 
 #[test]
 fn test_triangle_intersection() {
+    use rand::SeedableRng;
+    let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     for _ in 0..10000 {
-        let p0 = crate::vec3::sample_unit_cube();
-        let p1 = crate::vec3::sample_unit_cube();
-        let p2 = crate::vec3::sample_unit_cube();
+        let p0 = crate::vec3::sample_unit_cube(&mut reng);
+        let p1 = crate::vec3::sample_unit_cube(&mut reng);
+        let p2 = crate::vec3::sample_unit_cube(&mut reng);
         if area(&p0, &p1, &p2) < 1.0e-2 {
             continue;
         }
-        let q0 = crate::vec3::sample_unit_cube();
-        let q1 = crate::vec3::sample_unit_cube();
-        let q2 = crate::vec3::sample_unit_cube();
+        let q0 = crate::vec3::sample_unit_cube(&mut reng);
+        let q1 = crate::vec3::sample_unit_cube(&mut reng);
+        let q2 = crate::vec3::sample_unit_cube(&mut reng);
         if area(&q0, &q1, &q2) < 1.0e-2 {
             continue;
         }
@@ -725,8 +729,11 @@ mod tests {
 
     #[test]
     fn test_w_inverse_distance_cubic_integrated_over_wedge() {
+        use rand::SeedableRng;
+        let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
         for _ in 0..1000 {
-            let x = crate::vec3::sample_unit_cube::<f64>() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
+            let x = crate::vec3::sample_unit_cube::<_, f64>(&mut reng)
+                - nalgebra::Vector3::new(0.5, 0.5, 0.5);
             if x.z.abs() < 0.1 {
                 continue;
             }
@@ -753,9 +760,12 @@ mod tests {
 
     #[test]
     fn test_dw_inverse_distance_cubic_integrated_over_wedge() {
+        use rand::SeedableRng;
+        let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
         use crate::tri3::wdw_inverse_distance_cubic_integrated_over_wedge;
         for _ in 0..100000 {
-            let x0 = crate::vec3::sample_unit_cube::<f64>() - nalgebra::Vector3::new(0.5, 0.5, 0.5);
+            let x0 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng)
+                - nalgebra::Vector3::new(0.5, 0.5, 0.5);
             if x0.z.abs() < 0.2 {
                 continue;
             }
@@ -776,11 +786,13 @@ mod tests {
 
     #[test]
     fn test_w_inverse_distance_cubic_integrated() {
+        use rand::SeedableRng;
+        let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
         for _ in 0..1000 {
-            let p0 = crate::vec3::sample_unit_cube::<f64>();
-            let p1 = crate::vec3::sample_unit_cube::<f64>();
-            let p2 = crate::vec3::sample_unit_cube::<f64>();
-            let q = crate::vec3::sample_unit_cube::<f64>();
+            let p0 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let p1 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let p2 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let q = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
             {
                 let area = area(&p0, &p1, &p2);
                 let h0 = crate::tri3::height(&p1, &p2, &p0);
@@ -811,12 +823,14 @@ mod tests {
 
     #[test]
     fn test_wdw_integral_of_inverse_distance_cubic() {
+        use rand::SeedableRng;
+        let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
         use crate::tri3::wdw_integral_of_inverse_distance_cubic;
         for _ in 0..10000 {
-            let p0 = crate::vec3::sample_unit_cube::<f64>();
-            let p1 = crate::vec3::sample_unit_cube::<f64>();
-            let p2 = crate::vec3::sample_unit_cube::<f64>();
-            let q0 = crate::vec3::sample_unit_cube::<f64>();
+            let p0 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let p1 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let p2 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let q0 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
             {
                 let area = area(&p0, &p1, &p2);
                 let h0 = crate::tri3::height(&p1, &p2, &p0);

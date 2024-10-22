@@ -4,24 +4,26 @@
 //! next 2 Reals are for half of major axis direction
 //! next 2 Reals are for half of minar axis direction
 
-fn is_include_point2(obb: &[f32; 6], p: &[f32; 2]) -> bool
-{
-    let d = crate::vec2::sub(p, arrayref::array_ref!(obb,0,2));
+fn is_include_point2(obb: &[f32; 6], p: &[f32; 2]) -> bool {
+    let d = crate::vec2::sub(p, arrayref::array_ref!(obb, 0, 2));
     {
-        let v = arrayref::array_ref!(obb,2,2);
+        let v = arrayref::array_ref!(obb, 2, 2);
         let vd = crate::vec2::dot(&d, v);
         let vv = crate::vec2::dot(v, v);
-        if vd < -vv || vd > vv { return false; }
+        if vd < -vv || vd > vv {
+            return false;
+        }
     }
     {
-        let v = arrayref::array_ref!(obb,4,2);
+        let v = arrayref::array_ref!(obb, 4, 2);
         let vd = crate::vec2::dot(&d, v);
         let vv = crate::vec2::dot(v, v);
-        if vd < -vv || vd > vv { return false; }
+        if vd < -vv || vd > vv {
+            return false;
+        }
     }
     true
 }
-
 
 /// four corner points of obb2
 /// sequentially connecting the outputs give a quadrilateral
@@ -35,20 +37,27 @@ pub fn corner_points(obb: &[f32; 6]) -> [[f32; 2]; 4] {
 }
 
 pub fn nearest_point2(obb: &[f32; 6], p: &[f32; 2]) -> [f32; 2] {
-    if is_include_point2(obb, p) { return *p; }
+    if is_include_point2(obb, p) {
+        return *p;
+    }
     let cp = corner_points(obb);
     let ps = [
         crate::edge2::nearest_point2(&cp[0], &cp[1], p).1,
         crate::edge2::nearest_point2(&cp[1], &cp[2], p).1,
         crate::edge2::nearest_point2(&cp[2], &cp[3], p).1,
-        crate::edge2::nearest_point2(&cp[3], &cp[0], p).1];
+        crate::edge2::nearest_point2(&cp[3], &cp[0], p).1,
+    ];
     let ls = [
         crate::edge2::length(&ps[0], p),
         crate::edge2::length(&ps[1], p),
         crate::edge2::length(&ps[2], p),
-        crate::edge2::length(&ps[3], p)];
-    let (i, _l) = ls.iter().enumerate()
-        .min_by(|&a, &b| a.1.partial_cmp(&b.1).unwrap()).unwrap();
+        crate::edge2::length(&ps[3], p),
+    ];
+    let (i, _l) = ls
+        .iter()
+        .enumerate()
+        .min_by(|&a, &b| a.1.partial_cmp(&b.1).unwrap())
+        .unwrap();
     ps[i]
 }
 
@@ -58,7 +67,6 @@ fn test_project() {
     let p0 = nearest_point2(&obb, &[1.5, 1.5]);
     assert!(crate::edge2::length(&p0, &[1., 1.]) < 1.0e-8);
 }
-
 
 /// check if an OBB is intersect with an AABB. For obb,
 /// the first two element is one of its point, and the other are two edge vectors
@@ -94,19 +102,16 @@ pub fn is_intersect_aabb2(obb: &[f32; 6], aabb: &[f32; 4]) -> bool {
 
 #[test]
 fn test_is_intersect_aabb2() {
-    use rand::SeedableRng;
     use rand::Rng;
+    use rand::SeedableRng;
     let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     for _iter in 0..100 {
         let obb = {
-            let cntr = [2.*reng.gen::<f32>()-1., 2.*reng.gen::<f32>()-1.];
-            let u = [2.*reng.gen::<f32>()-1., 2.*reng.gen::<f32>()-1.];
-            let v = [2.*reng.gen::<f32>()-1., 2.*reng.gen::<f32>()-1.];
-            let v = crate::vec2::orthogonalize(&u,&v);
-            [
-                cntr[0], cntr[1],
-                u[0], u[1],
-                v[0], v[1] ]
+            let cntr = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
+            let u = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
+            let v = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
+            let v = crate::vec2::orthogonalize(&u, &v);
+            [cntr[0], cntr[1], u[0], u[1], v[0], v[1]]
         };
         let aabb = crate::aabb2::from_two_points(
             &[2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.],
@@ -124,10 +129,12 @@ fn test_is_intersect_aabb2() {
         //let len12 = crate::edge2::length(&a1, &a2);
         let len23 = crate::edge2::length(&a2, &a3);
         let len34 = crate::edge2::length(&a3, &a4);
-        if len34 > 0. && len34 < len23 * 0.99999 { continue; } // still converging
-        // dbg!(len01, len12, len23, len34);
-        // dbg!(is_include_point2(&obb, &a4));
-        // dbg!(crate::aabb2::is_include_point2(&aabb, &a4));
+        if len34 > 0. && len34 < len23 * 0.99999 {
+            continue;
+        } // still converging
+          // dbg!(len01, len12, len23, len34);
+          // dbg!(is_include_point2(&obb, &a4));
+          // dbg!(crate::aabb2::is_include_point2(&aabb, &a4));
         let res0 = is_intersect_aabb2(&obb, &aabb);
         let res1 = len34 < 0.0001;
         assert_eq!(res0, res1);
@@ -162,7 +169,6 @@ pub fn is_intersect_obb2(obb1: &[f32; 6], obb2: &[f32; 6]) -> bool {
     }
     true
 }
-
 
 #[test]
 fn test_is_intersect_obb1() {

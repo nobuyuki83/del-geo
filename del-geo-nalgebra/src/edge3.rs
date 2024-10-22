@@ -249,10 +249,12 @@ mod tests {
 
     #[test]
     fn test_wdw_integral_of_inverse_distance_cubic() {
+        use rand::SeedableRng;
+        let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
         for _i in 0..10000 {
-            let p0 = crate::vec3::sample_unit_cube();
-            let p1 = crate::vec3::sample_unit_cube();
-            let q = crate::vec3::sample_unit_cube();
+            let p0 = crate::vec3::sample_unit_cube(&mut reng);
+            let p1 = crate::vec3::sample_unit_cube(&mut reng);
+            let q = crate::vec3::sample_unit_cube(&mut reng);
             let len = (p0 - p1).norm();
             let height = crate::tri3::height(&p0, &p1, &q);
             if height < 0.1 {
@@ -287,12 +289,14 @@ mod tests {
 
     #[test]
     fn test_distance() {
+        use rand::SeedableRng;
+        let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
         let eps = 1.0e-4;
         for _i in 0..10000 {
-            let p0 = crate::vec3::sample_unit_cube::<f64>();
-            let p1 = crate::vec3::sample_unit_cube::<f64>();
-            let q0 = crate::vec3::sample_unit_cube::<f64>();
-            let q1 = crate::vec3::sample_unit_cube::<f64>();
+            let p0 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let p1 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let q0 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
+            let q1 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
             let (dist, rp, rq) = crate::edge3::nearest_to_edge3(&p0, &p1, &q0, &q1);
             //
             let vp = p1 - p0;
