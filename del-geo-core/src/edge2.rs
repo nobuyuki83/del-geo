@@ -144,6 +144,12 @@ pub fn nearest_origin(
         (1. - r0) * ps[1] + r0 * pe[1] ])
 }
 
+#[test]
+fn test_nearest_origin() {
+    let (r, pm) = nearest_origin( &[-0.1, 1.0], &[1.0, 1.0]);
+    assert!( crate::vec2::length( &crate::vec2::sub(&pm, &[0., 1.]) ) < 1.0e-5 );
+}
+
 pub fn nearest_point2(
     s: &[f32;2], // source
     e: &[f32;2], // end
@@ -155,4 +161,10 @@ pub fn nearest_point2(
         r,
         [p0[0] + p[0], p0[1] + p[1]]
     )
+}
+
+#[test]
+fn test_nearest_point2() {
+    let (r, pm) = nearest_point2( &[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
+    assert!( crate::vec2::length( &crate::vec2::sub(&pm, &[0., 1.]) ) < 1.0e-5 );
 }

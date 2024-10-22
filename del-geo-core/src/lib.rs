@@ -32,3 +32,5 @@ pub mod tri3;
 pub mod view_rotation;
 pub mod view_projection;
 pub mod obb2;
+pub mod mat3_sym;
+pub mod mat3_row_major;
