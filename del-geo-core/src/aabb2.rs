@@ -40,6 +40,9 @@ where
     o
 }
 
+// above: from method
+// -----------------------
+
 pub fn add_point<T>(aabb2: &mut [T; 4], p: &[T; 2], rad: T)
 where
     T: num_traits::Float,
@@ -142,7 +145,7 @@ fn test_to_transformation_world2unit_ortho_preserve_asp() {
     }
 }
 
-pub fn is_inlcude_point<Real>(aabb: &[Real; 4], p: &[Real; 2]) -> bool
+pub fn is_include_point2<Real>(aabb: &[Real; 4], p: &[Real; 2]) -> bool
 where
     Real: num_traits::Float,
 {
@@ -159,6 +162,13 @@ where
         return false;
     }
     true
+}
+
+pub fn nearest_point2(aabb: &[f32;4], p: &[f32;2]) -> [f32;2] {
+    [
+        p[0].clamp(aabb[0],aabb[2]),
+        p[1].clamp(aabb[1],aabb[3])
+    ]
 }
 
 /// https://iquilezles.org/articles/distfunctions2d/

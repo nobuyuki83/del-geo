@@ -188,7 +188,7 @@ fn test_prinsipal_directions() {
             let v = evec0 * theta.cos() + evec1 * theta.sin();
             let radrad = (v.transpose() * sig * v)[0];
             assert!((radrad - 1.).abs() < 1.0e-3, "{}", radrad);
-            assert!(crate::aabb2::is_inlcude_point(&aabb, &[v[0], v[1]]));
+            assert!(crate::aabb2::is_include_point2(&aabb, &[v[0], v[1]]));
             let sdf = crate::aabb2::sdf(&aabb, &[v[0], v[1]]);
             assert!(sdf <= 0f32);
             if sdf > sdf_max {
