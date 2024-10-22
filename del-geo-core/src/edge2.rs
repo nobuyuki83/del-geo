@@ -2,23 +2,23 @@
 
 use num_traits::AsPrimitive;
 
-pub fn length<T>(ps: &[T;2], pe: &[T;2]) -> T
-where T: num_traits::Float
+pub fn length<T>(ps: &[T; 2], pe: &[T; 2]) -> T
+where
+    T: num_traits::Float,
 {
-    let dx = ps[0]- pe[0];
-    let dy = ps[1]- pe[1];
+    let dx = ps[0] - pe[0];
+    let dy = ps[1] - pe[1];
     (dx * dx + dy * dy).sqrt()
 }
 
-pub fn unit_edge_vector<T>(
-    ps: &[T;2],
-    pe: &[T;2]) -> [T;2]
-where T: num_traits::Float
+pub fn unit_edge_vector<T>(ps: &[T; 2], pe: &[T; 2]) -> [T; 2]
+where
+    T: num_traits::Float,
 {
-    let dx = pe[0]- ps[0];
-    let dy = pe[1]- ps[1];
-    let linv: T = T::one()/(dx * dx + dy * dy).sqrt();
-    [dx *linv, dy *linv]
+    let dx = pe[0] - ps[0];
+    let dy = pe[1] - ps[1];
+    let linv: T = T::one() / (dx * dx + dy * dy).sqrt();
+    [dx * linv, dy * linv]
 }
 
 pub fn culling_intersection<T>(
@@ -113,10 +113,7 @@ where
     Some((r0, r1))
 }
 
-pub fn winding_number<T>(
-    ps: &[T; 2],
-    pe: &[T; 2],
-    po: &[T; 2]) -> T
+pub fn winding_number<T>(ps: &[T; 2], pe: &[T; 2], po: &[T; 2]) -> T
 where
     T: num_traits::Float + num_traits::FloatConst,
 {
@@ -128,43 +125,41 @@ where
     y.atan2(x) * T::FRAC_1_PI() * half
 }
 
-pub fn nearest_origin(
-    ps: &[f32;2],
-    pe: &[f32;2]) -> (f32, [f32;2])
-{
+pub fn nearest_origin(ps: &[f32; 2], pe: &[f32; 2]) -> (f32, [f32; 2]) {
     let d = crate::vec2::sub(pe, ps);
     let a = crate::vec2::squared_length(&d);
     if a == 0f32 {
-        return (0.5, [(ps[0] + pe[0])*0.5, (ps[1]+ pe[1])*0.5]);
+        return (0.5, [(ps[0] + pe[0]) * 0.5, (ps[1] + pe[1]) * 0.5]);
     }
     let b = crate::vec2::dot(&d, ps);
     let r0 = (-b / a).clamp(0., 1.);
-    (r0, [
-        (1. - r0) * ps[0] + r0 * pe[0],
-        (1. - r0) * ps[1] + r0 * pe[1] ])
-}
-
-#[test]
-fn test_nearest_origin() {
-    let (r, pm) = nearest_origin( &[-0.1, 1.0], &[1.0, 1.0]);
-    assert!( crate::vec2::length( &crate::vec2::sub(&pm, &[0., 1.]) ) < 1.0e-5 );
-}
-
-pub fn nearest_point2(
-    s: &[f32;2], // source
-    e: &[f32;2], // end
-    p: &[f32;2]) -> (f32, [f32;2])
-{
-    use crate::vec2;
-    let (r, p0) = nearest_origin(&vec2::sub(s, p), &vec2::sub(e, p));
     (
-        r,
-        [p0[0] + p[0], p0[1] + p[1]]
+        r0,
+        [
+            (1. - r0) * ps[0] + r0 * pe[0],
+            (1. - r0) * ps[1] + r0 * pe[1],
+        ],
     )
 }
 
 #[test]
+fn test_nearest_origin() {
+    let (_r, pm) = nearest_origin(&[-0.1, 1.0], &[1.0, 1.0]);
+    assert!(crate::vec2::length(&crate::vec2::sub(&pm, &[0., 1.])) < 1.0e-5);
+}
+
+pub fn nearest_point2(
+    s: &[f32; 2], // source
+    e: &[f32; 2], // end
+    p: &[f32; 2],
+) -> (f32, [f32; 2]) {
+    use crate::vec2;
+    let (r, p0) = nearest_origin(&vec2::sub(s, p), &vec2::sub(e, p));
+    (r, [p0[0] + p[0], p0[1] + p[1]])
+}
+
+#[test]
 fn test_nearest_point2() {
-    let (r, pm) = nearest_point2( &[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
-    assert!( crate::vec2::length( &crate::vec2::sub(&pm, &[0., 1.]) ) < 1.0e-5 );
+    let (_r, pm) = nearest_point2(&[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
+    assert!(crate::vec2::length(&crate::vec2::sub(&pm, &[0., 1.])) < 1.0e-5);
 }

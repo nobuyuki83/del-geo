@@ -27,17 +27,15 @@ where
 }
 
 pub fn to_mat4_col_major<Real>(q: &[Real; 4]) -> [Real; 16]
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
     let a = to_mat3_col_major(q);
     [
-        a[0], a[1], a[2], zero,
-        a[3], a[4], a[5], zero,
-        a[6], a[7], a[8], zero,
-        zero, zero, zero, one
+        a[0], a[1], a[2], zero, a[3], a[4], a[5], zero, a[6], a[7], a[8], zero, zero, zero, zero,
+        one,
     ]
 }
 
@@ -107,24 +105,17 @@ where
     ]
 }
 
-pub fn from_axisangle(
-    a: &[f32;3]) -> [f32;4]
-{
+pub fn from_axisangle(a: &[f32; 3]) -> [f32; 4] {
     let half = 0.5;
     let sqlen = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
     if sqlen < 1.0e-10 {
-        return [
-            half * a[0],
-            half * a[1],
-            half * a[2],
-            1. - 0.125 * sqlen,
-        ];
+        return [half * a[0], half * a[1], half * a[2], 1. - 0.125 * sqlen];
     }
     let lena = sqlen.sqrt();
     [
         (lena * half).sin() * a[0] / lena,
         (lena * half).sin() * a[1] / lena,
         (lena * half).sin() * a[2] / lena,
-        (lena * half).cos()
+        (lena * half).cos(),
     ]
 }

@@ -5,11 +5,11 @@ pub struct Trackball {
 impl Trackball {
     pub fn new() -> Self {
         Self {
-            quaternion: [0., 0., 0., 1.]
+            quaternion: [0., 0., 0., 1.],
         }
     }
 
-    pub fn mat4_col_major(&self) -> [f32;16] {
+    pub fn mat4_col_major(&self) -> [f32; 16] {
         crate::quaternion::to_mat4_col_major(&self.quaternion)
     }
 

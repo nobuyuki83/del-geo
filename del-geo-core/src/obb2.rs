@@ -6,16 +6,15 @@
 
 use core::f32;
 
-use crate::aabb;
-
-/// check if an OBB is intersect with an AABB. For obb, the first two element is one of its point, and the other are two edge vectors
-pub fn is_intersect_aabb_2d(obb: &[f32;6], aabb: &[f32;4]) -> bool {
+/// check if an OBB is intersect with an AABB. For obb,
+/// the first two element is one of its point, and the other are two edge vectors
+pub fn is_intersect_aabb_2d(obb: &[f32; 6], aabb: &[f32; 4]) -> bool {
     // choose 4 separating axes for obb and aabb
     let axes = [[1.0, 0.0], [0.0, 1.0], [-obb[3], obb[2]], [-obb[5], obb[4]]];
     let obb_points = [
-        [obb[0]                  , obb[1]                  ],
-        [obb[0] + obb[2]         , obb[1] + obb[3]         ],
-        [obb[0] + obb[4]         , obb[1] + obb[5]         ],
+        [obb[0], obb[1]],
+        [obb[0] + obb[2], obb[1] + obb[3]],
+        [obb[0] + obb[4], obb[1] + obb[5]],
         [obb[0] + obb[2] + obb[4], obb[1] + obb[3] + obb[5]],
     ];
     let aabb_points = [
@@ -44,18 +43,23 @@ pub fn is_intersect_aabb_2d(obb: &[f32;6], aabb: &[f32;4]) -> bool {
     true
 }
 
-pub fn is_intersect_obb_2d(obb1: &[f32;6], obb2: &[f32;6]) -> bool {
-    let axes = [[-obb1[3], obb1[2]], [-obb1[5], obb1[4]], [-obb2[3], obb2[2]], [-obb2[5], obb2[4]]];
+pub fn is_intersect_obb2(obb1: &[f32; 6], obb2: &[f32; 6]) -> bool {
+    let axes = [
+        [-obb1[3], obb1[2]],
+        [-obb1[5], obb1[4]],
+        [-obb2[3], obb2[2]],
+        [-obb2[5], obb2[4]],
+    ];
     let obb1_points = [
-        [obb1[0]                    , obb1[1]                  ],
-        [obb1[0] + obb1[2]          , obb1[1] + obb1[3]         ],
-        [obb1[0] + obb1[4]          , obb1[1] + obb1[5]         ],
+        [obb1[0], obb1[1]],
+        [obb1[0] + obb1[2], obb1[1] + obb1[3]],
+        [obb1[0] + obb1[4], obb1[1] + obb1[5]],
         [obb1[0] + obb1[2] + obb1[4], obb1[1] + obb1[3] + obb1[5]],
     ];
     let obb2_points = [
-        [obb2[0]                    , obb2[1]                  ],
-        [obb2[0] + obb2[2]          , obb2[1] + obb2[3]         ],
-        [obb2[0] + obb2[4]          , obb2[1] + obb2[5]         ],
+        [obb2[0], obb2[1]],
+        [obb2[0] + obb2[2], obb2[1] + obb2[3]],
+        [obb2[0] + obb2[4], obb2[1] + obb2[5]],
         [obb2[0] + obb2[2] + obb2[4], obb2[1] + obb2[3] + obb2[5]],
     ];
     for axis in axes.iter() {
@@ -96,12 +100,12 @@ fn test_is_intersect_aabb2() {
 fn test_is_intersect_obb1() {
     let obb1 = [0., 0., 1.0, 2.0, 2.0, 1.0];
     let obb2 = [1., 1., 1.0, 2.0, 2.0, 1.0];
-    assert!(is_intersect_obb_2d(&obb1, &obb2));
+    assert!(is_intersect_obb2(&obb1, &obb2));
 }
 
 #[test]
-fn test_is_intersect_obb2(){
+fn test_is_intersect_obb2() {
     let obb1 = [0., 0., 1.0, 0.0, 2.0, 1.0];
     let obb2 = [1.1, 0.0, 1.0, 0.0, 2.0, 1.0];
-    assert!(!is_intersect_obb_2d(&obb1, &obb2));
+    assert!(!is_intersect_obb2(&obb1, &obb2));
 }

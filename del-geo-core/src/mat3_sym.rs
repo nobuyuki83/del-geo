@@ -1,16 +1,15 @@
-
-
 fn squared_norm<Real>(sm: &[Real; 6]) -> Real
-    where Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
     let two = Real::one() + Real::one();
-    sm[0] * sm[0] + sm[1] * sm[1] + sm[2] * sm[2] + two * (sm[3] * sm[3] + sm[4] * sm[4] + sm[5] * sm[5])
+    sm[0] * sm[0]
+        + sm[1] * sm[1]
+        + sm[2] * sm[2]
+        + two * (sm[3] * sm[3] + sm[4] * sm[4] + sm[5] * sm[5])
 }
 
-pub fn eigen_decomp(
-    sm: [f64; 6],
-    nitr: usize) -> Option<([f64; 9], [f64; 3])>
-{
+pub fn eigen_decomp(sm: [f64; 6], nitr: usize) -> Option<([f64; 9], [f64; 3])> {
     let mut u = [0f64; 9];
     let mut l = [0f64; 3];
     // initialize u as identity matrix
@@ -27,11 +26,20 @@ pub fn eigen_decomp(
     l[1] = 0.0;
     l[2] = 0.0;
     let dnrm = squared_norm(&sm);
-    if dnrm < 1.0e-30 { return None; } // this matrix is too small
+    if dnrm < 1.0e-30 {
+        return None;
+    } // this matrix is too small
     let scale = dnrm.sqrt();
     let invscl = 1.0 / scale;
-    let mut sms = [sm[0] * invscl, sm[1] * invscl, sm[2] * invscl, sm[3] * invscl, sm[4] * invscl, sm[5] * invscl];
-    for itr in 0..nitr {
+    let mut sms = [
+        sm[0] * invscl,
+        sm[1] * invscl,
+        sm[2] * invscl,
+        sm[3] * invscl,
+        sm[4] * invscl,
+        sm[5] * invscl,
+    ];
+    for _itr in 0..nitr {
         let m = [sms[0], sms[1], sms[2], sms[3], sms[4], sms[5]];
         let v = [u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7], u[8]];
         let a12 = sms[3].abs();
@@ -83,7 +91,7 @@ pub fn eigen_decomp(
             sms[3] = st * m[4] + ct * m[3];
             sms[4] = ct * m[4] - st * m[3];
             sms[5] = 0.; // (ct*ct-st*st)*m[5]+st*ct*(m[0]-m[1]);
-            //
+                         //
             u[0] = ct * v[0] - st * v[1];
             u[1] = st * v[0] + ct * v[1];
             u[3] = ct * v[3] - st * v[4];
@@ -100,11 +108,11 @@ pub fn eigen_decomp(
 
 #[test]
 fn hoge() {
-    use rand::SeedableRng;
     use rand::Rng;
+    use rand::SeedableRng;
     let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     // std::uniform_real_distribution < double > dist(-50.0, 50.0);
-    for itr in 0..1000 {
+    for _itr in 0..1000 {
         let sm = {
             let mut sm = [0f64; 6];
             for i in 0..6 {
@@ -112,15 +120,16 @@ fn hoge() {
             }
             sm
         };
-        let Some((u,l)) = eigen_decomp(
-            sm, 20) else { todo!() };
+        let Some((u, _l)) = eigen_decomp(sm, 20) else {
+            todo!()
+        };
         {
             let ut = crate::mat3_row_major::transpose(&u);
             let utu = crate::mat3_row_major::mult_mat_row_major(&u, &ut);
             let id = crate::mat3_row_major::from_identity();
             let diff = crate::mat3_row_major::sub(&id, &utu);
             let diffnorm = crate::mat3_row_major::squared_norm(&diff);
-            assert!( diffnorm < 1.0e-20 );
+            assert!(diffnorm < 1.0e-20);
         }
     }
 }

@@ -4,9 +4,9 @@ use num_traits::AsPrimitive;
 use rand::distributions::{Distribution, Standard};
 
 pub fn center<T>(aabb: &[T; 6]) -> [T; 3]
-    where
-        T: num_traits::Float + 'static + Copy,
-        f64: AsPrimitive<T>,
+where
+    T: num_traits::Float + 'static + Copy,
+    f64: AsPrimitive<T>,
 {
     [
         (aabb[0] + aabb[3]) * 0.5f64.as_(),
@@ -15,8 +15,9 @@ pub fn center<T>(aabb: &[T; 6]) -> [T; 3]
     ]
 }
 
-pub fn xyz_from_hex_index<Real>(aabb: &[Real;6], i_vtx: usize) -> [Real;3]
-where Real: num_traits::Float
+pub fn xyz_from_hex_index<Real>(aabb: &[Real; 6], i_vtx: usize) -> [Real; 3]
+where
+    Real: num_traits::Float,
 {
     match i_vtx {
         0 => [aabb[0], aabb[1], aabb[2]],
@@ -32,8 +33,8 @@ where Real: num_traits::Float
 }
 
 pub fn max_edge_size<T>(aabb: &[T; 6]) -> T
-    where
-        T: num_traits::Float,
+where
+    T: num_traits::Float,
 {
     let lx = aabb[3] - aabb[0];
     let ly = aabb[4] - aabb[1];
@@ -48,8 +49,8 @@ pub fn max_edge_size<T>(aabb: &[T; 6]) -> T
 }
 
 pub fn from_two_aabbs<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
-    where
-        T: num_traits::Float,
+where
+    T: num_traits::Float,
 {
     assert_eq!(i0.len(), 6);
     assert_eq!(i1.len(), 6);
@@ -66,15 +67,15 @@ pub fn from_two_aabbs<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
 }
 
 pub fn is_active<T>(i0: &[T; 6]) -> bool
-    where
-        T: PartialOrd,
+where
+    T: PartialOrd,
 {
     i0[0] <= i0[3]
 }
 
 pub fn is_intersect<T>(i0: &[T; 6], i1: &[T; 6]) -> bool
-    where
-        T: PartialOrd,
+where
+    T: PartialOrd,
 {
     assert_eq!(i0.len(), 6);
     assert_eq!(i1.len(), 6);
@@ -122,10 +123,10 @@ pub fn to_transformation_world2unit_ortho_preserve_asp(aabb_world: &[f32; 6]) ->
 }
 
 pub fn sample<Reng, T>(aabb: &[T; 6], reng: &mut Reng) -> [T; 3]
-    where
-        Reng: rand::Rng,
-        T: num_traits::Float,
-        Standard: Distribution<T>,
+where
+    Reng: rand::Rng,
+    T: num_traits::Float,
+    Standard: Distribution<T>,
 {
     let r0 = reng.gen::<T>();
     let r1 = reng.gen::<T>();
@@ -138,7 +139,8 @@ pub fn sample<Reng, T>(aabb: &[T; 6], reng: &mut Reng) -> [T; 3]
 }
 
 pub fn set_as_cube<Real>(aabb: &mut [Real; 6], xyz: &[Real; 3], eps: Real)
-    where Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
     {
         let cgx = xyz[0];
@@ -158,7 +160,8 @@ pub fn set_as_cube<Real>(aabb: &mut [Real; 6], xyz: &[Real; 3], eps: Real)
 }
 
 pub fn update<Real>(aabb: &mut [Real; 6], xyz: &[Real; 3], eps: Real)
-    where Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
     aabb[0] = if xyz[0] - eps < aabb[0] {
         xyz[0] - eps
@@ -197,8 +200,8 @@ pub fn update<Real>(aabb: &mut [Real; 6], xyz: &[Real; 3], eps: Real)
 pub type AABB3<'a, Real> = crate::aabb::AABB<'a, Real, 3, 6>;
 
 pub fn from_slice<Real>(s: &[Real]) -> AABB3<Real>
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     AABB3 {
         aabb: arrayref::array_ref!(s, 0, 6),
@@ -206,8 +209,8 @@ pub fn from_slice<Real>(s: &[Real]) -> AABB3<Real>
 }
 
 pub fn from_aabbs<Real>(aabbs: &[Real], i_aabb: usize) -> AABB3<Real>
-    where
-        Real: num_traits::Float,
+where
+    Real: num_traits::Float,
 {
     AABB3 {
         aabb: arrayref::array_ref!(aabbs, i_aabb * 6, 6),

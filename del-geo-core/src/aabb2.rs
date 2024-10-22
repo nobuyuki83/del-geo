@@ -214,10 +214,10 @@ where
 }
 
 pub fn overlapping_tiles(
-    aabb: &[f32;4],
+    aabb: &[f32; 4],
     tile_size: usize,
-    tile_shape: (usize, usize)) -> std::collections::BTreeSet<usize>
-{
+    tile_shape: (usize, usize),
+) -> std::collections::BTreeSet<usize> {
     let ix0 = (aabb[0] / tile_size as f32).floor() as i32;
     let iy0 = (aabb[1] / tile_size as f32).floor() as i32;
     let ix1 = (aabb[2] / tile_size as f32).floor() as i32 + 1;
