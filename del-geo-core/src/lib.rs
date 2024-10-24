@@ -1,3 +1,6 @@
+#![allow(clippy::identity_op)]
+#![allow(clippy::erasing_op)]
+#![allow(clippy::needless_borrow)]
 /*
 vec < mat < aabb < obb <
 line < ray < edge <

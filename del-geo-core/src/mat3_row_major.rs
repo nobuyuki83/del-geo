@@ -68,48 +68,22 @@ where
 
 fn sort_eigen(g: &mut [f64; 3], v: &mut [f64; 9]) {
     if g[1] > g[0] {
-        // swap 01
-        let mut t = g[0];
-        g[0] = g[1];
-        g[1] = t;
-        t = v[0];
-        v[0] = v[1];
-        v[1] = t;
-        t = v[3];
-        v[3] = v[4];
-        v[4] = t;
-        t = v[6];
-        v[6] = v[7];
-        v[7] = t;
+        g.swap(0, 1);
+        v.swap(0, 1);
+        v.swap(3, 4);
+        v.swap(6, 7);
     }
     if g[2] > g[1] {
-        let mut t = g[1];
-        g[1] = g[2];
-        g[2] = t;
-        t = v[1];
-        v[1] = v[2];
-        v[2] = t;
-        t = v[4];
-        v[4] = v[5];
-        v[5] = t;
-        t = v[7];
-        v[7] = v[8];
-        v[8] = t;
+        g.swap(1, 2);
+        v.swap(1, 2);
+        v.swap(4, 5);
+        v.swap(7, 8);
     }
     if g[1] > g[0] {
-        // swap 01
-        let mut t = g[0];
-        g[0] = g[1];
-        g[1] = t;
-        t = v[0];
-        v[0] = v[1];
-        v[1] = t;
-        t = v[3];
-        v[3] = v[4];
-        v[4] = t;
-        t = v[6];
-        v[6] = v[7];
-        v[7] = t;
+        g.swap(0, 1);
+        v.swap(0, 1);
+        v.swap(3, 4);
+        v.swap(6, 7);
     }
 }
 
@@ -128,16 +102,8 @@ pub fn svd(m: &[f64; 9], nitr: usize) {
         todo!()
     };
     sort_eigen(&mut lv, &mut v);
-    if lv[0] < 0. {
-        lv[0] = 0.0;
-    }
-    if lv[1] < 0. {
-        lv[1] = 0.0;
-    }
-    if lv[2] < 0. {
-        lv[2] = 0.0;
-    }
-    let mut g = [lv[0].sqrt(), lv[1].sqrt(), lv[2].sqrt()];
+    lv = lv.map(|x| x.clamp(0.0, x));
+    let mut g = lv.map(|x| x.sqrt());
 
     let mut u0 = [
         m[0] * v[0] + m[1] * v[3] + m[2] * v[6],
@@ -185,22 +151,14 @@ pub fn svd(m: &[f64; 9], nitr: usize) {
         crate::vec3::normalize(&mut u1);
         let s2 = crate::vec3::cross(&u0, &u1);
         let d22 = u2[0] * s2[0] + u2[1] * s2[1] + u2[2] * s2[2];
-        u2[0] = s2[0];
-        u2[1] = s2[1];
-        u2[2] = s2[2];
+        u2 = s2;
         if d22 < 0. {
             g[2] *= -1.;
         }
     } else {
-        u0[0] = 1.;
-        u0[1] = 0.;
-        u0[2] = 0.;
-        u1[0] = 0.;
-        u1[1] = 1.;
-        u1[2] = 0.;
-        u2[0] = 0.;
-        u2[1] = 0.;
-        u2[2] = 1.;
+        u0 = [1., 0., 0.];
+        u1 = [0., 1., 0.];
+        u2 = [0., 0., 1.];
     }
     u[0] = u0[0];
     u[1] = u1[0];

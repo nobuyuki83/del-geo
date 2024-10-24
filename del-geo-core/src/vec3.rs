@@ -190,9 +190,9 @@ pub fn scale<T>(a: &mut [T; 3], s: T)
 where
     T: MulAssign + Copy,
 {
-    a[0] *= s;
-    a[1] *= s;
-    a[2] *= s;
+    for x in a.iter_mut() {
+        *x *= s;
+    }
 }
 
 pub fn distance<T>(p0: &[T; 3], p1: &[T; 3]) -> T

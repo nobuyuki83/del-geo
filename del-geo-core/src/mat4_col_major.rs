@@ -258,24 +258,7 @@ pub fn scale<Real>(m: &[Real; 16], s: Real) -> [Real; 16]
 where
     Real: Copy + std::ops::Mul<Output = Real>,
 {
-    [
-        s * m[0],
-        s * m[1],
-        s * m[2],
-        s * m[3],
-        s * m[4],
-        s * m[5],
-        s * m[6],
-        s * m[7],
-        s * m[8],
-        s * m[9],
-        s * m[10],
-        s * m[11],
-        s * m[12],
-        s * m[13],
-        s * m[14],
-        s * m[15],
-    ]
+    m.map(|x| s * x)
 }
 
 pub fn mult_mat<Real>(a: &[Real; 16], b: &[Real; 16]) -> [Real; 16]
