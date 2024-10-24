@@ -32,18 +32,10 @@ where
 {
     let mut aabb = [vtx2vec[0][0], vtx2vec[0][1], vtx2vec[0][0], vtx2vec[0][1]];
     for xy in vtx2vec.iter().skip(1) {
-        if xy[0] < aabb[0] {
-            aabb[0] = xy[0];
-        }
-        if xy[1] < aabb[1] {
-            aabb[1] = xy[1];
-        }
-        if xy[0] > aabb[2] {
-            aabb[2] = xy[0];
-        }
-        if xy[1] > aabb[3] {
-            aabb[3] = xy[1];
-        }
+        aabb[0] = aabb[0].min(xy[0]);
+        aabb[1] = aabb[1].min(xy[1]);
+        aabb[2] = aabb[2].max(xy[0]);
+        aabb[3] = aabb[3].max(xy[1]);
     }
     aabb
 }
