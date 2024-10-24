@@ -30,7 +30,7 @@ where
     true
 }
 
-// return the normalized axes and the magnitude of each axis 
+// return the normalized axes and the magnitude of each axis
 pub fn axis_size<Real>(obb: &[Real; 12]) -> ([[Real; 3]; 3], [Real; 3])
 where
     Real: num_traits::Float,
@@ -131,55 +131,154 @@ where
     max_dist
 }
 
-pub fn is_intersect<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> bool 
+pub fn is_intersect<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> bool
 where
     Real: num_traits::Float,
-{   // If the distance between OBBs are not bigger than zero, intersected
-    return  distance_to_obb3(obb_i, obb_j) == Real::zero(); 
+{
+    // If all distances between OBBs are not bigger than zero, intersected
+    distance_to_obb3(obb_i, obb_j) == Real::zero()
 }
+
+/// Get 8 corners of an obb3
+/// The first four points defines the front face of the obb3, the last four defines back face.
+pub fn corner_points<Real>(obb: &[Real; 12]) -> [[Real; 3]; 8]
+where
+    Real: num_traits::Float,
+{
+    // extend respect each axis
+    let e_x = obb[3] + obb[6] + obb[9];
+    let e_y = obb[4] + obb[7] + obb[10];
+    let e_z = obb[5] + obb[8] + obb[11];
+    [
+        [obb[0] + e_x, obb[1] + e_y, obb[2] + e_z],
+        [obb[0] + e_x, obb[1] - e_y, obb[2] + e_z],
+        [obb[0] - e_x, obb[1] + e_y, obb[2] + e_z],
+        [obb[0] - e_x, obb[1] - e_y, obb[2] + e_z],
+        [obb[0] + e_x, obb[1] + e_y, obb[2] - e_z],
+        [obb[0] + e_x, obb[1] - e_y, obb[2] - e_z],
+        [obb[0] - e_x, obb[1] + e_y, obb[2] - e_z],
+        [obb[0] - e_x, obb[1] - e_y, obb[2] - e_z],
+    ]
+}
+
+fn nearest_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    use crate::{mat3_array_of_array::inverse, mat3_array_of_array::matmul};
+
+    let tran = [
+        [obb[3], obb[6], obb[9]],
+        [obb[4], obb[7], obb[10]],
+        [obb[5], obb[8], obb[11]],
+    ];
+
+    // TODO: check not inversable
+    let inv_tran = inverse(&tran);
+
+    let zero = Real::zero();
+    // TODO: use matxi mul vector
+    let p_mat = [[p[0], zero, zero], [p[1], zero, zero], [p[2], zero, zero]];
+    // transfrom point to obb's column space
+    let mut c_coord = matmul(&inv_tran, &p_mat);
+
+    let one = Real::one();
+    c_coord[0][0] = c_coord[0][0].clamp(-one, one);
+    c_coord[1][0] = c_coord[1][0].clamp(-one, one);
+    c_coord[2][0] = c_coord[2][0].clamp(-one, one);
+
+    // convert to original system
+    let o_coord = matmul(&tran, &c_coord);
+    [o_coord[0][0], o_coord[1][0], o_coord[2][0]]
+}
+
+fn convex_sets_distance<Real, const M: usize, const N: usize>(
+    s1: &[Real; M],
+    s2: &[Real; N],
+) -> Real
+where
+    Real: num_traits::Float,
+{
+    todo!()
+}
+
+#[test]
+fn test_nearest_point_obb3() {
+    let halfsqrt2 = 1.41421356 / 2.;
+    let obb: [f64; 12] = [
+        0.0, 0.0, 0.0, halfsqrt2, halfsqrt2, 0.0, -halfsqrt2, halfsqrt2, 0.0, 0.0, 0.0, 1.0,
+    ];
+    let p: [f64; 3] = [2., 0., 0.];
+    let nearset = nearest_point3(&obb, &p);
+    assert_eq!(nearset[0], halfsqrt2 * 2.);
+
+    let obb: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let p: [f64; 3] = [2., 0., 0.];
+    let nearset = nearest_point3(&obb, &p);
+    assert_eq!(nearset[0], 1.);
+
+    let obb: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0];
+    let p: [f64; 3] = [2., 5., 0.];
+    let nearset = nearest_point3(&obb, &p);
+    assert_eq!(nearset[1], 2.);
+}
+
+#[test]
+fn test_convex_sets_distance() {}
 
 #[test]
 fn test_distance() {
     // Orthogonal vectors
-    let random_i:[f64;3] = [1.0,3.0,6.1];
-    let random_j:[f64;3] = [1.0,7.0,4.1];
+    let random_i: [f64; 3] = [1.0, 3.0, 6.1];
+    let random_j: [f64; 3] = [1.0, 7.0, 4.1];
     let i_basic = crate::vec3::normalized(&random_i);
     let mut j_basic = crate::vec3::normalized(&random_j);
     let k_basic = crate::vec3::cross(&i_basic, &j_basic);
     j_basic = crate::vec3::cross(&k_basic, &i_basic);
 
     // Seperated
-    let obb1:[f64;12] = [0.0,0.0,0.0, 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0];
-    let obb2:[f64;12] = [3.0,0.0,0.0, 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0];
-    assert!(is_intersect(&obb1, &obb2)==false); 
-    
-    let obb1:[f64;12] = [0.0,0.0,0.0, 
-                         i_basic[0], i_basic[1], i_basic[2],
-                         j_basic[0], j_basic[1], j_basic[2],
-                         k_basic[0], k_basic[1], k_basic[2]];
-    let obb2:[f64;12] = [3.0,0.0,0.0, 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0];
-    assert!(is_intersect(&obb1, &obb2)==false); 
+    let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let obb2: [f64; 12] = [3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+
+    assert!(is_intersect(&obb1, &obb2) == false);
+
+    let obb1: [f64; 12] = [
+        0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
+        k_basic[0], k_basic[1], k_basic[2],
+    ];
+    let obb2: [f64; 12] = [3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    assert!(is_intersect(&obb1, &obb2) == false);
 
     // Partially intersected
-    let obb1:[f64;12] = [0.0,0.0,0.0, 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0];
-    let obb2:[f64;12] = [1.0,0.0,0.0, 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0];
-    assert!(is_intersect(&obb1, &obb2)==true); 
-    let obb1:[f64;12] = [0.0,0.0,0.0, 
-                         i_basic[0], i_basic[1], i_basic[2],
-                         j_basic[0], j_basic[1], j_basic[2],
-                         k_basic[0], k_basic[1], k_basic[2]];
-    let obb2:[f64;12] = [1.0,0.0,0.0, 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0];
-    assert!(is_intersect(&obb1, &obb2)==true); 
+    let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    assert!(is_intersect(&obb1, &obb2) == true);
+    let obb1: [f64; 12] = [
+        0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
+        k_basic[0], k_basic[1], k_basic[2],
+    ];
+    let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    assert!(is_intersect(&obb1, &obb2) == true);
 
     // Constains
-    let obb1:[f64;12] = [0.0,0.0,0.0, 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0];
-    let obb2:[f64;12] = [0.0,0.0,0.0, 0.5,0.0,0.0, 0.0,0.5,0.0, 0.0,0.0,0.5];
-    assert!(is_intersect(&obb1, &obb2)==true); 
-    let obb1:[f64;12] = [0.0,0.0,0.0, 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0];
-    let obb2:[f64;12] = [0.0,0.0,0.0, 
-                         i_basic[0]*0.5, i_basic[1]*0.5, i_basic[2]*0.5,
-                         j_basic[0]*0.5, j_basic[1]*0.5, j_basic[2]*0.5,
-                         k_basic[0]*0.5, k_basic[1]*0.5, k_basic[2]*0.5];
+    let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let obb2: [f64; 12] = [0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5];
+    assert!(is_intersect(&obb1, &obb2) == true);
+    let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let obb2: [f64; 12] = [
+        0.0,
+        0.0,
+        0.0,
+        i_basic[0] * 0.5,
+        i_basic[1] * 0.5,
+        i_basic[2] * 0.5,
+        j_basic[0] * 0.5,
+        j_basic[1] * 0.5,
+        j_basic[2] * 0.5,
+        k_basic[0] * 0.5,
+        k_basic[1] * 0.5,
+        k_basic[2] * 0.5,
+    ];
 
-    assert!(is_intersect(&obb1, &obb2)==true); 
+    assert!(is_intersect(&obb1, &obb2) == true);
 }
