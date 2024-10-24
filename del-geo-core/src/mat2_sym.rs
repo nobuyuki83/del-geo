@@ -104,7 +104,7 @@ where
     let two = one + one;
     let four = two + two;
     let half = one / two;
-    let tmp = ((a - c) * (a - c) + four * b * b).sqrt();
+    let tmp = ((a - c).powi(2) + four * b * b).sqrt();
     let lam0 = half * (a + c - tmp);
     let lam1 = half * (a + c + tmp);
     let det0 = a - c + tmp;
@@ -137,7 +137,7 @@ where
     let a = coeff[0];
     let b = coeff[1];
     let c = coeff[2];
-    let det = a * c - b * b;
+    let det = a * c - b.powi(2);
     let minx = (c / det).sqrt();
     let miny = (a / det).sqrt();
     [-minx, -miny, minx, miny]
@@ -191,9 +191,7 @@ fn test_prinsipal_directions() {
             assert!(crate::aabb2::is_include_point2(&aabb, &[v[0], v[1]]));
             let sdf = crate::aabb2::sdf(&aabb, &[v[0], v[1]]);
             assert!(sdf <= 0f32);
-            if sdf > sdf_max {
-                sdf_max = sdf;
-            }
+            sdf_max = sdf_max.max(sdf);
         }
         assert!(sdf_max > -1.0e-3, "{}", sdf_max);
     }
