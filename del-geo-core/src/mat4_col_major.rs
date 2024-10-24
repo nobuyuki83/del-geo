@@ -1,7 +1,7 @@
 //! methods for 4x4 matrix
 
-use std::ops::AddAssign;
 use num_traits::AsPrimitive;
+use std::ops::AddAssign;
 
 pub fn from_identity<Real>() -> [Real; 16]
 where
@@ -34,7 +34,6 @@ where
         s, zero, zero, zero, zero, s, zero, zero, zero, zero, s, zero, zero, zero, zero, one,
     ]
 }
-
 
 pub fn from_translate<Real>(v: &[Real; 3]) -> [Real; 16]
 where
@@ -104,17 +103,11 @@ where
     Some([y0 / y3, y1 / y3, y2 / y3])
 }
 
-pub fn jacobian_transform<Real>(
-    t: &[Real; 16],
-    p: &[Real; 3],
-) -> [Real; 9]
+pub fn jacobian_transform<Real>(t: &[Real; 16], p: &[Real; 3]) -> [Real; 9]
 where
     Real: num_traits::Float + Copy,
 {
-    let a = [
-        t[0], t[1], t[2],
-        t[4], t[5], t[6],
-        t[8], t[9], t[10], ];
+    let a = [t[0], t[1], t[2], t[4], t[5], t[6], t[8], t[9], t[10]];
     let b = [t[12], t[13], t[14]];
     let d = t[15];
     let c = [t[3], t[7], t[11]];
@@ -122,15 +115,23 @@ where
     let ee = e * e;
     let f = crate::vec3::add(&crate::mat3_col_major::mult_vec(&a, &p), &b);
     [
-        a[0] * e - f[0] * c[0] * ee, a[1] * e - f[1] * c[0] * ee, a[2] * e - f[2] * c[0] * ee,
-        a[3] * e - f[0] * c[1] * ee, a[4] * e - f[1] * c[1] * ee, a[5] * e - f[2] * c[1] * ee,
-        a[6] * e - f[0] * c[2] * ee, a[7] * e - f[1] * c[2] * ee, a[8] * e - f[2] * c[2] * ee,
+        a[0] * e - f[0] * c[0] * ee,
+        a[1] * e - f[1] * c[0] * ee,
+        a[2] * e - f[2] * c[0] * ee,
+        a[3] * e - f[0] * c[1] * ee,
+        a[4] * e - f[1] * c[1] * ee,
+        a[5] * e - f[2] * c[1] * ee,
+        a[6] * e - f[0] * c[2] * ee,
+        a[7] * e - f[1] * c[2] * ee,
+        a[8] * e - f[2] * c[2] * ee,
     ]
 }
 
 #[test]
 fn test_jacobian_transform() {
-    let a: [f64; 16] = [1.1, 2.3, 3.4, 1.4, 1.7, 3.2, -0.5, 0.2, 2.3, -1.3, 1.4, 0.3, 0.6, 2.3, 1.5, -2.3];
+    let a: [f64; 16] = [
+        1.1, 2.3, 3.4, 1.4, 1.7, 3.2, -0.5, 0.2, 2.3, -1.3, 1.4, 0.3, 0.6, 2.3, 1.5, -2.3,
+    ];
     let p0 = [1.3, 0.3, -0.5];
     let q0 = transform_homogeneous(&a, &p0).unwrap();
     let dqdp = jacobian_transform(&a, &p0);
@@ -240,8 +241,11 @@ where
     f64: AsPrimitive<Real>,
 {
     let deg2rad: Real = Real::PI() / 180.0.as_();
-    let transl =
-        crate::mat4_col_major::from_translate(&[-cam_location[0], -cam_location[1], -cam_location[2]]);
+    let transl = crate::mat4_col_major::from_translate(&[
+        -cam_location[0],
+        -cam_location[1],
+        -cam_location[2],
+    ]);
     let rot_x = crate::mat4_col_major::from_rot_x(-cam_rot_x_deg * deg2rad);
     let rot_y = crate::mat4_col_major::from_rot_y(-cam_rot_y_deg * deg2rad);
     let rot_z = crate::mat4_col_major::from_rot_z(-cam_rot_z_deg * deg2rad);
@@ -255,10 +259,22 @@ where
     Real: Copy + std::ops::Mul<Output = Real>,
 {
     [
-        s * m[0], s * m[1], s * m[2], s * m[3],
-        s * m[4], s * m[5], s * m[6], s * m[7],
-        s * m[8], s * m[9], s * m[10], s * m[11],
-        s * m[12], s * m[13], s * m[14], s * m[15],
+        s * m[0],
+        s * m[1],
+        s * m[2],
+        s * m[3],
+        s * m[4],
+        s * m[5],
+        s * m[6],
+        s * m[7],
+        s * m[8],
+        s * m[9],
+        s * m[10],
+        s * m[11],
+        s * m[12],
+        s * m[13],
+        s * m[14],
+        s * m[15],
     ]
 }
 
@@ -300,10 +316,7 @@ where
     Real: Copy,
 {
     [
-        m[0], m[4], m[8], m[12],
-        m[1], m[5], m[9], m[13],
-        m[2], m[6], m[10], m[14],
-        m[3], m[7], m[11], m[15],
+        m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3], m[7],
+        m[11], m[15],
     ]
 }
-

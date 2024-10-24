@@ -21,4 +21,4 @@ itertools = {workspace = true}
 [dev-dependencies]
 nalgebra = {workspace = true}
 del-geo-nalgebra = {workspace = true}
-
+rand_chacha = {workspace = true}

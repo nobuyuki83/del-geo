@@ -68,14 +68,13 @@ where
     }
 }
 
-pub fn sample_unit_cube<T>() -> nalgebra::Vector3<T>
+pub fn sample_unit_cube<Reng, T>(rng: &mut Reng) -> nalgebra::Vector3<T>
 where
+    Reng: rand::Rng,
     T: nalgebra::RealField + nalgebra::Scalar,
     rand::distributions::Standard: rand::prelude::Distribution<T>,
 {
-    use rand::Rng;
     let mut p0 = nalgebra::Vector3::<T>::zeros();
-    let mut rng = rand::thread_rng();
     for v in p0.iter_mut() {
         *v = rng.gen();
     }
