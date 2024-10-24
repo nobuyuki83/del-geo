@@ -56,7 +56,7 @@ pub fn nearest_point2(obb: &[f32; 6], p: &[f32; 2]) -> [f32; 2] {
     let (i, _l) = ls
         .iter()
         .enumerate()
-        .min_by(|&a, &b| a.1.partial_cmp(&b.1).unwrap())
+        .min_by(|&a, &b| a.1.partial_cmp(b.1).unwrap())
         .unwrap();
     ps[i]
 }

@@ -23,6 +23,8 @@ jobs:
 
     - name: Cargo commands
       run: |
+        cargo fmt --check
+        cargo clippy -- -D warnings
         cargo build --release
         cargo test --release
         cargo doc --release

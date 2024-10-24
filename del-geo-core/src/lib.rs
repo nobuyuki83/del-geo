@@ -1,3 +1,6 @@
+#![allow(clippy::identity_op)]
+#![allow(clippy::erasing_op)]
+#![allow(clippy::needless_borrow)]
 /*
 vec < mat < aabb < obb <
 line < ray < edge <
@@ -29,9 +32,9 @@ pub mod mat3_sym;
 pub mod matn;
 pub mod obb2;
 pub mod quaternion;
+pub mod spherical_harmonics;
 pub mod tet;
 pub mod tri2;
 pub mod tri3;
 pub mod view_projection;
 pub mod view_rotation;
-pub mod spherical_harmonics;
