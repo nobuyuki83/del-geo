@@ -93,6 +93,8 @@ where
     y.atan2(x) * T::FRAC_1_PI() * half
 }
 
+/// Find the nearest point on a line segment to the origin(0,0)
+/// Returns (k,v), where k is the coeffcient between [0,1], v is the point
 pub fn nearest_origin(ps: &[f32; 2], pe: &[f32; 2]) -> (f32, [f32; 2]) {
     let d = crate::vec2::sub(pe, ps);
     let a = crate::vec2::squared_length(&d);
@@ -116,6 +118,9 @@ fn test_nearest_origin() {
     assert!(crate::vec2::length(&crate::vec2::sub(&pm, &[0., 1.])) < 1.0e-5);
 }
 
+
+/// Find the nearest point on a line segment to point p
+/// Returns (k,v), where k is the coeffcient, v is the point
 pub fn nearest_point2(
     s: &[f32; 2], // source
     e: &[f32; 2], // end

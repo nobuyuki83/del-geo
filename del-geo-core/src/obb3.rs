@@ -30,6 +30,7 @@ where
     true
 }
 
+// return the normalized axes and the magnitude of each axis
 pub fn axis_size<Real>(obb: &[Real; 12]) -> ([[Real; 3]; 3], [Real; 3])
 where
     Real: num_traits::Float,
@@ -49,6 +50,7 @@ where
     (axes, sizes)
 }
 
+// Projection of an OBB at axis, return (min,max)
 pub fn range_axis<Real>(obb: &[Real; 12], axis: &[Real; 3]) -> (Real, Real)
 where
     Real: num_traits::Float,
@@ -60,6 +62,7 @@ where
     (c - x - y - z, c + x + y + z)
 }
 
+// Find the distance of two ranges, return None if they are overlapped
 pub fn distance_range<Real>(a: (Real, Real), b: (Real, Real)) -> Option<Real>
 where
     Real: num_traits::Float,
@@ -73,6 +76,7 @@ where
     None
 }
 
+// Use Separating Axis Theorem to check if two OBBs are intersected
 pub fn distance_to_obb3<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> Real
 where
     Real: num_traits::Float,
@@ -82,6 +86,7 @@ where
     let center_j: [Real; 3] = obb_j[0..3].try_into().unwrap();
     let axis_size_j = axis_size(obb_j);
     let mut max_dist = Real::zero();
+
     for i in 0..3 {
         let axis_i = axis_size_i.0[i];
         let lh_i = axis_size_i.1[i];
@@ -124,4 +129,156 @@ where
         }
     }
     max_dist
+}
+
+pub fn is_intersect<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> bool
+where
+    Real: num_traits::Float,
+{
+    // If all distances between OBBs are not bigger than zero, intersected
+    distance_to_obb3(obb_i, obb_j) == Real::zero()
+}
+
+/// Get 8 corners of an obb3
+/// The first four points defines the front face of the obb3, the last four defines back face.
+pub fn corner_points<Real>(obb: &[Real; 12]) -> [[Real; 3]; 8]
+where
+    Real: num_traits::Float,
+{
+    // extend respect each axis
+    let e_x = obb[3] + obb[6] + obb[9];
+    let e_y = obb[4] + obb[7] + obb[10];
+    let e_z = obb[5] + obb[8] + obb[11];
+    [
+        [obb[0] + e_x, obb[1] + e_y, obb[2] + e_z],
+        [obb[0] + e_x, obb[1] - e_y, obb[2] + e_z],
+        [obb[0] - e_x, obb[1] + e_y, obb[2] + e_z],
+        [obb[0] - e_x, obb[1] - e_y, obb[2] + e_z],
+        [obb[0] + e_x, obb[1] + e_y, obb[2] - e_z],
+        [obb[0] + e_x, obb[1] - e_y, obb[2] - e_z],
+        [obb[0] - e_x, obb[1] + e_y, obb[2] - e_z],
+        [obb[0] - e_x, obb[1] - e_y, obb[2] - e_z],
+    ]
+}
+
+fn nearest_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    use crate::{mat3_array_of_array::inverse, mat3_array_of_array::matmul};
+
+    let tran = [
+        [obb[3], obb[6], obb[9]],
+        [obb[4], obb[7], obb[10]],
+        [obb[5], obb[8], obb[11]],
+    ];
+
+    // TODO: check not inversable
+    let inv_tran = inverse(&tran);
+
+    let zero = Real::zero();
+    // TODO: use matxi mul vector
+    let p_mat = [[p[0], zero, zero], [p[1], zero, zero], [p[2], zero, zero]];
+    // transfrom point to obb's column space
+    let mut c_coord = matmul(&inv_tran, &p_mat);
+
+    let one = Real::one();
+    c_coord[0][0] = c_coord[0][0].clamp(-one, one);
+    c_coord[1][0] = c_coord[1][0].clamp(-one, one);
+    c_coord[2][0] = c_coord[2][0].clamp(-one, one);
+
+    // convert to original system
+    let o_coord = matmul(&tran, &c_coord);
+    [o_coord[0][0], o_coord[1][0], o_coord[2][0]]
+}
+
+fn convex_sets_distance<Real, const M: usize, const N: usize>(
+    s1: &[Real; M],
+    s2: &[Real; N],
+) -> Real
+where
+    Real: num_traits::Float,
+{
+    todo!()
+}
+
+#[test]
+fn test_nearest_point_obb3() {
+    let halfsqrt2 = 1.41421356 / 2.;
+    let obb: [f64; 12] = [
+        0.0, 0.0, 0.0, halfsqrt2, halfsqrt2, 0.0, -halfsqrt2, halfsqrt2, 0.0, 0.0, 0.0, 1.0,
+    ];
+    let p: [f64; 3] = [2., 0., 0.];
+    let nearset = nearest_point3(&obb, &p);
+    assert_eq!(nearset[0], halfsqrt2 * 2.);
+
+    let obb: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let p: [f64; 3] = [2., 0., 0.];
+    let nearset = nearest_point3(&obb, &p);
+    assert_eq!(nearset[0], 1.);
+
+    let obb: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0];
+    let p: [f64; 3] = [2., 5., 0.];
+    let nearset = nearest_point3(&obb, &p);
+    assert_eq!(nearset[1], 2.);
+}
+
+#[test]
+fn test_convex_sets_distance() {}
+
+#[test]
+fn test_distance() {
+    // Orthogonal vectors
+    let random_i: [f64; 3] = [1.0, 3.0, 6.1];
+    let random_j: [f64; 3] = [1.0, 7.0, 4.1];
+    let i_basic = crate::vec3::normalized(&random_i);
+    let mut j_basic = crate::vec3::normalized(&random_j);
+    let k_basic = crate::vec3::cross(&i_basic, &j_basic);
+    j_basic = crate::vec3::cross(&k_basic, &i_basic);
+
+    // Seperated
+    let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let obb2: [f64; 12] = [3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+
+    assert!(is_intersect(&obb1, &obb2) == false);
+
+    let obb1: [f64; 12] = [
+        0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
+        k_basic[0], k_basic[1], k_basic[2],
+    ];
+    let obb2: [f64; 12] = [3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    assert!(is_intersect(&obb1, &obb2) == false);
+
+    // Partially intersected
+    let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    assert!(is_intersect(&obb1, &obb2) == true);
+    let obb1: [f64; 12] = [
+        0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
+        k_basic[0], k_basic[1], k_basic[2],
+    ];
+    let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    assert!(is_intersect(&obb1, &obb2) == true);
+
+    // Constains
+    let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let obb2: [f64; 12] = [0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5];
+    assert!(is_intersect(&obb1, &obb2) == true);
+    let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+    let obb2: [f64; 12] = [
+        0.0,
+        0.0,
+        0.0,
+        i_basic[0] * 0.5,
+        i_basic[1] * 0.5,
+        i_basic[2] * 0.5,
+        j_basic[0] * 0.5,
+        j_basic[1] * 0.5,
+        j_basic[2] * 0.5,
+        k_basic[0] * 0.5,
+        k_basic[1] * 0.5,
+        k_basic[2] * 0.5,
+    ];
+
+    assert!(is_intersect(&obb1, &obb2) == true);
 }
