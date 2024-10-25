@@ -3,7 +3,7 @@ pub struct Trackball {
 }
 
 impl Trackball {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             quaternion: [0., 0., 0., 1.],
         }

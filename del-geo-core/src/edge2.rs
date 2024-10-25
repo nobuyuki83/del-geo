@@ -31,46 +31,14 @@ where
     T: num_traits::Float + 'static + Copy,
     f64: AsPrimitive<T>,
 {
-    let min0x = if po_s0[0] < po_e0[0] {
-        po_s0[0]
-    } else {
-        po_e0[0]
-    };
-    let max0x = if po_s0[0] > po_e0[0] {
-        po_s0[0]
-    } else {
-        po_e0[0]
-    };
-    let max1x = if po_s1[0] > po_e1[0] {
-        po_s1[0]
-    } else {
-        po_e1[0]
-    };
-    let min1x = if po_s1[0] < po_e1[0] {
-        po_s1[0]
-    } else {
-        po_e1[0]
-    };
-    let min0y = if po_s0[1] < po_e0[1] {
-        po_s0[1]
-    } else {
-        po_e0[1]
-    };
-    let max0y = if po_s0[1] > po_e0[1] {
-        po_s0[1]
-    } else {
-        po_e0[1]
-    };
-    let max1y = if po_s1[1] > po_e1[1] {
-        po_s1[1]
-    } else {
-        po_e1[1]
-    };
-    let min1y = if po_s1[1] < po_e1[1] {
-        po_s1[1]
-    } else {
-        po_e1[1]
-    };
+    let min0x = po_s0[0].min(po_e0[0]);
+    let max0x = po_s0[0].max(po_e0[0]);
+    let min1x = po_s1[0].min(po_e1[0]);
+    let max1x = po_s1[0].max(po_e1[0]);
+    let min0y = po_s0[1].min(po_e0[1]);
+    let max0y = po_s0[1].max(po_e0[1]);
+    let min1y = po_s1[1].min(po_e1[1]);
+    let max1y = po_s1[1].max(po_e1[1]);
     let len =
         ((max0x - min0x) + (max0y - min0y) + (max1x - min1x) + (max1y - min1y)) * 0.0001_f64.as_();
     if max1x + len < min0x {
