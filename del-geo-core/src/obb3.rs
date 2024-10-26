@@ -153,7 +153,8 @@ where
 }
 
 pub fn nearest_to_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
-where Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
     if is_include_point(&obb, p, Real::zero()) {
         return *p;
@@ -181,16 +182,12 @@ fn test_nearest_to_point3() {
         for _iter in 0..10 {
             let eps = 1.0e-2;
             let dp = crate::aabb3::sample(&[-eps, -eps, -eps, eps, eps, eps], &mut reng);
-            let q = [
-                p_near[0] + dp[0],
-                p_near[1] + dp[1],
-                p_near[2] + dp[2],
-            ];
+            let q = [p_near[0] + dp[0], p_near[1] + dp[1], p_near[2] + dp[2]];
             let q = nearest_to_point3(&obb, &q);
             let len0 = crate::edge3::length(&p, &p_near);
             let len1 = crate::edge3::length(&p, &q);
             dbg!(len0, len1);
-            assert!(len0<=len1);
+            assert!(len0 <= len1);
         }
     }
 }

@@ -3,7 +3,8 @@
 use std::ops::MulAssign;
 
 pub fn orthogonalize<Real>(u: &[Real; 3], v: &[Real; 3]) -> [Real; 3]
-where Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
     let t = dot(u, v) / dot(u, u);
     [v[0] - t * u[0], v[1] - t * u[1], v[2] - t * u[2]]
