@@ -117,9 +117,7 @@ where
         let Some(dist) = distance_between_two_ranges(range_i, range_j) else {
             continue;
         };
-        if dist > max_dist {
-            max_dist = dist;
-        }
+        max_dist = max_dist.max(dist);
     }
     for j in 0..3 {
         let axis_j = axis_size_j.0[j];
@@ -130,9 +128,7 @@ where
         let Some(dist) = distance_between_two_ranges(range_i, range_j) else {
             continue;
         };
-        if dist > max_dist {
-            max_dist = dist;
-        }
+        max_dist = max_dist.max(dist);
     }
     for i in 0..3 {
         let axis_i = axis_size_i.0[i];
@@ -144,9 +140,7 @@ where
             let Some(dist) = distance_between_two_ranges(range_i, range_j) else {
                 continue;
             };
-            if dist > max_dist {
-                max_dist = dist;
-            }
+            max_dist = max_dist.max(dist);
         }
     }
     max_dist
