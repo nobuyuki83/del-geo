@@ -12,7 +12,7 @@ where
     (x * x + y * y + z * z).sqrt()
 }
 
-pub fn nearest_point3<T>(p0: &[T; 3], p1: &[T; 3], point_pos: &[T; 3]) -> [T; 3]
+pub fn nearest_to_point3<T>(p0: &[T; 3], p1: &[T; 3], point_pos: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float + 'static + Copy + PartialOrd,
     f64: AsPrimitive<T>,
