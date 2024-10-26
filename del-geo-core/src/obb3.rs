@@ -96,9 +96,7 @@ where
         let Some(dist) = distance_range(range_i, range_j) else {
             continue;
         };
-        if dist > max_dist {
-            max_dist = dist;
-        }
+        max_dist = max_dist.max(dist);
     }
     for j in 0..3 {
         let axis_j = axis_size_j.0[j];
@@ -109,9 +107,7 @@ where
         let Some(dist) = distance_range(range_i, range_j) else {
             continue;
         };
-        if dist > max_dist {
-            max_dist = dist;
-        }
+        max_dist = max_dist.max(dist);
     }
     for i in 0..3 {
         let axis_i = axis_size_i.0[i];
@@ -123,9 +119,7 @@ where
             let Some(dist) = distance_range(range_i, range_j) else {
                 continue;
             };
-            if dist > max_dist {
-                max_dist = dist;
-            }
+            max_dist = max_dist.max(dist);
         }
     }
     max_dist
@@ -252,18 +246,18 @@ fn test_distance() {
     // Partially intersected
     let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
     let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-    assert!(is_intersect(&obb1, &obb2) == true);
+    assert!(is_intersect(&obb1, &obb2));
     let obb1: [f64; 12] = [
         0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
         k_basic[0], k_basic[1], k_basic[2],
     ];
     let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-    assert!(is_intersect(&obb1, &obb2) == true);
+    assert!(is_intersect(&obb1, &obb2));
 
     // Constains
     let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
     let obb2: [f64; 12] = [0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5];
-    assert!(is_intersect(&obb1, &obb2) == true);
+    assert!(is_intersect(&obb1, &obb2));
     let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
     let obb2: [f64; 12] = [
         0.0,
@@ -280,5 +274,5 @@ fn test_distance() {
         k_basic[2] * 0.5,
     ];
 
-    assert!(is_intersect(&obb1, &obb2) == true);
+    assert!(is_intersect(&obb1, &obb2));
 }
