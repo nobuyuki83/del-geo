@@ -4,6 +4,17 @@
 //! next 2 Reals are for half of major axis direction
 //! next 2 Reals are for half of minar axis direction
 
+pub fn from_random<RAND>(reng: &mut RAND) -> [f32; 6]
+where
+    RAND: rand::Rng,
+{
+    let cntr = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
+    let u = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
+    let v = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
+    let v = crate::vec2::orthogonalize(&u, &v);
+    [cntr[0], cntr[1], u[0], u[1], v[0], v[1]]
+}
+
 fn is_include_point2(obb: &[f32; 6], p: &[f32; 2]) -> bool {
     let d = crate::vec2::sub(p, arrayref::array_ref!(obb, 0, 2));
     {
@@ -62,7 +73,7 @@ pub fn nearest_point2(obb: &[f32; 6], p: &[f32; 2]) -> [f32; 2] {
 }
 
 #[test]
-fn test_project() {
+fn test_nearest_point2() {
     let obb = [0., 0., 1., 1., -0.5, 0.5];
     let p0 = nearest_point2(&obb, &[1.5, 1.5]);
     assert!(crate::edge2::length(&p0, &[1., 1.]) < 1.0e-8);
@@ -106,13 +117,7 @@ fn test_is_intersect_aabb2() {
     use rand::SeedableRng;
     let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     for _iter in 0..100 {
-        let obb = {
-            let cntr = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
-            let u = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
-            let v = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
-            let v = crate::vec2::orthogonalize(&u, &v);
-            [cntr[0], cntr[1], u[0], u[1], v[0], v[1]]
-        };
+        let obb = from_random(&mut reng);
         let aabb = crate::aabb2::from_two_points(
             &[2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.],
             &[2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.],
@@ -125,16 +130,11 @@ fn test_is_intersect_aabb2() {
         let a2 = crate::aabb2::nearest_point2(&aabb, &a1);
         let a3 = nearest_point2(&obb, &a2);
         let a4 = crate::aabb2::nearest_point2(&aabb, &a3);
-        //let len01 = crate::edge2::length(&a0, &a1);
-        //let len12 = crate::edge2::length(&a1, &a2);
         let len23 = crate::edge2::length(&a2, &a3);
         let len34 = crate::edge2::length(&a3, &a4);
         if len34 > 0. && len34 < len23 * 0.99999 {
             continue;
         } // still converging
-          // dbg!(len01, len12, len23, len34);
-          // dbg!(is_include_point2(&obb, &a4));
-          // dbg!(crate::aabb2::is_include_point2(&aabb, &a4));
         let res0 = is_intersect_aabb2(&obb, &aabb);
         let res1 = len34 < 0.0001;
         assert_eq!(res0, res1);
