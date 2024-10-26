@@ -25,8 +25,8 @@ pub fn eigen_decomp(sm: [f64; 6], nitr: usize) -> Option<([f64; 9], [f64; 3])> {
     let mut sms = sm.map(|x| x * invscl);
 
     for _itr in 0..nitr {
-        let m = sms.clone();
-        let v = u.clone();
+        let m = sms;
+        let v = u;
         let a12 = sms[3].abs();
         let a20 = sms[4].abs();
         let a01 = sms[5].abs();

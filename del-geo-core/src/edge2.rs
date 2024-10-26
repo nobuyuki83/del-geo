@@ -118,7 +118,6 @@ fn test_nearest_origin() {
     assert!(crate::vec2::length(&crate::vec2::sub(&pm, &[0., 1.])) < 1.0e-5);
 }
 
-
 /// Find the nearest point on a line segment to point p
 /// Returns (k,v), where k is the coeffcient, v is the point
 pub fn nearest_point2(
