@@ -1,7 +1,5 @@
 //! 3D Oriented Bounding Box (OBB)
 
-use std::f64::consts::PI;
-
 use rand::distributions::{Distribution, Standard};
 
 pub fn from_random<RAND, Real>(reng: &mut RAND) -> [Real; 12]
@@ -280,6 +278,7 @@ fn test_is_intersect_to_obb3() {
 
 #[test]
 fn test2_is_intersect_to_obb3() {
+    use std::f64::consts::PI;
     for i in 0..2 {
         let obb_i = [0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.];
 
