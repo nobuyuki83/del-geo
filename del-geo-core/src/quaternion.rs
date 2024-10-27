@@ -1,3 +1,5 @@
+// quaternion defined as [i,j,k,w] where w is the real part
+
 pub fn to_mat3_col_major<Real>(q: &[Real; 4]) -> [Real; 9]
 where
     Real: num_traits::Float,
@@ -118,4 +120,16 @@ pub fn from_axisangle(a: &[f32; 3]) -> [f32; 4] {
         (lena * half).sin() * a[2] / lena,
         (lena * half).cos(),
     ]
+}
+
+pub fn identity() -> [f64; 4] {
+    [0., 0., 0., 1.]
+}
+
+/// return rotation around axis with radian 
+pub fn around_axis(a: &[f64; 3], rad: f64) -> [f64; 4] {
+    let v = crate::vec3::normalized(a);
+    let half = rad * 0.5f64;
+    let sin = half.sin();
+    [v[0] * sin, v[1] * sin, v[2] * sin, half.cos()]
 }
