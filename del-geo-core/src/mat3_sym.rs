@@ -16,32 +16,17 @@ pub fn eigen_decomp(sm: [f64; 6], nitr: usize) -> Option<([f64; 9], [f64; 3])> {
     u[0] = 1.0;
     u[4] = 1.0;
     u[8] = 1.0;
-    u[1] = 0.0;
-    u[2] = 0.0;
-    u[3] = 0.0;
-    u[5] = 0.0;
-    u[6] = 0.0;
-    u[7] = 0.0;
-    l[0] = 0.0;
-    l[1] = 0.0;
-    l[2] = 0.0;
     let dnrm = squared_norm(&sm);
     if dnrm < 1.0e-30 {
         return None;
     } // this matrix is too small
     let scale = dnrm.sqrt();
     let invscl = 1.0 / scale;
-    let mut sms = [
-        sm[0] * invscl,
-        sm[1] * invscl,
-        sm[2] * invscl,
-        sm[3] * invscl,
-        sm[4] * invscl,
-        sm[5] * invscl,
-    ];
+    let mut sms = sm.map(|x| x * invscl);
+
     for _itr in 0..nitr {
-        let m = [sms[0], sms[1], sms[2], sms[3], sms[4], sms[5]];
-        let v = [u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7], u[8]];
+        let m = sms;
+        let v = u;
         let a12 = sms[3].abs();
         let a20 = sms[4].abs();
         let a01 = sms[5].abs();
@@ -113,13 +98,7 @@ fn hoge() {
     let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     // std::uniform_real_distribution < double > dist(-50.0, 50.0);
     for _itr in 0..1000 {
-        let sm = {
-            let mut sm = [0f64; 6];
-            for i in 0..6 {
-                sm[i] = rng.gen::<f64>() * 50.;
-            }
-            sm
-        };
+        let sm = std::array::from_fn(|_| rng.gen::<f64>() * 50.);
         let Some((u, _l)) = eigen_decomp(sm, 20) else {
             todo!()
         };

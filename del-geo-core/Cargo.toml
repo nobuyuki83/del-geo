@@ -22,3 +22,4 @@ itertools = {workspace = true}
 nalgebra = {workspace = true}
 del-geo-nalgebra = {workspace = true}
 rand_chacha = {workspace = true}
+del-msh-core = {workspace = true}

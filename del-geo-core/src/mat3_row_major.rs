@@ -53,17 +53,7 @@ pub fn sub<Real>(a: &[Real; 9], b: &[Real; 9]) -> [Real; 9]
 where
     Real: num_traits::Float,
 {
-    [
-        a[0] - b[0],
-        a[1] - b[1],
-        a[2] - b[2],
-        a[3] - b[3],
-        a[4] - b[4],
-        a[5] - b[5],
-        a[6] - b[6],
-        a[7] - b[7],
-        a[8] - b[8],
-    ]
+    std::array::from_fn(|i| a[i] - b[i])
 }
 
 fn sort_eigen(g: &mut [f64; 3], v: &mut [f64; 9]) {
@@ -138,16 +128,12 @@ pub fn svd(m: &[f64; 9], nitr: usize) {
         crate::vec3::normalize(&mut u0);
         let sql1 = crate::vec3::squared_norm(&u1);
         if sql1 < 1.0e-20 {
-            u1[0] = 1.0 - u0[0].abs();
-            u1[1] = 1.0 - u0[1].abs();
-            u1[2] = 1.0 - u0[2].abs();
+            u1 = u0.map(|x| 1.0 - x.abs());
         } else {
             crate::vec3::normalize(&mut u1);
         }
         let d01 = u0[0] * u1[0] + u0[1] * u1[1] + u0[2] * u1[2];
-        u1[0] -= d01 * u0[0];
-        u1[1] -= d01 * u0[1];
-        u1[2] -= d01 * u0[2];
+        u1 = std::array::from_fn(|i| u1[i] - d01 * u0[i]);
         crate::vec3::normalize(&mut u1);
         let s2 = crate::vec3::cross(&u0, &u1);
         let d22 = u2[0] * s2[0] + u2[1] * s2[1] + u2[2] * s2[2];
