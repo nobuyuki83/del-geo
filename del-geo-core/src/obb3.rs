@@ -1,5 +1,7 @@
 //! 3D Oriented Bounding Box (OBB)
 
+use std::f64::consts::PI;
+
 use rand::distributions::{Distribution, Standard};
 
 pub fn from_random<RAND, Real>(reng: &mut RAND) -> [Real; 12]
@@ -242,62 +244,36 @@ fn test_is_intersect_to_obb3() {
 
 #[test]
 fn test2_is_intersect_to_obb3() {
-    {
-        // Seperated
-        let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        let obb2: [f64; 12] = [3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), false);
-    }
-    {
-        // Orthogonal vectors
-        let random_i: [f64; 3] = [1.0, 3.0, 6.1];
-        let random_j: [f64; 3] = [1.0, 7.0, 4.1];
-        let i_basic = crate::vec3::normalized(&random_i);
-        let mut j_basic = crate::vec3::normalized(&random_j);
-        let k_basic = crate::vec3::cross(&i_basic, &j_basic);
-        j_basic = crate::vec3::cross(&k_basic, &i_basic);
-        let obb1: [f64; 12] = [
-            0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
-            k_basic[0], k_basic[1], k_basic[2],
+    for i in 0..2 {
+        let obb_i = [0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.];
+
+        // special obb need to check additional axes other than six orientation axes
+        // this test will fail if not checking addtional axes
+        let d = 2.0 + 0.01 * (i as f64); // small distance to the obbs make them seperated
+        let quad = crate::quaternion::around_axis(&[1., 0., -1.], -PI * 0.5f64);
+        let rot_mat = crate::quaternion::to_mat3_col_major(&quad);
+        let u = crate::mat3_col_major::mult_vec(&rot_mat, &[1., 0., 0.]);
+        let v = crate::mat3_col_major::mult_vec(&rot_mat, &[0., 1., 0.]);
+        let w = crate::mat3_col_major::mult_vec(&rot_mat, &[0., 0., 1.]);
+        let obb_j = [
+            d, 0., -d, u[0], u[1], u[2], v[0], v[1], v[2], w[0], w[1], w[2],
         ];
-        let obb2: [f64; 12] = [3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), false);
-        //
-        let obb1: [f64; 12] = [
-            0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
-            k_basic[0], k_basic[1], k_basic[2],
-        ];
-        let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), true);
-        //
-        let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        let obb2: [f64; 12] = [
-            0.0,
-            0.0,
-            0.0,
-            i_basic[0] * 0.5,
-            i_basic[1] * 0.5,
-            i_basic[2] * 0.5,
-            j_basic[0] * 0.5,
-            j_basic[1] * 0.5,
-            j_basic[2] * 0.5,
-            k_basic[0] * 0.5,
-            k_basic[1] * 0.5,
-            k_basic[2] * 0.5,
-        ];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), true);
-    }
-    {
-        // Partially intersected
-        let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), true);
-    }
-    {
-        // Constains
-        let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        let obb2: [f64; 12] = [0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), true);
+
+        let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
+        let p1 = nearest_to_point3(&obb_j, p0);
+        let p2 = nearest_to_point3(&obb_i, &p1);
+        let p3 = nearest_to_point3(&obb_j, &p2);
+        let p4 = nearest_to_point3(&obb_i, &p3);
+        let p5 = nearest_to_point3(&obb_j, &p4);
+        let p6 = nearest_to_point3(&obb_i, &p5);
+
+        let len45 = crate::edge3::length(&p4, &p5);
+        let len56 = crate::edge3::length(&p5, &p6);
+        assert!(len56 <= len45);
+
+        let res1 = len56 < 0.0001; // this will be false since not intersected
+        let res0 = is_intersect_to_obb3(&obb_i, &obb_j);
+        assert_eq!(res0, res1, "{} {}", len45, len56);
     }
 }
 
