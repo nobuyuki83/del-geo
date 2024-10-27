@@ -73,15 +73,21 @@ where
 }
 
 /// Projection of an OBB at axis, return (min,max)
-pub fn range_axis<Real>(obb: &[Real; 12], axis: &[Real; 3]) -> (Real, Real)
+fn range_axis<Real, const N: usize>(ps: &[[Real; 3]; N], axis: &[Real; 3]) -> (Real, Real)
 where
     Real: num_traits::Float,
 {
-    let c = obb[0] * axis[0] + obb[1] * axis[1] + obb[2] * axis[2];
-    let x = (obb[3] * axis[0] + obb[4] * axis[1] + obb[5] * axis[2]).abs();
-    let y = (obb[6] * axis[0] + obb[7] * axis[1] + obb[8] * axis[2]).abs();
-    let z = (obb[9] * axis[0] + obb[10] * axis[1] + obb[11] * axis[2]).abs();
-    (c - x - y - z, c + x + y + z)
+    let min0 = ps
+        .iter()
+        .map(|v| crate::vec3::dot(v, axis))
+        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+    let max0 = ps
+        .iter()
+        .map(|v| crate::vec3::dot(v, axis))
+        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+    (min0, max0)
 }
 
 /// Find the distance of two ranges, return None if they are overlapped
@@ -107,13 +113,15 @@ where
     let center_j: [Real; 3] = obb_j[0..3].try_into().unwrap();
     let axis_size_j = unit_axes_and_half_edge_lengths(obb_j);
     let mut max_dist = Real::zero();
+    let cp_i = corner_points(obb_i);
+    let cp_j = corner_points(obb_j);
 
     for i in 0..3 {
         let axis_i = axis_size_i.0[i];
         let lh_i = axis_size_i.1[i];
         let c_i = crate::vec3::dot(&axis_i, &center_i);
         let range_i = (c_i - lh_i, c_i + lh_i);
-        let range_j = range_axis(obb_j, &axis_i);
+        let range_j = range_axis(&cp_j, &axis_i);
         let Some(dist) = distance_between_two_ranges(range_i, range_j) else {
             continue;
         };
@@ -123,8 +131,8 @@ where
         let axis_j = axis_size_j.0[j];
         let lh_j = axis_size_j.1[j];
         let c_j = crate::vec3::dot(&axis_j, &center_j);
+        let range_i = range_axis(&cp_i, &axis_j);
         let range_j = (c_j - lh_j, c_j + lh_j);
-        let range_i = range_axis(obb_i, &axis_j);
         let Some(dist) = distance_between_two_ranges(range_i, range_j) else {
             continue;
         };
@@ -135,8 +143,8 @@ where
         for j in 0..3 {
             let axis_j = axis_size_j.0[j];
             let axis = crate::vec3::cross(&axis_i, &axis_j);
-            let range_i = range_axis(obb_i, &axis);
-            let range_j = range_axis(obb_j, &axis);
+            let range_i = range_axis(&cp_i, &axis);
+            let range_j = range_axis(&cp_j, &axis);
             let Some(dist) = distance_between_two_ranges(range_i, range_j) else {
                 continue;
             };
@@ -169,18 +177,17 @@ where
 fn test_nearest_to_point3() {
     use rand::SeedableRng;
     let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
-    for _itr in 0..100 {
+    for _itr in 0..1000 {
         let obb = from_random::<_, f64>(&mut reng);
         let p = crate::aabb3::sample(&[-1., -1., -1., 1., 1., 1.], &mut reng);
         let p_near = nearest_to_point3(&obb, &p);
-        for _iter in 0..10 {
-            let eps = 1.0e-2;
+        for _iter in 0..100 {
+            let eps = 1.0e-4;
             let dp = crate::aabb3::sample(&[-eps, -eps, -eps, eps, eps, eps], &mut reng);
             let q = [p_near[0] + dp[0], p_near[1] + dp[1], p_near[2] + dp[2]];
             let q = nearest_to_point3(&obb, &q);
             let len0 = crate::edge3::length(&p, &p_near);
             let len1 = crate::edge3::length(&p, &q);
-            dbg!(len0, len1);
             assert!(len0 <= len1);
         }
     }
@@ -189,18 +196,35 @@ fn test_nearest_to_point3() {
 /// Use Separating Axis Theorem (SAT) to check if two OBBs are intersected
 pub fn is_intersect_to_obb3<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> bool
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + std::fmt::Debug,
 {
     let axes = {
         let (axes_i, _) = unit_axes_and_half_edge_lengths(&obb_i);
         let (axes_j, _) = unit_axes_and_half_edge_lengths(&obb_j);
         [
-            axes_i[0], axes_i[1], axes_i[2], axes_j[0], axes_j[1], axes_j[2],
+            axes_i[0],
+            axes_i[1],
+            axes_i[2],
+            axes_j[0],
+            axes_j[1],
+            axes_j[2],
+            crate::vec3::cross(&axes_i[0], &axes_j[0]),
+            crate::vec3::cross(&axes_i[0], &axes_j[1]),
+            crate::vec3::cross(&axes_i[0], &axes_j[2]),
+            crate::vec3::cross(&axes_i[1], &axes_j[0]),
+            crate::vec3::cross(&axes_i[1], &axes_j[1]),
+            crate::vec3::cross(&axes_i[1], &axes_j[2]),
+            crate::vec3::cross(&axes_i[2], &axes_j[0]),
+            crate::vec3::cross(&axes_i[2], &axes_j[1]),
+            crate::vec3::cross(&axes_i[2], &axes_j[2]),
         ]
     };
+    let corner_i = corner_points(obb_i);
+    let corner_j = corner_points(obb_j);
     for axis in axes.iter() {
-        let range_i = range_axis(obb_i, axis);
-        let range_j = range_axis(obb_j, axis);
+        let range_i = range_axis(&corner_i, axis);
+        let range_j = range_axis(&corner_j, axis);
+        // dbg!(range_i, range_j);
         if distance_between_two_ranges(range_i, range_j).is_some() {
             return false;
         }
@@ -212,7 +236,7 @@ where
 fn test_is_intersect_to_obb3() {
     use rand::SeedableRng;
     let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
-    for _iter in 0..100 {
+    for _iter in 0..1000 {
         let obb_i = from_random::<_, f64>(&mut reng);
         let obb_j = from_random(&mut reng);
         let res0 = is_intersect_to_obb3(&obb_i, &obb_j);
@@ -226,10 +250,28 @@ fn test_is_intersect_to_obb3() {
         let len45 = crate::edge3::length(&p4, &p5);
         let len56 = crate::edge3::length(&p5, &p6);
         assert!(len56 <= len45);
-        if len56 > 0. && len56 < len45 {
+        if len56 > 0. && len56 < len45 * 0.9999 {
             continue;
         } // still converging
         let res1 = len56 < 0.0001;
+        if res0 != res1 {
+            let (mut tri2vtx_i, mut vtx2xyz_i) = del_msh_core::trimesh3_primitive::obb3(&obb_i);
+            let (tri2vtx_j, vtx2xyz_j) = del_msh_core::trimesh3_primitive::obb3(&obb_j);
+            del_msh_core::uniform_mesh::merge(
+                &mut tri2vtx_i,
+                &mut vtx2xyz_i,
+                &tri2vtx_j,
+                &vtx2xyz_j,
+                3,
+            );
+            // output mesh to visualize the failure case
+            let _ = del_msh_core::io_obj::save_tri2vtx_vtx2xyz(
+                "../../target/fail_obb3.obj",
+                &tri2vtx_i,
+                &vtx2xyz_i,
+                3,
+            );
+        }
         assert_eq!(res0, res1, "{} {}", len45, len56);
     }
 }
