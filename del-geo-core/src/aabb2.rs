@@ -30,12 +30,8 @@ where
 {
     let mut o = [T::zero(); 4];
     for i in 0..2 {
-        o[i] = if i0[i] < i1[i] { i0[i] } else { i1[i] };
-        o[i + 2] = if i0[i + 2] > i1[i + 2] {
-            i0[i + 2]
-        } else {
-            i1[i + 2]
-        };
+        o[i] = i0[i].min(i1[i]);
+        o[i + 2] = i0[i + 2].max(i1[i + 2]);
     }
     o
 }
@@ -102,8 +98,8 @@ where
     [
         ax.iter().fold(T::infinity(), |a, &b| a.min(b)),
         ay.iter().fold(T::infinity(), |a, &b| a.min(b)),
-        ax.iter().fold(-T::infinity(), |a, &b| a.max(b)),
-        ay.iter().fold(-T::infinity(), |a, &b| a.max(b)),
+        ax.iter().fold(T::neg_infinity(), |a, &b| a.max(b)),
+        ay.iter().fold(T::neg_infinity(), |a, &b| a.max(b)),
     ]
 }
 
