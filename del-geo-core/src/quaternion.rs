@@ -126,7 +126,7 @@ pub fn identity() -> [f64; 4] {
     [0., 0., 0., 1.]
 }
 
-/// return rotation around axis with radian 
+/// return rotation around axis with radian
 pub fn around_axis(a: &[f64; 3], rad: f64) -> [f64; 4] {
     let v = crate::vec3::normalized(a);
     let half = rad * 0.5f64;
