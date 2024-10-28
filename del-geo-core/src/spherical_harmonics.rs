@@ -1,3 +1,6 @@
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::comparison_chain)]
+
 use num_complex::{Complex, ComplexFloat};
 use std::f64::consts::PI;
 
@@ -263,13 +266,10 @@ fn sph_coeff_buffer(n: i8, x: f64, y: f64, z: f64) -> [f64; 100] {
 fn legendre_coeff_vec(n: u64) -> Vec<Vec<f64>> {
     let mut res = Vec::new();
 
-    let mut p0 = Vec::new();
-    p0.push(1.0);
+    let p0 = vec![1.0];
     res.push(p0);
 
-    let mut p1 = Vec::new();
-    p1.push(0.0);
-    p1.push(1.0);
+    let p1 = vec![0.0, 1.0];
     res.push(p1);
 
     for i in 2..n + 1 {
@@ -309,22 +309,22 @@ fn factorial(n: u128) -> u128 {
     for i in 1..n + 1 {
         res *= i;
     }
-    return res;
+    res
 }
 
 /// Calculate the coefficient of the term in the Legendre Polynomial.
 /// The term is P_l^m(x) = get_legendre_poly_term_coeff(l, m) * x^m.
 fn get_legendre_poly_term_coeff(func_order: u32, term_order: u32) -> f64 {
     if (func_order - term_order) % 2 != 0 {
-        return 0.0;
+        0.0
     } else {
         let k = (func_order - term_order) / 2;
         let mol = if k % 2 != 0 { -1.0 } else { 1.0 }
             * factorial((func_order + term_order) as u128) as f64;
-        let den = (2_u32.pow(func_order as u32) as u128
+        let den = (2_u32.pow(func_order) as u128
             * factorial(k as u128)
             * factorial(term_order as u128)
-            * factorial((k + term_order).into()) as u128) as f64;
+            * factorial((k + term_order).into())) as f64;
         mol / den
     }
 }
@@ -333,7 +333,7 @@ fn get_legendre_poly_term_coeff(func_order: u32, term_order: u32) -> f64 {
 fn calculate_assoc_legendre_poly(l: u64, m: i64, x: f64) -> f64 {
     let m_abs = m.abs();
     assert!(l >= m_abs as u64);
-    assert!(x <= 1.0 && x >= -1.0);
+    assert!((-1.0..=1.0).contains(&x));
     let sign = m.signum();
     let legendre = legendre_coeff_vec(l);
     let legendre_coeff_vec = &legendre[l as usize];
@@ -352,8 +352,9 @@ fn calculate_assoc_legendre_poly(l: u64, m: i64, x: f64) -> f64 {
     res *= if sign == 1 {
         1.0
     } else {
-        (if m.abs() % 2 == 0 { 1.0 } else { -1.0 }) * factorial((l - m.abs() as u64) as u128) as f64
-            / factorial((l + m.abs() as u64) as u128) as f64
+        (if m.abs() % 2 == 0 { 1.0 } else { -1.0 })
+            * factorial((l - m.unsigned_abs()) as u128) as f64
+            / factorial((l + m.unsigned_abs()) as u128) as f64
     } as f64;
     res
 }
@@ -368,22 +369,21 @@ fn get_spherical_harmonics_coeff(l: i64, m: i64, x: f64, y: f64, z: f64) -> f64 
     let r = f64::sqrt(x * x + y * y);
     let ep = Complex::new(x / r, y / r);
     if m == 0 {
-        return f64::sqrt((2.0 * l as f64 + 1.0) / 4.0 / PI)
-            * calculate_assoc_legendre_poly(l as u64, 0, z);
+        f64::sqrt((2.0 * l as f64 + 1.0) / 4.0 / PI) * calculate_assoc_legendre_poly(l as u64, 0, z)
     } else if m < 0 {
-        return f64::sqrt(
+        f64::sqrt(
             (2.0 * l as f64 + 1.0) / (4.0 * PI)
                 * factorial((l as u32 - m_abs as u32).into()) as f64
                 / factorial((l as u32 + m_abs as u32).into()) as f64,
         ) * calculate_assoc_legendre_poly(l as u64, m_abs, z)
-            * ep.powf(m_abs as f64).im();
+            * ep.powf(m_abs as f64).im()
     } else {
-        return f64::sqrt(
+        f64::sqrt(
             (2.0 * l as f64 + 1.0) * factorial((l as u32 - m_abs as u32).into()) as f64
                 / factorial((l as u32 + m_abs as u32).into()) as f64
                 / (4.0 * PI),
         ) * calculate_assoc_legendre_poly(l as u64, m_abs, z)
-            * ep.powf(m_abs as f64).re();
+            * ep.powf(m_abs as f64).re()
     }
 }
 
