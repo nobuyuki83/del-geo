@@ -184,8 +184,9 @@ fn sph_coeff_buffer(n: i8, x: f64, y: f64, z: f64) -> [f64; 100] {
         * (715.0 * z4 * z2 * z - 1001.0 * z4 * z + 385.0 * z2 * z - 35.0 * z);
     let v2 =
         3.0 / 128.0 * f64::sqrt(595.0 * inv_pi) * (143.0 * z4 * z2 - 143.0 * z4 + 33.0 * z2 - 1.0);
-    let v3 =
-        -1.0 / 64.00 * f64::sqrt(19635.0 * 0.5 * inv_pi) * (39.0 * z4 * z - 26.0 * z2 * z + 3.0 * z);
+    let v3 = -1.0 / 64.00
+        * f64::sqrt(19635.0 * 0.5 * inv_pi)
+        * (39.0 * z4 * z - 26.0 * z2 * z + 3.0 * z);
     let v4 = 3.0 / 128.0 * f64::sqrt(1309.0 * 0.5 * inv_pi) * (65.0 * z4 - 26.0 * z2 + 1.0);
     let v5 = -3.0 / 64.00 * f64::sqrt(17017.0 * 0.5 * inv_pi) * (5.0 * z2 * z - z);
     let v6 = 1.0 / 128.0 * f64::sqrt(7293.0 * inv_pi) * (15.0 * z2 - 1.0);
@@ -298,7 +299,6 @@ fn legendre_coeff_vec(n: u64) -> Vec<Vec<f64>> {
     res
 }
 
-
 /// Calculate the factorial of a number.
 /// Here needs a lot of optimization to avoid overflow. Now the maximum parameter is 11, which is enough for the current use.
 fn factorial(n: u128) -> u128 {
@@ -319,11 +319,12 @@ fn get_legendre_poly_term_coeff(func_order: u32, term_order: u32) -> f64 {
         return 0.0;
     } else {
         let k = (func_order - term_order) / 2;
-        let mol = if k % 2 != 0 { -1.0 } else { 1.0 } * factorial((func_order + term_order) as u128) as f64;
+        let mol = if k % 2 != 0 { -1.0 } else { 1.0 }
+            * factorial((func_order + term_order) as u128) as f64;
         let den = (2_u32.pow(func_order as u32) as u128
             * factorial(k as u128)
             * factorial(term_order as u128)
-            * factorial(((k + term_order)).into()) as u128) as f64;
+            * factorial((k + term_order).into()) as u128) as f64;
         mol / den
     }
 }
@@ -346,9 +347,8 @@ fn calculate_assoc_legendre_poly(l: u64, m: i64, x: f64) -> f64 {
     for i in 0..sum_coeff.len() {
         sum += sum_coeff[i] * f64::powi(x, i as i32);
     }
-    let mut res = if m_abs % 2 == 0 { 1.0 } else { -1.0 }
-        * (1.0 - x * x).powf(m_abs as f64 / 2.0)
-        * sum;
+    let mut res =
+        if m_abs % 2 == 0 { 1.0 } else { -1.0 } * (1.0 - x * x).powf(m_abs as f64 / 2.0) * sum;
     res *= if sign == 1 {
         1.0
     } else {
@@ -360,7 +360,7 @@ fn calculate_assoc_legendre_poly(l: u64, m: i64, x: f64) -> f64 {
 
 /// Calculate the coefficient of the spherical harmonics for "any" l and m.
 /// However, u128 is not enough for the factorial calculation, so the maximum l is 11.
-/// Now that it is related to multiply and divide in big factorials, it has large opmitization potential. 
+/// Now that it is related to multiply and divide in big factorials, it has large opmitization potential.
 /// But optimization based on combination is hard in both mathematically and programmatically.
 fn get_spherical_harmonics_coeff(l: i64, m: i64, x: f64, y: f64, z: f64) -> f64 {
     let m_abs = m.abs();
@@ -370,26 +370,41 @@ fn get_spherical_harmonics_coeff(l: i64, m: i64, x: f64, y: f64, z: f64) -> f64 
     if m == 0 {
         return f64::sqrt((2.0 * l as f64 + 1.0) / 4.0 / PI)
             * calculate_assoc_legendre_poly(l as u64, 0, z);
-    }
-    else if m < 0 {
-        return 
-            f64::sqrt((2.0 * l as f64 + 1.0) / (4.0 * PI) * factorial((l as u32 - m_abs as u32).into()) as f64 / factorial((l as u32 + m_abs as u32).into()) as f64)
-            * calculate_assoc_legendre_poly(l as u64, m_abs, z) * ep.powf(m_abs as f64).im();
-    }
-    else {
-        return 
-            f64::sqrt((2.0 * l as f64 + 1.0) * factorial((l as u32 - m_abs as u32).into()) as f64 / factorial((l as u32 + m_abs as u32).into()) as f64 / (4.0 * PI))
-            * calculate_assoc_legendre_poly(l as u64, m_abs, z) * ep.powf(m_abs as f64).re();
+    } else if m < 0 {
+        return f64::sqrt(
+            (2.0 * l as f64 + 1.0) / (4.0 * PI)
+                * factorial((l as u32 - m_abs as u32).into()) as f64
+                / factorial((l as u32 + m_abs as u32).into()) as f64,
+        ) * calculate_assoc_legendre_poly(l as u64, m_abs, z)
+            * ep.powf(m_abs as f64).im();
+    } else {
+        return f64::sqrt(
+            (2.0 * l as f64 + 1.0) * factorial((l as u32 - m_abs as u32).into()) as f64
+                / factorial((l as u32 + m_abs as u32).into()) as f64
+                / (4.0 * PI),
+        ) * calculate_assoc_legendre_poly(l as u64, m_abs, z)
+            * ep.powf(m_abs as f64).re();
     }
 }
 
 #[test]
 fn test_get_spherical_harmonics_coeff() {
     let tmp = 1.0 / f64::sqrt(3.0);
-    let sph_coeff = sph_coeff_buffer(9, 1.0 / f64::sqrt(3.0), 1.0 / f64::sqrt(3.0), 1.0 / f64::sqrt(3.0));
+    let sph_coeff = sph_coeff_buffer(
+        9,
+        1.0 / f64::sqrt(3.0),
+        1.0 / f64::sqrt(3.0),
+        1.0 / f64::sqrt(3.0),
+    );
     for l in 7..10 {
         for m in -l..l + 1 {
-            let current_coeff = get_spherical_harmonics_coeff(l, m, 1.0 / f64::sqrt(3.0), 1.0 / f64::sqrt(3.0), 1.0 / f64::sqrt(3.0));
+            let current_coeff = get_spherical_harmonics_coeff(
+                l,
+                m,
+                1.0 / f64::sqrt(3.0),
+                1.0 / f64::sqrt(3.0),
+                1.0 / f64::sqrt(3.0),
+            );
             let base = l.pow(2);
             assert!(base + m >= 0 && base + m < 100);
             println!("{} {}", current_coeff, sph_coeff[(base + m) as usize]);
