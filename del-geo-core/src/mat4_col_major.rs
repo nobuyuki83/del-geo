@@ -85,6 +85,70 @@ where
     ]
 }
 
+/// transformation converting normalized device coordinate (NDC) `[-1,+1]^2` to pixel coordinate
+/// depth (-1, +1) is transformed to (0, +1)
+/// for example:
+///     [-1,-1,-1] becomes (0, H, 0)
+///     [+1,+1,+1] becomes (W, 0, 1)
+/// * Return
+///     * `image_shape` - (width, height)
+pub fn from_transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 16] {
+    [
+        0.5 * (img_shape.0 as f32),
+        0.,
+        0.,
+        0.,
+        //
+        0.,
+        -0.5 * (img_shape.1 as f32),
+        0.,
+        0.,
+        //
+        0.,
+        0.,
+        0.5,
+        0.,
+        //
+        0.5 * (img_shape.0 as f32),
+        0.5 * (img_shape.1 as f32),
+        0.5,
+        1.,
+    ]
+}
+
+pub fn from_aabb3_fit_into_ndc_preserving_xyasp(aabb: &[f32; 6], asp: f32) -> [f32; 16] {
+    let cntr = crate::aabb3::center(aabb);
+    let (scale_xy, scale_z) = {
+        let mut size = crate::aabb3::size(aabb);
+        let lenx = size[0] / asp;
+        let leny = size[1];
+        dbg!(size, lenx, leny);
+        if lenx > leny {
+            (lenx / 2f32, size[2] / 2f32)
+        } else {
+            (leny / 2f32, size[2] / 2f32)
+        }
+    };
+    [
+        scale_xy * asp,
+        0.,
+        0.,
+        0.,
+        0.,
+        scale_xy,
+        0.,
+        0.,
+        0.,
+        0.,
+        scale_z,
+        0.,
+        cntr[0],
+        cntr[1],
+        cntr[2],
+        1.,
+    ]
+}
+
 // above: from method (making 4x4 matrix)
 // ----------------------------------------
 

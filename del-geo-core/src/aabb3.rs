@@ -1,18 +1,67 @@
 //! methods for 3D Axis-aligned Bounding Box (AABB)
 
-use num_traits::AsPrimitive;
 use rand::distributions::{Distribution, Standard};
+
+pub fn from_two_aabbs<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
+where
+    T: num_traits::Float,
+{
+    assert_eq!(i0.len(), 6);
+    assert_eq!(i1.len(), 6);
+    let mut o = [T::zero(); 6];
+    for i in 0..3 {
+        o[i] = if i0[i] < i1[i] { i0[i] } else { i1[i] };
+        o[i + 3] = if i0[i + 3] > i1[i + 3] {
+            i0[i + 3]
+        } else {
+            i1[i + 3]
+        };
+    }
+    o
+}
+
+// ----------------------------------
+
+pub fn scale<T>(aabb: &[T; 6], s: T) -> [T; 6]
+where
+    T: num_traits::Float,
+{
+    let c = center(aabb);
+    let size = size(aabb);
+    let half = T::one() / (T::one() + T::one());
+    [
+        c[0] - size[0] * s * half,
+        c[1] - size[1] * s * half,
+        c[2] - size[2] * s * half,
+        c[0] + size[0] * s * half,
+        c[1] + size[1] * s * half,
+        c[2] + size[2] * s * half,
+    ]
+}
 
 pub fn center<T>(aabb: &[T; 6]) -> [T; 3]
 where
-    T: num_traits::Float + 'static + Copy,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
+    let half = T::one() / (T::one() + T::one());
     [
-        (aabb[0] + aabb[3]) * 0.5f64.as_(),
-        (aabb[1] + aabb[4]) * 0.5f64.as_(),
-        (aabb[2] + aabb[5]) * 0.5f64.as_(),
+        (aabb[0] + aabb[3]) * half,
+        (aabb[1] + aabb[4]) * half,
+        (aabb[2] + aabb[5]) * half,
     ]
+}
+
+pub fn size<T>(aabb: &[T; 6]) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    [aabb[3] - aabb[0], aabb[4] - aabb[1], aabb[5] - aabb[2]]
+}
+
+pub fn volume<T>(aabb: &[T; 6]) -> T
+where T: num_traits::Float
+{
+    (aabb[3] - aabb[0])*(aabb[4] - aabb[1])*(aabb[5] - aabb[2])
 }
 
 pub fn xyz_from_hex_index<Real>(aabb: &[Real; 6], i_vtx: usize) -> [Real; 3]
@@ -46,24 +95,6 @@ where
         return ly;
     }
     lz
-}
-
-pub fn from_two_aabbs<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
-where
-    T: num_traits::Float,
-{
-    assert_eq!(i0.len(), 6);
-    assert_eq!(i1.len(), 6);
-    let mut o = [T::zero(); 6];
-    for i in 0..3 {
-        o[i] = if i0[i] < i1[i] { i0[i] } else { i1[i] };
-        o[i + 3] = if i0[i + 3] > i1[i + 3] {
-            i0[i + 3]
-        } else {
-            i1[i + 3]
-        };
-    }
-    o
 }
 
 pub fn is_active<T>(i0: &[T; 6]) -> bool
@@ -120,6 +151,20 @@ pub fn to_transformation_world2unit_ortho_preserve_asp(aabb_world: &[f32; 6]) ->
     let c = -a * cntr[1] + 0.5;
     let d = -a * cntr[2] + 0.5;
     [a, 0., 0., 0., 0., a, 0., 0., 0., 0., a, 0., b, c, d, 1.]
+}
+
+/// transform aabb to unit square (0,1)^3
+/// return 4x4 homogeneous transformation matrix in **column major** order
+pub fn to_transformation_world2unit_aabb3(aabb_world: &[f32; 6]) -> [f32; 16] {
+    let cntr = crate::aabb3::center(aabb_world);
+    let size = crate::aabb3::size(aabb_world);
+    let ax = 1f32 / size[0];
+    let ay = 1f32 / size[1];
+    let az = 1f32 / size[2];
+    let b = -ax * cntr[0] + 0.5;
+    let c = -ay * cntr[1] + 0.5;
+    let d = -az * cntr[2] + 0.5;
+    [ax, 0., 0., 0., 0., ay, 0., 0., 0., 0., az, 0., b, c, d, 1.]
 }
 
 pub fn sample<Reng, T>(aabb: &[T; 6], reng: &mut Reng) -> [T; 3]

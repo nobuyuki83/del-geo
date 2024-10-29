@@ -245,9 +245,9 @@ where
         - b[3] * b[1] * b[8]
 }
 
-/// transformation converting normalized device coodinate (NDC) [-1,+1]^2 to pixel coordinate
+/// transformation converting normalized device coordinate (NDC) `[-1,+1]^2` to pixel coordinate
 /// * `image_shape` - (width, height)
-pub fn transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 9] {
+pub fn from_transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 9] {
     [
         0.5 * (img_shape.0 as f32),
         0.,
@@ -263,7 +263,7 @@ pub fn transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 9] {
 
 /// transformation converting unit coodinate (NDC) [0,+1]^2 to pixel coordinate
 /// * `image_shape` - (width, height)
-pub fn transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
+pub fn from_transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
     [
         img_shape.0 as f32,
         0.,

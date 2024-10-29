@@ -1,31 +1,37 @@
 //! methods for 3D triangle (parameterized by three corner points)
 
-use num_traits::{AsPrimitive, Zero};
+use num_traits::AsPrimitive;
 
-pub struct RayTriangleIntersectionData {
-    inv_det: f32,
-    n_dot_c: f32,
-    n_dot_dir: f32,
-    r_dot_e2: f32,
-    r_dot_e1: f32,
-    c: nalgebra::Vector3<f32>,
-    n: nalgebra::Vector3<f32>,
-    r: nalgebra::Vector3<f32>,
-    e1: nalgebra::Vector3<f32>,
-    e2: nalgebra::Vector3<f32>,
-    dir: nalgebra::Vector3<f32>,
+pub struct RayTriangleIntersectionData<Real> {
+    inv_det: Real,
+    n_dot_c: Real,
+    n_dot_dir: Real,
+    r_dot_e2: Real,
+    r_dot_e1: Real,
+    c: nalgebra::Vector3<Real>,
+    n: nalgebra::Vector3<Real>,
+    r: nalgebra::Vector3<Real>,
+    e1: nalgebra::Vector3<Real>,
+    e2: nalgebra::Vector3<Real>,
+    pub dir: nalgebra::Vector3<Real>,
 }
 
 /// ray triangle intersection.
 /// * `dir` - any nonzero vector (not necessary to be a unit vector)
-///   t, u, v: org + t * dir = (1 - u - v) * p0 + u * p1 + v * p2
-pub fn ray_triangle_intersection(
-    org: &nalgebra::Vector3<f32>,
-    dir: &nalgebra::Vector3<f32>,
-    p0: &nalgebra::Vector3<f32>,
-    p1: &nalgebra::Vector3<f32>,
-    p2: &nalgebra::Vector3<f32>,
-) -> Option<(f32, f32, f32, RayTriangleIntersectionData)> {
+/// * `t`
+/// * `u`
+/// * `v`
+///  `org + t * dir = (1 - u - v) * p0 + u * p1 + v * p2`
+pub fn ray_triangle_intersection<T>(
+    org: &nalgebra::Vector3<T>,
+    dir: &nalgebra::Vector3<T>,
+    p0: &nalgebra::Vector3<T>,
+    p1: &nalgebra::Vector3<T>,
+    p2: &nalgebra::Vector3<T>,
+) -> Option<(T, T, T, RayTriangleIntersectionData<T>)>
+where
+    T: nalgebra::RealField + Copy,
+{
     let e1 = p0 - p1;
     let e2 = p2 - p0;
     let n = e1.cross(&e2);
@@ -33,28 +39,28 @@ pub fn ray_triangle_intersection(
     if n_dot_dir.is_zero() {
         return None;
     }
-    let inv_det = 1f32 / n_dot_dir;
+    let inv_det = T::one() / n_dot_dir;
     let c = p0 - org;
     let n_dot_c = n.dot(&c);
     let t_ = inv_det * n_dot_c;
-    if t_ < 0f32 {
+    if t_ < T::zero() {
         return None;
     }
     let r = dir.cross(&c);
     //
     let r_dot_e2 = r.dot(&e2);
     let u_ = inv_det * r_dot_e2;
-    if u_ < 0f32 {
+    if u_ < T::zero() {
         return None;
     }
     //
     let r_dot_e1 = r.dot(&e1);
     let v_ = inv_det * r_dot_e1;
-    if v_ < 0f32 {
+    if v_ < T::zero() {
         return None;
     }
 
-    if u_ + v_ >= 1f32 {
+    if u_ + v_ >= T::one() {
         return None;
     }
     Some((
@@ -77,29 +83,46 @@ pub fn ray_triangle_intersection(
     ))
 }
 
-pub fn dw_ray_triangle_intersection_(
-    d_t: f32,
-    d_u: f32,
-    d_v: f32,
-    data: &RayTriangleIntersectionData,
+#[test]
+fn test_ray_triangle_intersection() {
+    type Real = f64;
+    let p0 = nalgebra::Vector3::<Real>::new(-13., -5., 8.);
+    let p1 = nalgebra::Vector3::<Real>::new(14., -5., 8.);
+    let p2 = nalgebra::Vector3::<Real>::new(1., 3., -3.);
+    let origin = nalgebra::Vector3::<Real>::new(8., 11., 10.);
+    let dir = nalgebra::Vector3::<Real>::new(-7., -11., -8.);
+    let t1 = del_geo_core::tri3::intersection_against_ray( p0.as_ref(), p1.as_ref(), p2.as_ref(), origin.as_ref(), dir.as_ref() ).unwrap();
+    let (t0, _u0, _v0, _data)
+        = ray_triangle_intersection(&origin, &dir, &p0, &p1, &p2).unwrap();
+    assert!((t0-t1).abs()<1.0e-8);
+}
+
+pub fn dw_ray_triangle_intersection_<Real>(
+    d_t: Real,
+    d_u: Real,
+    d_v: Real,
+    data: &RayTriangleIntersectionData<Real>,
 ) -> (
-    nalgebra::Vector3<f32>,
-    nalgebra::Vector3<f32>,
-    nalgebra::Vector3<f32>,
-) {
+    nalgebra::Vector3<Real>,
+    nalgebra::Vector3<Real>,
+    nalgebra::Vector3<Real>,
+)
+where
+    Real: nalgebra::RealField + Copy,
+{
     let d_n_dot_c = d_t * data.inv_det;
     let d_r_dot_e2 = d_u * data.inv_det;
     let d_r_dot_e1 = d_v * data.inv_det;
     let d_inv_det = d_t * data.n_dot_c + d_u * data.r_dot_e2 + d_v * data.r_dot_e1;
 
-    let mut d_n = d_n_dot_c * data.c;
-    let mut d_c = d_n_dot_c * data.n;
-    let mut d_e2 = d_r_dot_e2 * data.r;
-    let mut d_e1 = d_r_dot_e1 * data.r;
-    let d_r = d_r_dot_e2 * data.e2 + d_r_dot_e1 * data.e1;
+    let mut d_n = data.c.scale(d_n_dot_c);
+    let mut d_c = data.n.scale(d_n_dot_c);
+    let mut d_e2 = data.r.scale(d_r_dot_e2);
+    let mut d_e1 = data.r.scale(d_r_dot_e1);
+    let d_r = data.e2.scale(d_r_dot_e2) + data.e1.scale(d_r_dot_e1);
 
     let d_n_dot_dir = -d_inv_det / data.n_dot_dir / data.n_dot_dir;
-    d_n += d_n_dot_dir * data.dir;
+    d_n += data.dir.scale(d_n_dot_dir);
     d_c += d_r.cross(&data.dir);
     d_e2 += d_n.cross(&data.e1);
     d_e1 += data.e2.cross(&d_n);
@@ -111,37 +134,37 @@ pub fn dw_ray_triangle_intersection_(
 }
 
 #[test]
-fn test_ray_triangle_intersection() {
+fn test_dw_ray_triangle_intersection() {
+    type Real = f64;
     let p0 = [
-        nalgebra::Vector3::<f32>::new(-1f32, -0.5f32, 0.5f32),
-        nalgebra::Vector3::<f32>::new(1f32, -0.5f32, 0.5f32),
-        nalgebra::Vector3::<f32>::new(0f32, 1f32, -0.5f32),
+        nalgebra::Vector3::<Real>::new(-13., -5., 8.),
+        nalgebra::Vector3::<Real>::new(14., -5., 8.),
+        nalgebra::Vector3::<Real>::new(1., 3., -3.),
     ];
 
-    let origin = nalgebra::Vector3::<f32>::new(1f32, 1f32, 1f32);
-    let target = nalgebra::Vector3::<f32>::new(0f32, 0f32, 0f32);
-    let dir: nalgebra::Vector3<f32> = target - origin;
+    // let origin = nalgebra::Vector3::<Real>::new(9., 11., 12.);
+    let origin = nalgebra::Vector3::<Real>::new(8., 11., 10.);
+    let dir: nalgebra::Vector3<Real> = nalgebra::Vector3::<Real>::new(1., 0., 2.) - origin;
 
     let Some((t0, u0, v0, data)) = ray_triangle_intersection(&origin, &dir, &p0[0], &p0[1], &p0[2])
     else {
         panic!()
     };
 
-    let ha: nalgebra::Vector3<f32> = (1f32 - u0 - v0) * p0[0] + u0 * p0[1] + v0 * p0[2];
+    let ha: nalgebra::Vector3<Real> = (1. - u0 - v0) * p0[0] + u0 * p0[1] + v0 * p0[2];
     assert!(crate::tet::volume(&p0[0], &p0[1], &p0[2], &ha).abs() < 1.0e-8);
-    let hb: nalgebra::Vector3<f32> = origin + t0 * dir;
+    let hb: nalgebra::Vector3<Real> = origin + t0 * dir;
     assert!((ha - hb).norm() < 1.0e-6);
 
     // d_t, d_u, d_u are back-propagated from the loss
-    let d_t = 1f32;
-    let d_u = 1f32;
-    let d_v = 1f32;
+    let d_t = 0.7;
+    let d_u = 1.3;
+    let d_v = 1.1;
 
-    let dp = dw_ray_triangle_intersection_(d_t, d_u, d_v, &data);
+    let dp = dw_ray_triangle_intersection_::<Real>(d_t, d_u, d_v, &data);
     let dp = [dp.0, dp.1, dp.2];
-    // dbg!(&d_p0, &d_p1, &d_p2);
 
-    let eps = 1.0e-3;
+    let eps = 1.0e-5;
     for i_node in 0..3 {
         for i_dim in 0..3 {
             let p1 = {
@@ -156,8 +179,9 @@ fn test_ray_triangle_intersection() {
             };
             let dloss = ((t1 - t0) * d_t + (u1 - u0) * d_u + (v1 - v0) * d_v) / eps;
             let dloss_analytic = dp[i_node][i_dim];
+            // dbg!(dloss, dloss_analytic);
             assert!(
-                (dloss - dloss_analytic).abs() < 6.0e-4,
+                (dloss - dloss_analytic).abs() < 6.0e-7,
                 "{} {} {}",
                 dloss_analytic,
                 dloss,
