@@ -17,6 +17,7 @@ arrayref = {workspace = true}
 array-macro = {workspace = true}
 ordered-float = {workspace = true}
 itertools = {workspace = true}
+num-complex = {workspace = true}
 
 [dev-dependencies]
 nalgebra = {workspace = true}
