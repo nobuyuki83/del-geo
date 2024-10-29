@@ -16,7 +16,7 @@ fn normalize(x: &mut f64, y: &mut f64, z: &mut f64) -> f64 {
 }
 
 /// Calculate the coefficients of the spherical harmonics for l <= 9 and store them in an array buffer.
-/// Try to access the coefficient Y_l^m by the index: base + m, where base = l^2.
+/// Try to access the coefficient Y_l^m by the index: base + l + m, where base = l^2.
 #[inline]
 fn sph_coeff_buffer(n: i8, x: f64, y: f64, z: f64) -> [f64; 100] {
     let inv_pi = 1.0 / PI;
@@ -234,7 +234,7 @@ fn sph_coeff_buffer(n: i8, x: f64, y: f64, z: f64) -> [f64; 100] {
     let v5 = -3.0 / 256.0 * f64::sqrt(2717.0 * inv_pi) * (85.0 * z4 - 30.0 * z2 + 1.0);
     let v6 = 1.0 / 128.0 * f64::sqrt(40755.0 * inv_pi) * z * (17.0 * z2 - 3.0);
     let v7 = -3.0 / 512.0 * f64::sqrt(13585.0 * inv_pi) * (17.0 * z2 - 1.0);
-    let v8 = -3.0 / 512.0 * f64::sqrt(230945.0 * 2.0 * inv_pi) * z;
+    let v8 = 3.0 / 512.0 * f64::sqrt(230945.0 * 2.0 * inv_pi) * z;
     let v9 = -1.0 / 512.0 * f64::sqrt(230945.0 * inv_pi);
     res[81] = v9 * i9;
     res[82] = v8 * i8;
@@ -406,10 +406,8 @@ fn test_get_spherical_harmonics_coeff() {
                 1.0 / f64::sqrt(3.0),
             );
             let base = l.pow(2);
-            assert!(base + m >= 0 && base + m < 100);
-            println!("{} {}", current_coeff, sph_coeff[(base + m) as usize]);
-            println!("{}", (current_coeff - sph_coeff[(base + m) as usize]).abs());
-            assert!((current_coeff - sph_coeff[(base + m) as usize]).abs() <= 1.0);
+            assert!(base + m >= 0 && base + l + m < 100);
+            assert!((current_coeff - sph_coeff[(base + l + m) as usize]).abs() <= 1.0e-7);
         }
     }
 }
