@@ -118,6 +118,7 @@ pub fn to_transformation_world2unit_ortho_preserve_asp(aabb_world: &[f32; 6]) ->
     [a, 0., 0., 0., 0., a, 0., 0., 0., 0., a, 0., b, c, d, 1.]
 }
 
+/// return a vec3 sampled inside a aabb
 pub fn sample<Reng, T>(aabb: &[T; 6], reng: &mut Reng) -> [T; 3]
 where
     Reng: rand::Rng,
