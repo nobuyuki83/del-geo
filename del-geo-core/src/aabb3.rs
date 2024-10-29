@@ -56,12 +56,8 @@ where
     assert_eq!(i1.len(), 6);
     let mut o = [T::zero(); 6];
     for i in 0..3 {
-        o[i] = if i0[i] < i1[i] { i0[i] } else { i1[i] };
-        o[i + 3] = if i0[i + 3] > i1[i + 3] {
-            i0[i + 3]
-        } else {
-            i1[i + 3]
-        };
+        o[i] = i0[i].min(i1[i]);
+        o[i + 3] = i0[i + 3].max(i1[i + 3]);
     }
     o
 }
@@ -163,36 +159,12 @@ pub fn update<Real>(aabb: &mut [Real; 6], xyz: &[Real; 3], eps: Real)
 where
     Real: num_traits::Float,
 {
-    aabb[0] = if xyz[0] - eps < aabb[0] {
-        xyz[0] - eps
-    } else {
-        aabb[0]
-    };
-    aabb[3] = if xyz[0] + eps > aabb[3] {
-        xyz[0] + eps
-    } else {
-        aabb[3]
-    };
-    aabb[1] = if xyz[1] - eps < aabb[1] {
-        xyz[1] - eps
-    } else {
-        aabb[1]
-    };
-    aabb[4] = if xyz[1] + eps > aabb[4] {
-        xyz[1] + eps
-    } else {
-        aabb[4]
-    };
-    aabb[2] = if xyz[2] - eps < aabb[2] {
-        xyz[2] - eps
-    } else {
-        aabb[2]
-    };
-    aabb[5] = if xyz[2] + eps > aabb[5] {
-        xyz[2] + eps
-    } else {
-        aabb[5]
-    };
+    aabb[0] = aabb[0].min(xyz[0] - eps);
+    aabb[3] = aabb[3].max(xyz[0] + eps);
+    aabb[1] = aabb[1].min(xyz[1] - eps);
+    aabb[4] = aabb[4].max(xyz[1] + eps);
+    aabb[2] = aabb[2].min(xyz[2] - eps);
+    aabb[5] = aabb[5].max(xyz[2] + eps);
 }
 
 // --------------------------
