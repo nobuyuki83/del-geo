@@ -18,10 +18,11 @@ pub struct RayTriangleIntersectionData<Real> {
 
 /// ray triangle intersection.
 /// * `dir` - any nonzero vector (not necessary to be a unit vector)
-/// * `t`
-/// * `u`
-/// * `v`
-///  `org + t * dir = (1 - u - v) * p0 + u * p1 + v * p2`
+/// * `t` - ratio of `dir` vector from
+/// * `u` - barycentric coordinate
+/// * `v` - barycentric coordinate
+///
+/// `org + t * dir = (1 - u - v) * p0 + u * p1 + v * p2`
 pub fn ray_triangle_intersection<T>(
     org: &nalgebra::Vector3<T>,
     dir: &nalgebra::Vector3<T>,
@@ -91,10 +92,16 @@ fn test_ray_triangle_intersection() {
     let p2 = nalgebra::Vector3::<Real>::new(1., 3., -3.);
     let origin = nalgebra::Vector3::<Real>::new(8., 11., 10.);
     let dir = nalgebra::Vector3::<Real>::new(-7., -11., -8.);
-    let t1 = del_geo_core::tri3::intersection_against_ray( p0.as_ref(), p1.as_ref(), p2.as_ref(), origin.as_ref(), dir.as_ref() ).unwrap();
-    let (t0, _u0, _v0, _data)
-        = ray_triangle_intersection(&origin, &dir, &p0, &p1, &p2).unwrap();
-    assert!((t0-t1).abs()<1.0e-8);
+    let t1 = del_geo_core::tri3::intersection_against_ray(
+        p0.as_ref(),
+        p1.as_ref(),
+        p2.as_ref(),
+        origin.as_ref(),
+        dir.as_ref(),
+    )
+    .unwrap();
+    let (t0, _u0, _v0, _data) = ray_triangle_intersection(&origin, &dir, &p0, &p1, &p2).unwrap();
+    assert!((t0 - t1).abs() < 1.0e-8);
 }
 
 pub fn dw_ray_triangle_intersection_<Real>(

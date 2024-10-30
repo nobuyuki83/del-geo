@@ -40,7 +40,6 @@ pub fn to_mat4_col_major_transf_into_unit_preserve_asp(aabb_world: &[f32; 6]) ->
     [a, 0., 0., 0., 0., a, 0., 0., 0., 0., a, 0., b, c, d, 1.]
 }
 
-
 /// transform aabb to unit square (0,1)^3
 /// return 4x4 homogeneous transformation matrix in **column major** order
 pub fn to_mat4_col_major_transf_into_unit(aabb_world: &[f32; 6]) -> [f32; 16] {
@@ -94,9 +93,10 @@ where
 }
 
 pub fn volume<T>(aabb: &[T; 6]) -> T
-where T: num_traits::Float
+where
+    T: num_traits::Float,
 {
-    (aabb[3] - aabb[0])*(aabb[4] - aabb[1])*(aabb[5] - aabb[2])
+    (aabb[3] - aabb[0]) * (aabb[4] - aabb[1]) * (aabb[5] - aabb[2])
 }
 
 pub fn xyz_from_hex_index<Real>(aabb: &[Real; 6], i_vtx: usize) -> [Real; 3]
@@ -171,7 +171,6 @@ where
     }
     true
 }
-
 
 /// return a vec3 sampled inside a aabb
 pub fn sample<Reng, T>(aabb: &[T; 6], reng: &mut Reng) -> [T; 3]
