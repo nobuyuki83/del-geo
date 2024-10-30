@@ -20,6 +20,41 @@ where
     o
 }
 
+// Above: from method
+// ----------------------------------
+// Below: to method
+
+/// transform aabb to unit square (0,1)^3 while preserving aspect ratio
+/// return 4x4 homogeneous transformation matrix in **column major** order
+pub fn to_mat4_col_major_transf_into_unit_preserve_asp(aabb_world: &[f32; 6]) -> [f32; 16] {
+    let cntr = [
+        (aabb_world[0] + aabb_world[3]) * 0.5,
+        (aabb_world[1] + aabb_world[4]) * 0.5,
+        (aabb_world[2] + aabb_world[5]) * 0.5,
+    ];
+    let size = max_edge_size(aabb_world);
+    let a = 1f32 / size;
+    let b = -a * cntr[0] + 0.5;
+    let c = -a * cntr[1] + 0.5;
+    let d = -a * cntr[2] + 0.5;
+    [a, 0., 0., 0., 0., a, 0., 0., 0., 0., a, 0., b, c, d, 1.]
+}
+
+
+/// transform aabb to unit square (0,1)^3
+/// return 4x4 homogeneous transformation matrix in **column major** order
+pub fn to_mat4_col_major_transf_into_unit(aabb_world: &[f32; 6]) -> [f32; 16] {
+    let cntr = crate::aabb3::center(aabb_world);
+    let size = crate::aabb3::size(aabb_world);
+    let ax = 1f32 / size[0];
+    let ay = 1f32 / size[1];
+    let az = 1f32 / size[2];
+    let b = -ax * cntr[0] + 0.5;
+    let c = -ay * cntr[1] + 0.5;
+    let d = -az * cntr[2] + 0.5;
+    [ax, 0., 0., 0., 0., ay, 0., 0., 0., 0., az, 0., b, c, d, 1.]
+}
+
 // ----------------------------------
 
 pub fn scale<T>(aabb: &[T; 6], s: T) -> [T; 6]
@@ -137,36 +172,8 @@ where
     true
 }
 
-/// transform aabb to unit square (0,1)^3 while preserving aspect ratio
-/// return 4x4 homogeneous transformation matrix in **column major** order
-pub fn to_transformation_world2unit_ortho_preserve_asp(aabb_world: &[f32; 6]) -> [f32; 16] {
-    let cntr = [
-        (aabb_world[0] + aabb_world[3]) * 0.5,
-        (aabb_world[1] + aabb_world[4]) * 0.5,
-        (aabb_world[2] + aabb_world[5]) * 0.5,
-    ];
-    let size = max_edge_size(aabb_world);
-    let a = 1f32 / size;
-    let b = -a * cntr[0] + 0.5;
-    let c = -a * cntr[1] + 0.5;
-    let d = -a * cntr[2] + 0.5;
-    [a, 0., 0., 0., 0., a, 0., 0., 0., 0., a, 0., b, c, d, 1.]
-}
 
-/// transform aabb to unit square (0,1)^3
-/// return 4x4 homogeneous transformation matrix in **column major** order
-pub fn to_transformation_world2unit_aabb3(aabb_world: &[f32; 6]) -> [f32; 16] {
-    let cntr = crate::aabb3::center(aabb_world);
-    let size = crate::aabb3::size(aabb_world);
-    let ax = 1f32 / size[0];
-    let ay = 1f32 / size[1];
-    let az = 1f32 / size[2];
-    let b = -ax * cntr[0] + 0.5;
-    let c = -ay * cntr[1] + 0.5;
-    let d = -az * cntr[2] + 0.5;
-    [ax, 0., 0., 0., 0., ay, 0., 0., 0., 0., az, 0., b, c, d, 1.]
-}
-
+/// return a vec3 sampled inside a aabb
 pub fn sample<Reng, T>(aabb: &[T; 6], reng: &mut Reng) -> [T; 3]
 where
     Reng: rand::Rng,
@@ -208,36 +215,12 @@ pub fn update<Real>(aabb: &mut [Real; 6], xyz: &[Real; 3], eps: Real)
 where
     Real: num_traits::Float,
 {
-    aabb[0] = if xyz[0] - eps < aabb[0] {
-        xyz[0] - eps
-    } else {
-        aabb[0]
-    };
-    aabb[3] = if xyz[0] + eps > aabb[3] {
-        xyz[0] + eps
-    } else {
-        aabb[3]
-    };
-    aabb[1] = if xyz[1] - eps < aabb[1] {
-        xyz[1] - eps
-    } else {
-        aabb[1]
-    };
-    aabb[4] = if xyz[1] + eps > aabb[4] {
-        xyz[1] + eps
-    } else {
-        aabb[4]
-    };
-    aabb[2] = if xyz[2] - eps < aabb[2] {
-        xyz[2] - eps
-    } else {
-        aabb[2]
-    };
-    aabb[5] = if xyz[2] + eps > aabb[5] {
-        xyz[2] + eps
-    } else {
-        aabb[5]
-    };
+    aabb[0] = aabb[0].min(xyz[0] - eps);
+    aabb[3] = aabb[3].max(xyz[0] + eps);
+    aabb[1] = aabb[1].min(xyz[1] - eps);
+    aabb[4] = aabb[4].max(xyz[1] + eps);
+    aabb[2] = aabb[2].min(xyz[2] - eps);
+    aabb[5] = aabb[5].max(xyz[2] + eps);
 }
 
 // --------------------------

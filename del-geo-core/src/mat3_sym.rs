@@ -11,7 +11,6 @@ where
 
 pub fn eigen_decomp(sm: [f64; 6], nitr: usize) -> Option<([f64; 9], [f64; 3])> {
     let mut u = [0f64; 9];
-    let mut l = [0f64; 3];
     // initialize u as identity matrix
     u[0] = 1.0;
     u[4] = 1.0;
@@ -85,9 +84,7 @@ pub fn eigen_decomp(sm: [f64; 6], nitr: usize) -> Option<([f64; 9], [f64; 3])> {
             u[7] = st * v[6] + ct * v[7];
         }
     }
-    l[0] = scale * sms[0];
-    l[1] = scale * sms[1];
-    l[2] = scale * sms[2];
+    let l = std::array::from_fn(|i| scale * sms[i]);
     Some((u, l))
 }
 

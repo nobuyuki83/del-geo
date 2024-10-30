@@ -119,7 +119,7 @@ pub fn from_transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 16] {
 pub fn from_aabb3_fit_into_ndc_preserving_xyasp(aabb: &[f32; 6], asp: f32) -> [f32; 16] {
     let cntr = crate::aabb3::center(aabb);
     let (scale_xy, scale_z) = {
-        let mut size = crate::aabb3::size(aabb);
+        let size = crate::aabb3::size(aabb);
         let lenx = size[0] / asp;
         let leny = size[1];
         dbg!(size, lenx, leny);

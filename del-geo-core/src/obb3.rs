@@ -278,62 +278,38 @@ fn test_is_intersect_to_obb3() {
 
 #[test]
 fn test2_is_intersect_to_obb3() {
-    {
-        // Seperated
-        let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        let obb2: [f64; 12] = [3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), false);
-    }
-    {
-        // Orthogonal vectors
-        let random_i: [f64; 3] = [1.0, 3.0, 6.1];
-        let random_j: [f64; 3] = [1.0, 7.0, 4.1];
-        let i_basic = crate::vec3::normalized(&random_i);
-        let mut j_basic = crate::vec3::normalized(&random_j);
-        let k_basic = crate::vec3::cross(&i_basic, &j_basic);
-        j_basic = crate::vec3::cross(&k_basic, &i_basic);
-        let obb1: [f64; 12] = [
-            0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
-            k_basic[0], k_basic[1], k_basic[2],
+    use std::f64::consts::PI;
+
+    for i in 0..2 {
+        let obb_i = [0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 1.];
+
+        // special obb need to check additional axes other than six orientation axes
+        // this test will fail if not checking addtional axes
+        let d = 2.0 + 0.01 * (i as f64); // small distance to the obbs make them seperated
+        let quad = crate::quaternion::around_axis(&[1., 0., -1.], -PI * 0.5f64);
+        let rot_mat = crate::quaternion::to_mat3_col_major(&quad);
+        let u = crate::mat3_col_major::mult_vec(&rot_mat, &[1., 0., 0.]);
+        let v = crate::mat3_col_major::mult_vec(&rot_mat, &[0., 1., 0.]);
+        let w = crate::mat3_col_major::mult_vec(&rot_mat, &[0., 0., 1.]);
+        let obb_j = [
+            d, 0., -d, u[0], u[1], u[2], v[0], v[1], v[2], w[0], w[1], w[2],
         ];
-        let obb2: [f64; 12] = [3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), false);
-        //
-        let obb1: [f64; 12] = [
-            0.0, 0.0, 0.0, i_basic[0], i_basic[1], i_basic[2], j_basic[0], j_basic[1], j_basic[2],
-            k_basic[0], k_basic[1], k_basic[2],
-        ];
-        let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), true);
-        //
-        let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        let obb2: [f64; 12] = [
-            0.0,
-            0.0,
-            0.0,
-            i_basic[0] * 0.5,
-            i_basic[1] * 0.5,
-            i_basic[2] * 0.5,
-            j_basic[0] * 0.5,
-            j_basic[1] * 0.5,
-            j_basic[2] * 0.5,
-            k_basic[0] * 0.5,
-            k_basic[1] * 0.5,
-            k_basic[2] * 0.5,
-        ];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), true);
-    }
-    {
-        // Partially intersected
-        let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        let obb2: [f64; 12] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), true);
-    }
-    {
-        // Constains
-        let obb1: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-        let obb2: [f64; 12] = [0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5];
-        assert_eq!(is_intersect_to_obb3(&obb1, &obb2), true);
+
+        let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
+        let p1 = nearest_to_point3(&obb_j, p0);
+        let p2 = nearest_to_point3(&obb_i, &p1);
+        let p3 = nearest_to_point3(&obb_j, &p2);
+        let p4 = nearest_to_point3(&obb_i, &p3);
+        let p5 = nearest_to_point3(&obb_j, &p4);
+        let p6 = nearest_to_point3(&obb_i, &p5);
+
+        let len45 = crate::edge3::length(&p4, &p5);
+        let len56 = crate::edge3::length(&p5, &p6);
+        assert!(len56 <= len45);
+
+        let res1 = len56 < 0.0001; // this will be false since not intersected
+        let res0 = is_intersect_to_obb3(&obb_i, &obb_j);
+        assert_eq!(res0, res1, "{} {}", len45, len56);
     }
 }
 
@@ -386,74 +362,3 @@ where
         ],
     ]
 }
-
-/*
-fn nearest_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
-where
-    Real: num_traits::Float,
-{
-    use crate::{mat3_array_of_array::inverse, mat3_array_of_array::matmul};
-
-    let tran = [
-        [obb[3], obb[6], obb[9]],
-        [obb[4], obb[7], obb[10]],
-        [obb[5], obb[8], obb[11]],
-    ];
-
-    // TODO: check not inversable
-    let inv_tran = inverse(&tran);
-
-    let zero = Real::zero();
-    // TODO: use matxi mul vector
-    let p_mat = [[p[0], zero, zero], [p[1], zero, zero], [p[2], zero, zero]];
-    // transfrom point to obb's column space
-    let mut c_coord = matmul(&inv_tran, &p_mat);
-
-    let one = Real::one();
-    c_coord[0][0] = c_coord[0][0].clamp(-one, one);
-    c_coord[1][0] = c_coord[1][0].clamp(-one, one);
-    c_coord[2][0] = c_coord[2][0].clamp(-one, one);
-
-    // convert to original system
-    let o_coord = matmul(&tran, &c_coord);
-    [o_coord[0][0], o_coord[1][0], o_coord[2][0]]
-}
- */
-
-/*
-fn convex_sets_distance<Real, const M: usize, const N: usize>(
-    s1: &[Real; M],
-    s2: &[Real; N],
-) -> Real
-where
-    Real: num_traits::Float,
-{
-    todo!()
-}
- */
-
-/*
-#[test]
-fn test_nearest_point_obb3() {
-    let halfsqrt2 = 1.41421356 / 2.;
-    let obb: [f64; 12] = [
-        0.0, 0.0, 0.0, halfsqrt2, halfsqrt2, 0.0, -halfsqrt2, halfsqrt2, 0.0, 0.0, 0.0, 1.0,
-    ];
-    let p: [f64; 3] = [2., 0., 0.];
-    let nearset = nearest_point3(&obb, &p);
-    assert_eq!(nearset[0], halfsqrt2 * 2.);
-
-    let obb: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
-    let p: [f64; 3] = [2., 0., 0.];
-    let nearset = nearest_point3(&obb, &p);
-    assert_eq!(nearset[0], 1.);
-
-    let obb: [f64; 12] = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0];
-    let p: [f64; 3] = [2., 5., 0.];
-    let nearset = nearest_point3(&obb, &p);
-    assert_eq!(nearset[1], 2.);
-}
- */
-
-// #[test]
-// fn test_convex_sets_distance() {}
