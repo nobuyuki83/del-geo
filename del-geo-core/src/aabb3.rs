@@ -222,6 +222,23 @@ where
     aabb[5] = aabb[5].max(xyz[2] + eps);
 }
 
+pub fn is_possible_distance_to_aabb2_smaller_than_threshold(
+    aabb0: &[f32; 6],
+    aabb1: &[f32; 6],
+    threshold: f32,
+) -> bool {
+    for i_dim in 0..3 {
+        let range0 = (aabb0[i_dim], aabb0[i_dim + 3]);
+        let range1 = (aabb1[i_dim], aabb1[i_dim + 3]);
+        if let Some(dist) = crate::range::distance_to_range(range0, range1) {
+            if dist > threshold {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 // --------------------------
 
 pub type AABB3<'a, Real> = crate::aabb::AABB<'a, Real, 3, 6>;

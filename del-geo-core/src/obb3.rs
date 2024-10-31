@@ -90,20 +90,7 @@ where
     (min0, max0)
 }
 
-/// Find the distance of two ranges, return None if they are overlapped
-fn distance_between_two_ranges<Real>(a: (Real, Real), b: (Real, Real)) -> Option<Real>
-where
-    Real: num_traits::Float,
-{
-    if a.0 > b.1 {
-        return Some(a.0 - b.1);
-    }
-    if b.0 > a.1 {
-        return Some(b.0 - a.1);
-    }
-    None
-}
-
+/*
 pub fn distance_to_obb3<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> Real
 where
     Real: num_traits::Float,
@@ -153,6 +140,7 @@ where
     }
     max_dist
 }
+ */
 
 pub fn nearest_to_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
 where
@@ -224,8 +212,7 @@ where
     for axis in axes.iter() {
         let range_i = range_axis(&corner_i, axis);
         let range_j = range_axis(&corner_j, axis);
-        // dbg!(range_i, range_j);
-        if distance_between_two_ranges(range_i, range_j).is_some() {
+        if crate::range::distance_to_range(range_i, range_j).is_some() {
             return false;
         }
     }
@@ -239,7 +226,6 @@ fn test_is_intersect_to_obb3() {
     for _iter in 0..1000 {
         let obb_i = from_random::<_, f64>(&mut reng);
         let obb_j = from_random(&mut reng);
-        let res0 = is_intersect_to_obb3(&obb_i, &obb_j);
         let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
         let p1 = nearest_to_point3(&obb_j, p0);
         let p2 = nearest_to_point3(&obb_i, &p1);
@@ -253,26 +239,30 @@ fn test_is_intersect_to_obb3() {
         if len56 > 0. && len56 < len45 * 0.9999 {
             continue;
         } // still converging
-        let res1 = len56 < 0.0001;
-        if res0 != res1 {
-            let (mut tri2vtx_i, mut vtx2xyz_i) = del_msh_core::trimesh3_primitive::obb3(&obb_i);
-            let (tri2vtx_j, vtx2xyz_j) = del_msh_core::trimesh3_primitive::obb3(&obb_j);
-            del_msh_core::uniform_mesh::merge(
-                &mut tri2vtx_i,
-                &mut vtx2xyz_i,
-                &tri2vtx_j,
-                &vtx2xyz_j,
-                3,
-            );
-            // output mesh to visualize the failure case
-            let _ = del_msh_core::io_obj::save_tri2vtx_vtx2xyz(
-                "../../target/fail_obb3.obj",
-                &tri2vtx_i,
-                &vtx2xyz_i,
-                3,
-            );
+        {
+            // test intersect
+            let res0 = is_intersect_to_obb3(&obb_i, &obb_j);
+            let res1 = len56 < 0.0001;
+            if res0 != res1 {
+                let (mut tri2vtx_i, mut vtx2xyz_i) = del_msh_core::trimesh3_primitive::obb3(&obb_i);
+                let (tri2vtx_j, vtx2xyz_j) = del_msh_core::trimesh3_primitive::obb3(&obb_j);
+                del_msh_core::uniform_mesh::merge(
+                    &mut tri2vtx_i,
+                    &mut vtx2xyz_i,
+                    &tri2vtx_j,
+                    &vtx2xyz_j,
+                    3,
+                );
+                // output mesh to visualize the failure case
+                let _ = del_msh_core::io_obj::save_tri2vtx_vtx2xyz(
+                    "../../target/fail_obb3.obj",
+                    &tri2vtx_i,
+                    &vtx2xyz_i,
+                    3,
+                );
+            }
+            assert_eq!(res0, res1, "{} {}", len45, len56);
         }
-        assert_eq!(res0, res1, "{} {}", len45, len56);
     }
 }
 

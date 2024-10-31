@@ -13,6 +13,8 @@ sphere < tet
 pub mod aabb;
 pub mod aabb2;
 pub mod aabb3;
+pub mod range;
+
 pub mod curve_linear_coords;
 pub mod mat2x3_col_major;
 
