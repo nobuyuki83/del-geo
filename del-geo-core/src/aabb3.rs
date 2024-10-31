@@ -236,7 +236,7 @@ pub fn is_possible_distance_to_aabb2_smaller_than_threshold(
             }
         }
     }
-    return true;
+    true
 }
 
 // --------------------------
