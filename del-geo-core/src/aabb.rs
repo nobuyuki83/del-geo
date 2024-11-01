@@ -1,10 +1,19 @@
 //! method common in 2D or 3D Axis-Aligned Bounding Box (AABB)
 
-pub fn is_intersect_ray<Real, const NDIM: usize, const SIZE_AABB: usize>(
+/// compute intersection against ray
+/// * `ray_org` - origin of ray
+/// * `ray_dir` - direction of ray (general non-zero vector, not necessarily unitary)
+///
+/// * Return
+///     * `None`: if there is no intersection
+///     * `(t_min: Real, t_max: Real)` min and max of the depth at intersections.
+///         `t_*` is a ratio of `ray_dir` not distance.
+///         For example `p_min = ray_org + t_min * ray_dir`
+pub fn intersections_against_ray<Real, const NDIM: usize, const SIZE_AABB: usize>(
     aabb: &[Real; SIZE_AABB],
     ray_org: &[Real; NDIM],
     ray_dir: &[Real; NDIM],
-) -> bool
+) -> Option<(Real, Real)>
 where
     Real: num_traits::Float,
 {
@@ -18,10 +27,14 @@ where
             tmin = tmin.max(t1.min(t2));
             tmax = tmax.min(t1.max(t2));
         } else if ray_org[i_dim] < aabb[i_dim] || ray_org[i_dim] > aabb[i_dim + NDIM] {
-            return false;
+            return None;
         }
     }
-    tmax >= tmin && tmax >= Real::zero()
+    if tmax >= tmin && tmax >= Real::zero() {
+        Some((tmin, tmax))
+    } else {
+        None
+    }
 }
 
 pub fn is_include_point<Real, const NDIM: usize, const SIZE_AABB: usize>(
@@ -64,8 +77,8 @@ where
         is_include_point::<Real, NDIM, SIZE_AABB>(self.aabb, point)
     }
 
-    pub fn is_intersect_ray(&self, ray_org: &[Real; NDIM], ray_dir: &[Real; NDIM]) -> bool {
-        is_intersect_ray::<Real, NDIM, SIZE_AABB>(self.aabb, ray_org, ray_dir)
+    pub fn intersections_against_ray(&self, ray_org: &[Real; NDIM], ray_dir: &[Real; NDIM]) -> Option<(Real, Real)> {
+        intersections_against_ray::<Real, NDIM, SIZE_AABB>(self.aabb, ray_org, ray_dir)
     }
 
     pub fn center(&self) -> [Real; NDIM] {
