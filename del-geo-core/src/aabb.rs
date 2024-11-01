@@ -77,7 +77,11 @@ where
         is_include_point::<Real, NDIM, SIZE_AABB>(self.aabb, point)
     }
 
-    pub fn intersections_against_ray(&self, ray_org: &[Real; NDIM], ray_dir: &[Real; NDIM]) -> Option<(Real, Real)> {
+    pub fn intersections_against_ray(
+        &self,
+        ray_org: &[Real; NDIM],
+        ray_dir: &[Real; NDIM],
+    ) -> Option<(Real, Real)> {
         intersections_against_ray::<Real, NDIM, SIZE_AABB>(self.aabb, ray_org, ray_dir)
     }
 
