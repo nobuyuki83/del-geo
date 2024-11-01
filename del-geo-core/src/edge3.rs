@@ -18,23 +18,16 @@ where
     f64: AsPrimitive<T>,
 {
     use crate::vec3;
-    let d = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
+    let d = std::array::from_fn(|i| p1[i] - p0[i]);
     let t = {
-        if vec3::dot(&d, &d) > 1.0e-20_f64.as_() {
-            let ps = [
-                p0[0] - point_pos[0],
-                p0[1] - point_pos[1],
-                p0[2] - point_pos[2],
-            ];
+        if vec3::dot(&d, &d) > T::epsilon() {
+            let ps = std::array::from_fn(|i| p0[i] - point_pos[i]);
             let a = vec3::dot(&d, &d);
             let b = vec3::dot(&d, &ps);
-            let mut r: T = -b / a;
-            r = if r < 0_f64.as_() { 0_f64.as_() } else { r };
-            r = if r > 1_f64.as_() { 1_f64.as_() } else { r };
-            r
+            (-b / a).clamp(0f64.as_(), 1f64.as_())
         } else {
             0.5_f64.as_()
         }
     };
-    [p0[0] + t * d[0], p0[1] + t * d[1], p0[2] + t * d[2]]
+    std::array::from_fn(|i| p0[i] + t * d[i])
 }
