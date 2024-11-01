@@ -95,20 +95,24 @@ where
 
 /// Find the nearest point on a line segment to the origin(0,0)
 /// Returns (k,v), where k is the coeffcient between [0,1], v is the point
-pub fn nearest_origin(ps: &[f32; 2], pe: &[f32; 2]) -> (f32, [f32; 2]) {
+pub fn nearest_origin<T>(ps: &[T; 2], pe: &[T; 2]) -> (T, [T; 2])
+where
+    T: num_traits::Float + 'static,
+    f64: AsPrimitive<T>,
+{
     let d = crate::vec2::sub(pe, ps);
     let a = crate::vec2::squared_length(&d);
-    if a == 0f32 {
-        return (0.5, [(ps[0] + pe[0]) * 0.5, (ps[1] + pe[1]) * 0.5]);
+    if a.is_zero() {
+        return (
+            0.5f64.as_(),
+            std::array::from_fn(|i| (ps[i] + pe[i]) * 0.5f64.as_()),
+        );
     }
     let b = crate::vec2::dot(&d, ps);
-    let r0 = (-b / a).clamp(0., 1.);
+    let r0 = (-b / a).clamp(0f64.as_(), 1f64.as_());
     (
         r0,
-        [
-            (1. - r0) * ps[0] + r0 * pe[0],
-            (1. - r0) * ps[1] + r0 * pe[1],
-        ],
+        std::array::from_fn(|i| (-r0 + 1f64.as_()) * ps[i] + r0 * pe[i]),
     )
 }
 
