@@ -54,7 +54,7 @@ where
             p2: e.v,
         },
     );
-    let list_te= list_te?; // return None if none
+    let list_te = list_te?; // return None if none
     assert!(list_te[0] <= list_te[1]);
     for te in list_te {
         let ts = T::one() - te;
