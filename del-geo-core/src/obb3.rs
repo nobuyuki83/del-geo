@@ -146,7 +146,7 @@ pub fn nearest_to_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
 {
-    if is_include_point(&obb, p, Real::zero()) {
+    if is_include_point(obb, p, Real::zero()) {
         return *p;
     }
     let (axes, hlen) = unit_axes_and_half_edge_lengths(obb);
@@ -187,8 +187,8 @@ where
     Real: num_traits::Float + std::fmt::Debug,
 {
     let axes = {
-        let (axes_i, _) = unit_axes_and_half_edge_lengths(&obb_i);
-        let (axes_j, _) = unit_axes_and_half_edge_lengths(&obb_j);
+        let (axes_i, _) = unit_axes_and_half_edge_lengths(obb_i);
+        let (axes_j, _) = unit_axes_and_half_edge_lengths(obb_j);
         [
             axes_i[0],
             axes_i[1],

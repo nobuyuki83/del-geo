@@ -6,7 +6,7 @@ use std::f64::consts::PI;
 
 /// Calculate the normalization of the vector.
 #[inline]
-fn normalize(x: &mut f64, y: &mut f64, z: &mut f64) -> f64 {
+pub fn normalize(x: &mut f64, y: &mut f64, z: &mut f64) -> f64 {
     let r = f64::sqrt(*x * *x + *y * *y + *z * *z);
     let invr = 1.0 / r;
     *x *= invr;
@@ -18,7 +18,7 @@ fn normalize(x: &mut f64, y: &mut f64, z: &mut f64) -> f64 {
 /// Calculate the coefficients of the spherical harmonics for l <= 9 and store them in an array buffer.
 /// Try to access the coefficient Y_l^m by the index: base + l + m, where base = l^2.
 #[inline]
-fn sph_coeff_buffer(n: i8, x: f64, y: f64, z: f64) -> [f64; 100] {
+pub fn sph_coeff_buffer(n: i8, x: f64, y: f64, z: f64) -> [f64; 100] {
     let inv_pi = 1.0 / PI;
     let ep = Complex::new(x, y);
     let mut res = [0.0; 100];
@@ -314,7 +314,7 @@ fn factorial(n: u128) -> u128 {
 
 /// Calculate the coefficient of the term in the Legendre Polynomial.
 /// The term is P_l^m(x) = get_legendre_poly_term_coeff(l, m) * x^m.
-fn get_legendre_poly_term_coeff(func_order: u32, term_order: u32) -> f64 {
+pub fn get_legendre_poly_term_coeff(func_order: u32, term_order: u32) -> f64 {
     if (func_order - term_order) % 2 != 0 {
         0.0
     } else {
@@ -363,7 +363,7 @@ fn calculate_assoc_legendre_poly(l: u64, m: i64, x: f64) -> f64 {
 /// However, u128 is not enough for the factorial calculation, so the maximum l is 11.
 /// Now that it is related to multiply and divide in big factorials, it has large opmitization potential.
 /// But optimization based on combination is hard in both mathematically and programmatically.
-fn get_spherical_harmonics_coeff(l: i64, m: i64, x: f64, y: f64, z: f64) -> f64 {
+pub fn get_spherical_harmonics_coeff(l: i64, m: i64, x: f64, y: f64, z: f64) -> f64 {
     let m_abs = m.abs();
     assert!(l >= 0 && l >= m_abs);
     let r = f64::sqrt(x * x + y * y);
@@ -389,7 +389,7 @@ fn get_spherical_harmonics_coeff(l: i64, m: i64, x: f64, y: f64, z: f64) -> f64 
 
 #[test]
 fn test_get_spherical_harmonics_coeff() {
-    let tmp = 1.0 / f64::sqrt(3.0);
+    // let tmp = 1.0 / f64::sqrt(3.0);
     let sph_coeff = sph_coeff_buffer(
         9,
         1.0 / f64::sqrt(3.0),

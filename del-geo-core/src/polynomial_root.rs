@@ -4,7 +4,7 @@ use num_traits::AsPrimitive;
 
 /// find root of quadratic function
 /// f(x) = c0 + c1*x + c2*x^2
-fn quadratic_root<T>(c0: T, c1: T, c2: T) -> Option<(T, T)>
+pub fn quadratic_root<T>(c0: T, c1: T, c2: T) -> Option<[T; 2]>
 where
     T: num_traits::Float + 'static + Copy + std::fmt::Debug,
     i64: AsPrimitive<T>,
@@ -30,7 +30,7 @@ where
         dbg!(c0, c1, c2, det, tmp, x1, x2);
     }
     assert!(x1 <= x2);
-    Some((x1, x2))
+    Some([x1, x2])
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn test_quadratic_root() {
         let c0: f64 = x0 * x1 * c2;
         let res = quadratic_root(c0, c1, c2);
         assert!(res.is_some());
-        let (y0, y1) = res.unwrap();
+        let [y0, y1] = res.unwrap();
         assert!((x0 - y0).abs() < 1.0e-8);
         assert!((x1 - y1).abs() < 1.0e-8);
         //
@@ -89,7 +89,7 @@ where
             }
         } else {
             // quadratic function
-            if let Some((e0, e1)) = quadratic_root(c0, c1, c2) {
+            if let Some([e0, e1]) = quadratic_root(c0, c1, c2) {
                 let (e0, e1) = if e0 < e1 { (e0, e1) } else { (e1, e0) };
                 if e0 >= T::zero() && e0 <= t {
                     result.push(e0);
@@ -130,7 +130,7 @@ where
         Some(r)
     };
     // f'(x) = c1 + 2*c2*x + 3*c3*x^2
-    if let Some((e0, e1)) = quadratic_root(c1, two * c2, three * c3) {
+    if let Some([e0, e1]) = quadratic_root(c1, two * c2, three * c3) {
         assert!(e0 <= e1);
         if T::zero() <= e0 {
             // overlap [0,t] and [-\infty,e0]

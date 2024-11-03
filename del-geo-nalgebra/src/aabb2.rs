@@ -2,6 +2,23 @@
 
 use num_traits::AsPrimitive;
 
+pub fn from_vtx2vec<T>(vtx2vec: &[nalgebra::Vector2<T>]) -> [T; 4]
+    where
+        T: nalgebra::RealField + Copy,
+{
+    let mut aabb = [vtx2vec[0][0], vtx2vec[0][1], vtx2vec[0][0], vtx2vec[0][1]];
+    for xy in vtx2vec.iter().skip(1) {
+        aabb[0] = aabb[0].min(xy[0]);
+        aabb[1] = aabb[1].min(xy[1]);
+        aabb[2] = aabb[2].max(xy[0]);
+        aabb[3] = aabb[3].max(xy[1]);
+    }
+    aabb
+}
+
+// Above: from method
+// ------------------------------
+
 /// signed distance from axis-aligned bounding box
 /// * `pos_in` - where the signed distance is evaluated
 /// * `x_min` - bounding box's x-coordinate minimum
@@ -9,7 +26,7 @@ use num_traits::AsPrimitive;
 /// * `y_min` - bounding box's y-coordinate minimum
 /// * `y_max` - bounding box's y-coordinate maximum
 /// * signed distance (inside is negative)
-pub fn signed_distance_aabb<Real>(
+pub fn signed_distance<Real>(
     pos_in: nalgebra::Vector2<Real>,
     min0: nalgebra::Vector2<Real>,
     max0: nalgebra::Vector2<Real>,
@@ -26,16 +43,3 @@ where
     x_dist.max(y_dist)
 }
 
-pub fn from_vtx2vec<T>(vtx2vec: &[nalgebra::Vector2<T>]) -> [T; 4]
-where
-    T: nalgebra::RealField + Copy,
-{
-    let mut aabb = [vtx2vec[0][0], vtx2vec[0][1], vtx2vec[0][0], vtx2vec[0][1]];
-    for xy in vtx2vec.iter().skip(1) {
-        aabb[0] = aabb[0].min(xy[0]);
-        aabb[1] = aabb[1].min(xy[1]);
-        aabb[2] = aabb[2].max(xy[0]);
-        aabb[3] = aabb[3].max(xy[1]);
-    }
-    aabb
-}

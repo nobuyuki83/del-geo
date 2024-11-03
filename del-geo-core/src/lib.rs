@@ -1,8 +1,3 @@
-#![allow(clippy::identity_op)]
-#![allow(clippy::erasing_op)]
-#![allow(clippy::needless_borrow)]
-#![allow(dead_code)]
-#![allow(unused_variables)]
 /*
 vec < mat < aabb < obb <
 line < ray < edge <
@@ -25,7 +20,6 @@ pub mod obb3;
 pub mod vec2;
 pub mod vec3;
 //
-pub mod ccd;
 pub mod edge;
 pub mod edge2;
 pub mod edge3;
@@ -35,6 +29,7 @@ pub mod mat3_row_major;
 pub mod mat3_sym;
 pub mod matn;
 pub mod obb2;
+pub mod polynomial_root;
 pub mod quaternion;
 pub mod spherical_harmonics;
 pub mod tet;

@@ -78,3 +78,17 @@ where
     let x: T = p0[0] * p1[0] + p0[1] * p1[1];
     y.atan2(x) * std::f64::consts::FRAC_1_PI.as_() * 0.5.as_()
 }
+
+pub fn barycentric<T>(
+    ps: &nalgebra::Vector2<T>,
+    pe: &nalgebra::Vector2<T>,
+    q: &nalgebra::Vector2<T>,
+) -> T
+where
+    T: nalgebra::RealField + Copy,
+{
+    let v = pe - ps;
+    let t = v.dot(q);
+    let s = v.dot(&v);
+    t / s.sqrt()
+}

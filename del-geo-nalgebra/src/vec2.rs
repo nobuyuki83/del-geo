@@ -1,3 +1,16 @@
+//! 2D vector
+
+pub fn basis<T>(i_dim: usize, eps: T) -> nalgebra::Vector2<T>
+where
+    T: nalgebra::RealField,
+{
+    let mut b = nalgebra::Vector2::<T>::zeros();
+    b[i_dim] = eps;
+    b
+}
+
+// -------------------
+
 pub fn rotate90<T>(v: &nalgebra::Vector2<T>) -> nalgebra::Vector2<T>
 where
     T: nalgebra::RealField + Copy,
@@ -12,11 +25,9 @@ where
     v[0] * v[0] + v[1] * v[1]
 }
 
-pub fn basis<T>(i_dim: usize, eps: T) -> nalgebra::Vector2<T>
+pub fn area_quadrilateral<T>(a: &nalgebra::Vector2<T>, b: &nalgebra::Vector2<T>) -> T
 where
-    T: nalgebra::RealField,
+    T: nalgebra::RealField + Copy,
 {
-    let mut b = nalgebra::Vector2::<T>::zeros();
-    b[i_dim] = eps;
-    b
+    a[0] * b[1] - a[1] * b[0]
 }

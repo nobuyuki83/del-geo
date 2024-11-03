@@ -1,5 +1,6 @@
 //! methods for 4x4 matrix
 
+use crate::aabb3::max_edge_size;
 use num_traits::AsPrimitive;
 use std::ops::AddAssign;
 
@@ -85,12 +86,13 @@ where
     ]
 }
 
-/// transformation converting normalized device coordinate (NDC) `[-1,+1]^2` to pixel coordinate
+/// transformation converting normalized device coordinate (NDC) `[-1,+1]^3` to pixel coordinate
 /// depth (-1, +1) is transformed to (0, +1)
 /// for example:
 ///     [-1,-1,-1] becomes (0, H, 0)
 ///     [+1,+1,+1] becomes (W, 0, 1)
-/// * Return
+///
+/// * Arguments
 ///     * `image_shape` - (width, height)
 pub fn from_transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 16] {
     [
@@ -122,7 +124,6 @@ pub fn from_aabb3_fit_into_ndc_preserving_xyasp(aabb: &[f32; 6], asp: f32) -> [f
         let size = crate::aabb3::size(aabb);
         let lenx = size[0] / asp;
         let leny = size[1];
-        dbg!(size, lenx, leny);
         if lenx > leny {
             (lenx / 2f32, size[2] / 2f32)
         } else {
@@ -147,6 +148,36 @@ pub fn from_aabb3_fit_into_ndc_preserving_xyasp(aabb: &[f32; 6], asp: f32) -> [f
         cntr[2],
         1.,
     ]
+}
+
+/// transform aabb to unit square (0,1)^3 while preserving aspect ratio
+/// return 4x4 homogeneous transformation matrix in **column major** order
+pub fn from_aabb3_fit_into_unit_preserve_asp(aabb_world: &[f32; 6]) -> [f32; 16] {
+    let cntr = [
+        (aabb_world[0] + aabb_world[3]) * 0.5,
+        (aabb_world[1] + aabb_world[4]) * 0.5,
+        (aabb_world[2] + aabb_world[5]) * 0.5,
+    ];
+    let size = max_edge_size(aabb_world);
+    let a = 1f32 / size;
+    let b = -a * cntr[0] + 0.5;
+    let c = -a * cntr[1] + 0.5;
+    let d = -a * cntr[2] + 0.5;
+    [a, 0., 0., 0., 0., a, 0., 0., 0., 0., a, 0., b, c, d, 1.]
+}
+
+/// transform aabb to unit square (0,1)^3
+/// return 4x4 homogeneous transformation matrix in **column major** order
+pub fn from_aabb3_fit_into_unit(aabb_world: &[f32; 6]) -> [f32; 16] {
+    let cntr = crate::aabb3::center(aabb_world);
+    let size = crate::aabb3::size(aabb_world);
+    let ax = 1f32 / size[0];
+    let ay = 1f32 / size[1];
+    let az = 1f32 / size[2];
+    let b = -ax * cntr[0] + 0.5;
+    let c = -ay * cntr[1] + 0.5;
+    let d = -az * cntr[2] + 0.5;
+    [ax, 0., 0., 0., 0., ay, 0., 0., 0., 0., az, 0., b, c, d, 1.]
 }
 
 // above: from method (making 4x4 matrix)
@@ -175,9 +206,9 @@ where
     let b = [t[12], t[13], t[14]];
     let d = t[15];
     let c = [t[3], t[7], t[11]];
-    let e = Real::one() / (crate::vec3::dot(&c, &p) + d);
+    let e = Real::one() / (crate::vec3::dot(&c, p) + d);
     let ee = e * e;
-    let f = crate::vec3::add(&crate::mat3_col_major::mult_vec(&a, &p), &b);
+    let f = crate::vec3::add(&crate::mat3_col_major::mult_vec(&a, p), &b);
     [
         a[0] * e - f[0] * c[0] * ee,
         a[1] * e - f[1] * c[0] * ee,

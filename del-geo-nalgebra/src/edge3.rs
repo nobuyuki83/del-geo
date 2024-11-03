@@ -1,6 +1,5 @@
 //! functions for 3D edge (line segment)
 
-use nalgebra::clamp;
 use num_traits::AsPrimitive;
 
 /// return  distance and parameter
@@ -17,7 +16,7 @@ where
     let dsq = d.norm_squared();
     let t = if dsq != T::zero() {
         let r: T = -d.dot(&(edge_pos0 - point_pos)) / dsq;
-        clamp(r, T::zero(), T::one())
+        nalgebra::clamp(r, T::zero(), T::one())
     } else {
         0.5_f64.as_()
     };
@@ -139,6 +138,7 @@ where
     T: nalgebra::RealField + Copy + 'static,
     f64: AsPrimitive<T>,
 {
+    use nalgebra::clamp;
     let vp = p1 - p0;
     let vq = q1 - q0;
     assert!(vp.norm() > T::zero());

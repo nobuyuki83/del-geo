@@ -29,8 +29,8 @@ impl Perspective {
 
     pub fn camera_translation(&mut self, asp: f32, cursor_dx: f32, cursor_dy: f32) {
         let mp = self.mat4_col_major(asp);
-        let sx = (mp[3 + 4 * 3] - mp[0 + 4 * 3]) / mp[0 + 4 * 0];
-        let sy = (mp[3 + 4 * 3] - mp[1 + 4 * 3]) / mp[1 + 4 * 1];
+        let sx = (mp[3 + 4 * 3] - mp[12]) / mp[0]; // (mp[3 + 4 * 3] - mp[0 + 4 * 3]) / mp[0 + 4 * 0];
+        let sy = (mp[3 + 4 * 3] - mp[13]) / mp[5]; // (mp[3 + 4 * 3] - mp[1 + 4 * 3]) / mp[1 + 4 * 1];
         self.cam_pos[0] -= sx * cursor_dx;
         self.cam_pos[1] -= sy * cursor_dy;
     }

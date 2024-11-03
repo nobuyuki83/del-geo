@@ -8,7 +8,8 @@ tet
 pub mod aabb2;
 pub mod bezier_cubic;
 pub mod bezier_quadratic;
-pub mod ccd;
+pub mod ccd2;
+pub mod ccd3;
 pub mod edge;
 pub mod edge2;
 pub mod edge3;

@@ -1,4 +1,4 @@
-//! Continuous Collision Detection
+//! 3D Continuous Collision Detection
 
 use num_traits::AsPrimitive;
 
@@ -32,7 +32,7 @@ where
         + scalar_triple_product(&x3, &v1, &v2);
     let k3 = scalar_triple_product(&v3, &v1, &v2);
     // cubic function is f(x) = k0 + k1*x + k2*x^2 + k3*x^3
-    del_geo_core::ccd::cubic_roots_in_range_zero_to_t(k0, k1, k2, k3, T::one(), epsilon)
+    del_geo_core::polynomial_root::cubic_roots_in_range_zero_to_t(k0, k1, k2, k3, T::one(), epsilon)
 }
 
 pub struct FaceVertex<'a, T> {
