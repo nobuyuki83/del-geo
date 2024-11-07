@@ -107,11 +107,19 @@ where
     ]
 }
 
-pub fn from_axisangle(a: &[f32; 3]) -> [f32; 4] {
-    let half = 0.5;
+pub fn from_axisangle<Real>(a: &[Real; 3]) -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
+    let half = Real::from(0.5).unwrap();
     let sqlen = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
-    if sqlen < 1.0e-10 {
-        return [half * a[0], half * a[1], half * a[2], 1. - 0.125 * sqlen];
+    if sqlen < Real::epsilon() {
+        return [
+            half * a[0],
+            half * a[1],
+            half * a[2],
+            -sqlen * Real::from(0.125).unwrap() + Real::one(),
+        ];
     }
     let lena = sqlen.sqrt();
     [
@@ -127,9 +135,12 @@ pub fn identity() -> [f64; 4] {
 }
 
 /// return rotation around axis with radian
-pub fn around_axis(a: &[f64; 3], rad: f64) -> [f64; 4] {
+pub fn around_axis<Real>(a: &[Real; 3], rad: Real) -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
     let v = crate::vec3::normalized(a);
-    let half = rad * 0.5f64;
+    let half = rad / Real::from(2).unwrap();
     let sin = half.sin();
     [v[0] * sin, v[1] * sin, v[2] * sin, half.cos()]
 }
