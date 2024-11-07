@@ -264,17 +264,11 @@ pub fn sph_coeff_buffer(n: i8, x: f64, y: f64, z: f64) -> [f64; 100] {
 /// Calculate the coefficients of Legendre Polynomials in all orders <= n.
 /// Try to access the coefficient of x^m in P_l(x) by result[l][m].
 fn legendre_coeff_vec(n: u64) -> Vec<Vec<f64>> {
-    let mut res = Vec::new();
+    let mut res = vec![vec![1.0], vec![0.0, 1.0]];
 
-    let p0 = vec![1.0];
-    res.push(p0);
-
-    let p1 = vec![0.0, 1.0];
-    res.push(p1);
-
-    for i in 2..n + 1 {
-        let mut p: Vec<f64> = Vec::new();
-        for j in 0..i + 1 {
+    for i in 2..=n {
+        let mut p = Vec::new();
+        for j in 0..=i {
             if (i - j) % 2 != 0 {
                 p.push(0.0);
             } else if j == 0 {
@@ -301,15 +295,14 @@ fn legendre_coeff_vec(n: u64) -> Vec<Vec<f64>> {
 
 /// Calculate the factorial of a number.
 /// Here needs a lot of optimization to avoid overflow. Now the maximum parameter is 11, which is enough for the current use.
-fn factorial(n: u128) -> u128 {
+const fn factorial(n: u128) -> u128 {
+    assert!(n <= 34, "The factorial is too large to calculate.");
+    // use recursion because const_for is unstable https://github.com/rust-lang/rust/issues/87575
     if n == 0 {
-        return 1;
+        1
+    } else {
+        n * factorial(n - 1)
     }
-    let mut res = 1;
-    for i in 1..n + 1 {
-        res *= i;
-    }
-    res
 }
 
 /// Calculate the coefficient of the term in the Legendre Polynomial.
@@ -320,10 +313,10 @@ pub fn get_legendre_poly_term_coeff(func_order: u32, term_order: u32) -> f64 {
     } else {
         let k = (func_order - term_order) / 2;
         let mol = if k % 2 != 0 { -1.0 } else { 1.0 }
-            * factorial((func_order + term_order) as u128) as f64;
+            * factorial((func_order + term_order).into()) as f64;
         let den = (2_u32.pow(func_order) as u128
-            * factorial(k as u128)
-            * factorial(term_order as u128)
+            * factorial(k.into())
+            * factorial(term_order.into())
             * factorial((k + term_order).into())) as f64;
         mol / den
     }
@@ -337,24 +330,25 @@ fn calculate_assoc_legendre_poly(l: u64, m: i64, x: f64) -> f64 {
     let sign = m.signum();
     let legendre = legendre_coeff_vec(l);
     let legendre_coeff_vec = &legendre[l as usize];
-    let mut sum_coeff: Vec<f64> = Vec::new();
-    for i in m_abs as usize..l as usize + 1 {
+    let mut sum_coeff = Vec::new();
+    for i in m_abs as usize..=l as usize {
         let mut tmp = legendre_coeff_vec[i];
         tmp *= factorial(i as u128) as f64 / factorial((i as u32 - m_abs as u32).into()) as f64;
         sum_coeff.push(tmp);
     }
-    let mut sum = 0.0;
-    for i in 0..sum_coeff.len() {
-        sum += sum_coeff[i] * f64::powi(x, i as i32);
-    }
+    let sum: f64 = sum_coeff
+        .iter()
+        .enumerate()
+        .map(|(i, &coeff)| coeff * x.powi(i as i32))
+        .sum();
     let mut res =
         if m_abs % 2 == 0 { 1.0 } else { -1.0 } * (1.0 - x * x).powf(m_abs as f64 / 2.0) * sum;
     res *= if sign == 1 {
         1.0
     } else {
         (if m.abs() % 2 == 0 { 1.0 } else { -1.0 })
-            * factorial((l - m.unsigned_abs()) as u128) as f64
-            / factorial((l + m.unsigned_abs()) as u128) as f64
+            * factorial((l - m.unsigned_abs()).into()) as f64
+            / factorial((l + m.unsigned_abs()).into()) as f64
     } as f64;
     res
 }
