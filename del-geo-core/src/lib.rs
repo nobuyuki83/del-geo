@@ -35,5 +35,6 @@ pub mod spherical_harmonics;
 pub mod tet;
 pub mod tri2;
 pub mod tri3;
+pub mod vecn;
 pub mod view_projection;
 pub mod view_rotation;

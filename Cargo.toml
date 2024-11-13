@@ -28,8 +28,8 @@ del-geo-nalgebra = { path="del-geo-nalgebra"}
 del-geo-core = { path="del-geo-core"}
 
 # external my library
-# del-msh-core = {path = "../del-msh/del-msh-core"}
-del-msh-core = { git = "https://github.com/nobuyuki83/del-msh.git", version = "0.1.36"}
+del-msh-core = {path = "../del-msh/del-msh-core"}
+# del-msh-core = { git = "https://github.com/nobuyuki83/del-msh.git"}
 
 
 
