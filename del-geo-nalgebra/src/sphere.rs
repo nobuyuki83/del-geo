@@ -1,4 +1,3 @@
-
 /// ray_dir is not always a unit vector
 pub fn intersection_ray<T>(
     center: &nalgebra::Vector3<T>,
@@ -6,7 +5,8 @@ pub fn intersection_ray<T>(
     ray_src: &nalgebra::Vector3<T>,
     ray_dir: &nalgebra::Vector3<T>,
 ) -> Option<T>
-where T: nalgebra::RealField + Copy
+where
+    T: nalgebra::RealField + Copy,
 {
     // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
     let op = ray_src - center;
@@ -19,9 +19,9 @@ where T: nalgebra::RealField + Copy
     } else {
         let det = det.sqrt();
         if -b - det >= T::zero() {
-            return Some((-b - det)/a);
+            return Some((-b - det) / a);
         } else if -b + det >= T::zero() {
-            return Some((-b + det)/a);
+            return Some((-b + det) / a);
         }
         None
     }
