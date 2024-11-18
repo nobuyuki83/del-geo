@@ -255,6 +255,15 @@ where
     ]
 }
 
+pub fn mirror_reflection(v: &[f32;3], nrm: &[f32;3]) -> [f32;3] {
+    let a = dot(nrm, v);
+    [
+        v[0] - nrm[0] * 2. * a,
+        v[1] - nrm[1] * 2. * a,
+        v[2] - nrm[2] * 2. * a,
+    ]
+}
+
 // ------------------------------------------
 pub struct XYZ<'a, Real> {
     pub p: &'a [Real; 3],
