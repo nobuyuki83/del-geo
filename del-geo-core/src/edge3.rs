@@ -12,6 +12,16 @@ where
     (x * x + y * y + z * z).sqrt()
 }
 
+pub fn squared_length<T>(p0: &[T; 3], p1: &[T; 3]) -> T
+where
+    T: num_traits::Float,
+{
+    let x = p0[0] - p1[0];
+    let y = p0[1] - p1[1];
+    let z = p0[2] - p1[2];
+    x * x + y * y + z * z
+}
+
 pub fn nearest_to_point3<T>(p0: &[T; 3], p1: &[T; 3], point_pos: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float + 'static + Copy + PartialOrd,

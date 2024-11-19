@@ -264,6 +264,10 @@ pub fn mirror_reflection(v: &[f32; 3], nrm: &[f32; 3]) -> [f32; 3] {
     ]
 }
 
+pub fn element_wise_mult(a: &[f32; 3], b: &[f32; 3]) -> [f32; 3] {
+    [a[0] * b[0], a[1] * b[1], a[2] * b[2]]
+}
+
 // ------------------------------------------
 pub struct XYZ<'a, Real> {
     pub p: &'a [Real; 3],
