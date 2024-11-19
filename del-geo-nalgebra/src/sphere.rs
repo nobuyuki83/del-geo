@@ -10,8 +10,8 @@ where
 {
     // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
     let op = ray_src - center;
-    let a = ray_dir.dot(&ray_dir);
-    let b = op.dot(&ray_dir);
+    let a = ray_dir.dot(ray_dir);
+    let b = op.dot(ray_dir);
     let c = op.dot(&op) - rad * rad;
     let det: T = b * b - c * a;
     if det < T::zero() {
