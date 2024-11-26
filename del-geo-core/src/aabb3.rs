@@ -180,7 +180,7 @@ where
     }
 }
 
-pub fn update<Real>(aabb: &mut [Real; 6], xyz: &[Real; 3], eps: Real)
+pub fn add_point<Real>(aabb: &mut [Real; 6], xyz: &[Real; 3], eps: Real)
 where
     Real: num_traits::Float,
 {
