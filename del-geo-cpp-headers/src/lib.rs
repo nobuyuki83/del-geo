@@ -18,13 +18,13 @@ impl Headers {
         }
     }
 
-    pub fn write_files(&self, path_out_dir: &std::path::PathBuf) {
+    pub fn write_files(&self, path_out_dir: &std::path::Path) {
         for header_idx in 0.. {
             use std::io::Write;
             let Some((header_name, header_content)) = self.get(header_idx) else {
                 break;
             };
-            let path = path_out_dir.join(header_name.to_string());
+            let path = path_out_dir.join(header_name);
             let mut output = std::fs::File::create(path).unwrap();
             write!(output, "{}", header_content).unwrap();
         }
