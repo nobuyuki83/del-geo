@@ -203,6 +203,7 @@ pub struct Tri3<'a, Real> {
     pub p2: &'a [Real; 3],
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a, Real> Tri3<'a, Real>
 where
     Real: num_traits::Float,

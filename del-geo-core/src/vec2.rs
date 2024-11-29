@@ -118,6 +118,7 @@ pub struct XY<'a, Real> {
     pub p: &'a [Real; 2],
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a, Real> XY<'a, Real>
 where
     Real: num_traits::Float,

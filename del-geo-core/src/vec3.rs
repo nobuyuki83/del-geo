@@ -273,6 +273,7 @@ pub struct XYZ<'a, Real> {
     pub p: &'a [Real; 3],
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a, Real> XYZ<'a, Real>
 where
     Real: num_traits::Float,

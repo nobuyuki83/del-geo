@@ -69,6 +69,7 @@ pub struct AABB<'a, Real, const NDIM: usize, const SIZE_AABB: usize> {
     pub aabb: &'a [Real; SIZE_AABB],
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a, Real, const NDIM: usize, const SIZE_AABB: usize> AABB<'a, Real, NDIM, SIZE_AABB>
 where
     Real: num_traits::Float,

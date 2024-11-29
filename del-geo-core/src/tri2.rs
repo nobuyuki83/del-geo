@@ -97,6 +97,7 @@ pub struct Tri2<'a, Real> {
     pub p2: &'a [Real; 2],
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a, Real> Tri2<'a, Real>
 where
     Real: num_traits::Float,
