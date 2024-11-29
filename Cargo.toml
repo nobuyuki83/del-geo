@@ -1,5 +1,8 @@
 [workspace]
-members = ["del-geo-core", "del-geo-nalgebra"]
+members = [
+    "del-geo-core",
+    "del-geo-nalgebra",
+    "del-geo-cpp-headers"]
 resolver = "2"
 
 [workspace.package]

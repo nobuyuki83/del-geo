@@ -1,0 +1,3 @@
+[package]
+name = "del-geo-cpp-headers"
+include = ["src/*.h"]
