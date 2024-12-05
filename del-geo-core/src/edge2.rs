@@ -144,27 +144,8 @@ pub fn intersection_length_against_aabb2(ps: &[f32; 2], pe: &[f32; 2], aabb2: &[
     // 0 min, 1 max
     let seg_range_x = [ps[0].min(pe[0]), ps[0].max(pe[0])];
     let aabb_range_x = [aabb2[0], aabb2[2]];
-
-    // no intersction
-    if seg_range_x[0] > aabb_range_x[1] || seg_range_x[1] < aabb_range_x[0] {
-        return 0f32;
-    }
-
     let seg_range_y = [ps[1].min(pe[1]), ps[1].max(pe[1])];
     let aabb_range_y = [aabb2[1], aabb2[3]];
-
-    if seg_range_y[0] > aabb_range_y[1] || seg_range_y[1] < aabb_range_y[0] {
-        return 0f32;
-    }
-
-    // fully inside aabb
-    if seg_range_x[1] <= aabb_range_x[1]
-        && seg_range_x[0] >= aabb_range_x[0]
-        && seg_range_y[1] <= aabb_range_y[1]
-        && seg_range_y[0] >= aabb_range_y[0]
-    {
-        return crate::vec2::length(&crate::vec2::sub(pe, ps));
-    }
 
     let dx = range_intersection_length(&aabb_range_x, &seg_range_x);
     let dy = range_intersection_length(&aabb_range_y, &seg_range_y);
