@@ -139,3 +139,11 @@ fn test_nearest_point2() {
     let (_r, pm) = nearest_point2(&[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
     assert!(crate::vec2::length(&crate::vec2::sub(&pm, &[0., 1.])) < 1.0e-5);
 }
+
+pub fn intersection_length_against_aabb2(
+    ps: &[f32; 2],
+    pe: &[f32; 2],
+    aabb2: &[f32;4]) -> f32
+{
+    0f32
+}
