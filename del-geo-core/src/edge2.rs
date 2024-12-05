@@ -140,10 +140,110 @@ fn test_nearest_point2() {
     assert!(crate::vec2::length(&crate::vec2::sub(&pm, &[0., 1.])) < 1.0e-5);
 }
 
-pub fn intersection_length_against_aabb2(
-    ps: &[f32; 2],
-    pe: &[f32; 2],
-    aabb2: &[f32;4]) -> f32
-{
-    0f32
+pub fn intersection_length_against_aabb2(ps: &[f32; 2], pe: &[f32; 2], aabb2: &[f32; 4]) -> f32 {
+    // 0 min, 1 max
+    let seg_range_x = [ps[0].min(pe[0]), ps[0].max(pe[0])];
+    let aabb_range_x = [aabb2[0], aabb2[2]];
+
+    // no intersction
+    if seg_range_x[0] > aabb_range_x[1] || seg_range_x[1] < aabb_range_x[0] {
+        return 0f32;
+    }
+
+    let seg_range_y = [ps[1].min(pe[1]), ps[1].max(pe[1])];
+    let aabb_range_y = [aabb2[1], aabb2[3]];
+
+    if seg_range_y[0] > aabb_range_y[1] || seg_range_y[1] < aabb_range_y[0] {
+        return 0f32;
+    }
+
+    // fully inside aabb
+    if seg_range_x[1] <= aabb_range_x[1]
+        && seg_range_x[0] >= aabb_range_x[0]
+        && seg_range_y[1] <= aabb_range_y[1]
+        && seg_range_y[0] >= aabb_range_y[0]
+    {
+        return crate::vec2::length(&crate::vec2::sub(pe, ps));
+    }
+
+    let dx = range_intersection_length(&aabb_range_x, &seg_range_x);
+    let dy = range_intersection_length(&aabb_range_y, &seg_range_y);
+    dbg!(dx);
+    dbg!(dy);
+    (dx * dx + dy * dy).sqrt()
+}
+
+pub fn range_intersection_length(r1: &[f32; 2], r2: &[f32; 2]) -> f32 {
+    // separeted
+    if r1[1] <= r2[0] || r1[0] >= r2[1] {
+        return 0f32;
+    };
+
+    // contains
+    if r1[0] >= r2[0] && r1[1] <= r2[1] {
+        return r1[1] - r1[0];
+    } else if r1[0] <= r2[0] && r1[1] >= r2[1] {
+        return r2[1] - r2[0];
+    };
+
+    if r1[1] > r2[1] {
+        r2[1] - r1[0]
+    } else if r2[1] > r1[1] {
+        r1[1] - r2[0]
+    } else {
+        (r1[1] - r2[0]).min(r1[1] - r1[0])
+    }
+}
+
+#[test]
+fn test_intersection_length_against_aabb2() {
+    use std::f32::consts::SQRT_2;
+    // inside AABB
+    let ps = [1.0, 1.0];
+    let pe = [2.0, 2.0];
+    let aabb = [0.0, 0.0, 3.0, 3.0];
+    let length = intersection_length_against_aabb2(&ps, &pe, &aabb);
+    assert!((length - SQRT_2).abs() < 1e-6);
+
+    // outside AABB
+    let ps = [0.0, 0.0];
+    let pe = [0.5, 0.5];
+    let aabb = [2.0, 2.0, 3.0, 3.0];
+    let length = intersection_length_against_aabb2(&ps, &pe, &aabb);
+    assert_eq!(length, 0.0);
+
+    // partially inside AABB
+    let ps = [0.0, 0.0];
+    let pe = [2.0, 2.0];
+    let aabb = [1.0, 1.0, 3.0, 3.0];
+    let length = intersection_length_against_aabb2(&ps, &pe, &aabb);
+    assert!((length - SQRT_2).abs() < 1e-6);
+
+    // touching border
+    let ps = [1.0, 0.0];
+    let pe = [1.0, 3.0];
+    let aabb = [1.0, 1.0, 2.0, 2.0];
+    let length = intersection_length_against_aabb2(&ps, &pe, &aabb);
+    assert!((length - 1.0).abs() < 1e-6);
+
+    // segment with coordinates in reverse order
+    let ps = [3.0, 3.0];
+    let pe = [1.0, 1.0];
+    let aabb = [0.0, 0.0, 2.0, 2.0];
+    let length = intersection_length_against_aabb2(&ps, &pe, &aabb);
+    assert!((length - SQRT_2).abs() < 1e-6);
+
+    // zero-length segment
+    let ps = [1.0, 1.0];
+    let pe = [1.0, 1.0];
+    let aabb = [0.0, 0.0, 2.0, 2.0];
+    let length = intersection_length_against_aabb2(&ps, &pe, &aabb);
+    assert_eq!(length, 0.0);
+
+    // segment crossing aabb diagonally
+    let ps = [0.0, 0.0];
+    let pe = [3.0, 3.0];
+    let aabb = [1.0, 1.0, 2.0, 2.0];
+    let length = intersection_length_against_aabb2(&ps, &pe, &aabb);
+    assert!((length - SQRT_2).abs() < 1e-6);
 }
