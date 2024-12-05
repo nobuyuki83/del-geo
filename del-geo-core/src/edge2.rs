@@ -168,8 +168,6 @@ pub fn intersection_length_against_aabb2(ps: &[f32; 2], pe: &[f32; 2], aabb2: &[
 
     let dx = range_intersection_length(&aabb_range_x, &seg_range_x);
     let dy = range_intersection_length(&aabb_range_y, &seg_range_y);
-    dbg!(dx);
-    dbg!(dy);
     (dx * dx + dy * dy).sqrt()
 }
 
