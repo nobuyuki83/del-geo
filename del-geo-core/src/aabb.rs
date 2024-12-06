@@ -54,7 +54,7 @@ pub fn intersections_against_ray<Real, const NDIM: usize, const SIZE_AABB: usize
 where
     Real: num_traits::Float,
 {
-    intersections_against_line(aabb, ray_org, ray_dir).filter(|(_tmin,tmax)| *tmax >= Real::zero() )
+    intersections_against_line(aabb, ray_org, ray_dir).filter(|(_tmin, tmax)| *tmax >= Real::zero())
 }
 
 pub fn is_include_point<Real, const NDIM: usize, const SIZE_AABB: usize>(
