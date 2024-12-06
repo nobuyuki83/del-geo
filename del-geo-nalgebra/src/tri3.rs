@@ -92,7 +92,7 @@ fn test_ray_triangle_intersection() {
     let p2 = nalgebra::Vector3::<Real>::new(1., 3., -3.);
     let origin = nalgebra::Vector3::<Real>::new(8., 11., 10.);
     let dir = nalgebra::Vector3::<Real>::new(-7., -11., -8.);
-    let t1 = del_geo_core::tri3::intersection_against_ray(
+    let t1 = del_geo_core::tri3::intersection_against_line(
         p0.as_ref(),
         p1.as_ref(),
         p2.as_ref(),

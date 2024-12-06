@@ -133,7 +133,7 @@ where
 ///
 /// <https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm>
 /// <https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection>
-pub fn intersection_against_ray<T>(
+pub fn intersection_against_line<T>(
     p0: &[T; 3],
     p1: &[T; 3],
     p2: &[T; 3],
@@ -213,7 +213,16 @@ where
         ray_org: &[Real; 3],
         ray_dir: &[Real; 3],
     ) -> Option<Real> {
-        intersection_against_ray(self.p0, self.p1, self.p2, ray_org, ray_dir)
+        intersection_against_line(self.p0, self.p1, self.p2, ray_org, ray_dir)
+            .filter(|&t| t >= Real::zero())
+    }
+
+    pub fn intersection_against_line(
+        &self,
+        line_org: &[Real; 3],
+        line_dir: &[Real; 3],
+    ) -> Option<Real> {
+        intersection_against_line(self.p0, self.p1, self.p2, line_org, line_dir)
     }
 
     pub fn area(&self) -> Real {
