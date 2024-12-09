@@ -233,6 +233,11 @@ where
         normal(self.p0, self.p1, self.p2)
     }
 
+    pub fn unit_normal(&self) -> [Real; 3] {
+        let n = normal(self.p0, self.p1, self.p2);
+        crate::vec3::normalized(&n)
+    }
+
     pub fn position_from_barycentric_coordinates(&self, r0: Real, r1: Real) -> [Real; 3] {
         let r2 = Real::one() - r0 - r1;
         [

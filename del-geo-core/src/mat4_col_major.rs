@@ -180,6 +180,12 @@ pub fn from_aabb3_fit_into_unit(aabb_world: &[f32; 6]) -> [f32; 16] {
     [ax, 0., 0., 0., 0., ay, 0., 0., 0., 0., az, 0., b, c, d, 1.]
 }
 
+pub fn from_mat3_col_major(m: &[f32; 9]) -> [f32; 16] {
+    [
+        m[0], m[1], m[2], 0., m[3], m[4], m[5], 0., m[6], m[7], m[8], 0., 0., 0., 0., 1.,
+    ]
+}
+
 // above: from method (making 4x4 matrix)
 // ----------------------------------------
 
@@ -200,7 +206,7 @@ where
 
 pub fn jacobian_transform<Real>(t: &[Real; 16], p: &[Real; 3]) -> [Real; 9]
 where
-    Real: num_traits::Float + Copy,
+    Real: num_traits::Float + Copy + std::fmt::Debug,
 {
     let a = [t[0], t[1], t[2], t[4], t[5], t[6], t[8], t[9], t[10]];
     let b = [t[12], t[13], t[14]];
@@ -224,25 +230,32 @@ where
 
 #[test]
 fn test_jacobian_transform() {
-    let a: [f64; 16] = [
+    let a0: [f64; 16] = [
         1.1, 2.3, 3.4, 1.4, 1.7, 3.2, -0.5, 0.2, 2.3, -1.3, 1.4, 0.3, 0.6, 2.3, 1.5, -2.3,
     ];
-    let p0 = [1.3, 0.3, -0.5];
-    let q0 = transform_homogeneous(&a, &p0).unwrap();
-    let dqdp = jacobian_transform(&a, &p0);
-    let eps = 1.0e-6;
-    for i_dim in 0..3 {
-        let p1 = {
-            let mut p1 = p0;
-            p1[i_dim] += eps;
-            p1
-        };
-        let q1 = transform_homogeneous(&a, &p1).unwrap();
+    let a1 = [
+        -0.9, 0.0, 0.0, 0.0, 0.0, -0.9, 0.0, 0.0, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 1.5, -2.0,
+    ];
+    let vec_a = [a0, a1];
+    for a in vec_a.iter() {
+        // let p0 = [1.3, 0.3, -0.5];
+        let p0 = [0.5, 0.3, 0.0];
+        let q0 = transform_homogeneous(a, &p0).unwrap();
+        let dqdp = jacobian_transform(a, &p0);
+        let eps = 1.0e-6;
         for j_dim in 0..3 {
-            let v_num = (q1[j_dim] - q0[j_dim]) / eps;
-            let v_ana = dqdp[i_dim * 3 + j_dim];
-            // dbg!(i_dim, j_dim, v_num, v_ana);
-            assert!((v_num - v_ana).abs() < 9.0e-5);
+            let p1 = {
+                let mut p1 = p0;
+                p1[j_dim] += eps;
+                p1
+            };
+            let q1 = transform_homogeneous(a, &p1).unwrap();
+            for i_dim in 0..3 {
+                let v_num = (q1[i_dim] - q0[i_dim]) / eps;
+                let v_ana = dqdp[i_dim + 3 * j_dim];
+                dbg!(i_dim, j_dim, v_num, v_ana);
+                assert!((v_num - v_ana).abs() < 9.0e-5);
+            }
         }
     }
 }

@@ -42,6 +42,21 @@ where
     ])
 }
 
+#[test]
+fn test_try_inverse() {
+    let m: [f32; 9] = [1.7, 3., 2.3, 4.5, 5., 1.5, 3.3, 2., 4.2];
+    let mi = try_inverse(&m).unwrap();
+    let mmi = mult_mat_col_major(&m, &mi);
+    let mim = mult_mat_col_major(&mi, &m);
+    for i in 0..3 {
+        for j in 0..3 {
+            let v = if i == j { 1. } else { 0. };
+            assert!((v - mmi[i + j * 3]).abs() < 1.0e-6);
+            assert!((v - mim[i + j * 3]).abs() < 1.0e-6);
+        }
+    }
+}
+
 pub fn from_identity<T>() -> [T; 9]
 where
     T: num_traits::Float,
