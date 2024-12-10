@@ -1,6 +1,18 @@
+#![allow(unused_imports)]
 //! 3D Oriented Bounding Box (OBB)
 
+use crate::vec3::Vec3;
+use crate::{aabb3::AABB3Trait, edge3::Edge3Trait};
 use rand::distributions::{Distribution, Standard};
+
+pub trait OBB3Trait<T> {
+    fn nearest_to_point3(self, p: &[T; 3]) -> [T; 3];
+}
+impl OBB3Trait<f64> for [f64; 12] {
+    fn nearest_to_point3(self, p: &[f64; 3]) -> [f64; 3] {
+        nearest_to_point3(&self, p)
+    }
+}
 
 pub fn from_random<RAND, Real>(reng: &mut RAND) -> [Real; 12]
 where
@@ -10,13 +22,13 @@ where
 {
     let one = Real::one();
     let aabb_m1p1 = [-one, -one, -one, one, one, one];
-    let cntr = crate::aabb3::sample(&aabb_m1p1, reng);
-    let u = crate::aabb3::sample(&aabb_m1p1, reng);
-    let v = crate::aabb3::sample(&aabb_m1p1, reng);
-    let v = crate::vec3::orthogonalize(&u, &v);
-    let w = crate::aabb3::sample(&aabb_m1p1, reng);
-    let w = crate::vec3::orthogonalize(&u, &w);
-    let w = crate::vec3::orthogonalize(&v, &w);
+    let cntr = aabb_m1p1.sample(reng);
+    let u = aabb_m1p1.sample(reng);
+    let v = aabb_m1p1.sample(reng);
+    let v = u.orthogonalize(&v);
+    let w = aabb_m1p1.sample(reng);
+    let w = u.orthogonalize(&w);
+    let w = v.orthogonalize(&w);
     [
         cntr[0], cntr[1], cntr[2], u[0], u[1], u[2], v[0], v[1], v[2], w[0], w[1], w[2],
     ]
@@ -79,12 +91,12 @@ where
 {
     let min0 = ps
         .iter()
-        .map(|v| crate::vec3::dot(v, axis))
+        .map(|v| v.dot(axis))
         .min_by(|a, b| a.partial_cmp(b).unwrap())
         .unwrap();
     let max0 = ps
         .iter()
-        .map(|v| crate::vec3::dot(v, axis))
+        .map(|v| v.dot(axis))
         .max_by(|a, b| a.partial_cmp(b).unwrap())
         .unwrap();
     (min0, max0)
@@ -167,11 +179,11 @@ fn test_nearest_to_point3() {
     let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     for _itr in 0..1000 {
         let obb = from_random::<_, f64>(&mut reng);
-        let p = crate::aabb3::sample(&[-1., -1., -1., 1., 1., 1.], &mut reng);
+        let p = [-1., -1., -1., 1., 1., 1.].sample(&mut reng);
         let p_near = nearest_to_point3(&obb, &p);
         for _iter in 0..100 {
             let eps = 1.0e-4;
-            let dp = crate::aabb3::sample(&[-eps, -eps, -eps, eps, eps, eps], &mut reng);
+            let dp = [-eps, -eps, -eps, eps, eps, eps].sample(&mut reng);
             let q = [p_near[0] + dp[0], p_near[1] + dp[1], p_near[2] + dp[2]];
             let q = nearest_to_point3(&obb, &q);
             let len0 = crate::edge3::length(&p, &p_near);
@@ -196,15 +208,15 @@ where
             axes_j[0],
             axes_j[1],
             axes_j[2],
-            crate::vec3::cross(&axes_i[0], &axes_j[0]),
-            crate::vec3::cross(&axes_i[0], &axes_j[1]),
-            crate::vec3::cross(&axes_i[0], &axes_j[2]),
-            crate::vec3::cross(&axes_i[1], &axes_j[0]),
-            crate::vec3::cross(&axes_i[1], &axes_j[1]),
-            crate::vec3::cross(&axes_i[1], &axes_j[2]),
-            crate::vec3::cross(&axes_i[2], &axes_j[0]),
-            crate::vec3::cross(&axes_i[2], &axes_j[1]),
-            crate::vec3::cross(&axes_i[2], &axes_j[2]),
+            axes_i[0].cross(&axes_j[0]),
+            axes_i[0].cross(&axes_j[1]),
+            axes_i[0].cross(&axes_j[2]),
+            axes_i[1].cross(&axes_j[0]),
+            axes_i[1].cross(&axes_j[1]),
+            axes_i[1].cross(&axes_j[2]),
+            axes_i[2].cross(&axes_j[0]),
+            axes_i[2].cross(&axes_j[1]),
+            axes_i[2].cross(&axes_j[2]),
         ]
     };
     let corner_i = corner_points(obb_i);
@@ -227,14 +239,14 @@ fn test_is_intersect_to_obb3() {
         let obb_i = from_random::<_, f64>(&mut reng);
         let obb_j = from_random(&mut reng);
         let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
-        let p1 = nearest_to_point3(&obb_j, p0);
-        let p2 = nearest_to_point3(&obb_i, &p1);
-        let p3 = nearest_to_point3(&obb_j, &p2);
-        let p4 = nearest_to_point3(&obb_i, &p3);
-        let p5 = nearest_to_point3(&obb_j, &p4);
-        let p6 = nearest_to_point3(&obb_i, &p5);
-        let len45 = crate::edge3::length(&p4, &p5);
-        let len56 = crate::edge3::length(&p5, &p6);
+        let p1 = obb_j.nearest_to_point3(p0);
+        let p2 = obb_i.nearest_to_point3(&p1);
+        let p3 = obb_j.nearest_to_point3(&p2);
+        let p4 = obb_i.nearest_to_point3(&p3);
+        let p5 = obb_j.nearest_to_point3(&p4);
+        let p6 = obb_i.nearest_to_point3(&p5);
+        let len45 = p4.length(&p5);
+        let len56 = p5.length(&p6);
         assert!(len56 <= len45);
         if len56 > 0. && len56 < len45 * 0.9999 {
             continue;
@@ -286,15 +298,15 @@ fn test2_is_intersect_to_obb3() {
         ];
 
         let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
-        let p1 = nearest_to_point3(&obb_j, p0);
-        let p2 = nearest_to_point3(&obb_i, &p1);
-        let p3 = nearest_to_point3(&obb_j, &p2);
-        let p4 = nearest_to_point3(&obb_i, &p3);
-        let p5 = nearest_to_point3(&obb_j, &p4);
-        let p6 = nearest_to_point3(&obb_i, &p5);
+        let p1 = obb_j.nearest_to_point3(p0);
+        let p2 = obb_i.nearest_to_point3(&p1);
+        let p3 = obb_j.nearest_to_point3(&p2);
+        let p4 = obb_i.nearest_to_point3(&p3);
+        let p5 = obb_j.nearest_to_point3(&p4);
+        let p6 = obb_i.nearest_to_point3(&p5);
 
-        let len45 = crate::edge3::length(&p4, &p5);
-        let len56 = crate::edge3::length(&p5, &p6);
+        let len45 = p4.length(&p5);
+        let len56 = p5.length(&p6);
         assert!(len56 <= len45);
 
         let res1 = len56 < 0.0001; // this will be false since not intersected

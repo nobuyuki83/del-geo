@@ -175,7 +175,7 @@ fn test_dw_ray_triangle_intersection() {
     for i_node in 0..3 {
         for i_dim in 0..3 {
             let p1 = {
-                let mut p1 = p0.clone();
+                let mut p1 = p0;
                 p1[i_node][i_dim] += eps;
                 p1
             };

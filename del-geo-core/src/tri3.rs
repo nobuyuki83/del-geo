@@ -1,4 +1,5 @@
 //! methods for 3d triangle
+use crate::vec3::Vec3;
 
 /// clamp barycentric coordinates inside a triangle
 pub fn clamp<T>(r0: T, r1: T, r2: T) -> (T, T, T)
@@ -49,17 +50,16 @@ where
 {
     let na = normal(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
-    crate::vec3::squared_norm(&na).sqrt() * half
+    na.squared_norm().sqrt() * half
 }
 
 pub fn unit_normal_area<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> ([T; 3], T)
 where
     T: num_traits::Float,
 {
-    use crate::vec3;
     let n = normal(p0, p1, p2);
     let half = T::one() / (T::one() + T::one());
-    let a = vec3::norm(&n) * half;
+    let a = n.norm() * half;
     let invlen: T = half / a;
     ([n[0] * invlen, n[1] * invlen, n[2] * invlen], a)
 }
@@ -69,7 +69,6 @@ pub fn cot<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float,
 {
-    use crate::vec3;
     assert!(p0.len() == 3 && p1.len() == 3 && p2.len() == 3);
     let v0 = [p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]];
     let v1 = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
@@ -82,12 +81,12 @@ where
             v1[2] * v2[0] - v2[2] * v1[0],
             v1[0] * v2[1] - v2[0] * v1[1],
         ];
-        vec3::squared_norm(&na).sqrt() * half
+        na.squared_norm().sqrt() * half
     };
     let tmp: T = onefourth / area;
-    let l0 = vec3::squared_norm(&v0);
-    let l1 = vec3::squared_norm(&v1);
-    let l2 = vec3::squared_norm(&v2);
+    let l0 = v0.squared_norm();
+    let l1 = v1.squared_norm();
+    let l2 = v2.squared_norm();
     [
         (l1 + l2 - l0) * tmp, // cot0 = cos0/sin0 = {(l1*l1+l2*l2-l0*l0)/(2*l1*l2)} / {2*area/(l1*l2)}
         (l2 + l0 - l1) * tmp, // cot1 = cos1/sin1 = {(l2*l2+l0*l0-l1*l1)/(2*l2*l0)} / {2*area/(l2*l0)}
@@ -143,28 +142,27 @@ pub fn intersection_against_line<T>(
 where
     T: num_traits::Float,
 {
-    use crate::vec3;
     let eps: T = T::epsilon();
-    let edge1 = vec3::sub(p1, p0);
-    let edge2 = vec3::sub(p2, p0);
-    let pvec = vec3::cross(ray_dir, &edge2);
-    let det = vec3::dot(&edge1, &pvec);
+    let edge1 = p1.sub(p0);
+    let edge2 = p2.sub(p0);
+    let pvec = ray_dir.cross(&edge2);
+    let det = edge1.dot(&pvec);
     if det > -eps && det < eps {
         return None;
     }
     let invdet = T::one() / det;
-    let tvec = vec3::sub(ray_org, p0);
-    let u = invdet * vec3::dot(&tvec, &pvec);
+    let tvec = ray_org.sub(p0);
+    let u = invdet * tvec.dot(&pvec);
     if u < T::zero() || u > T::one() {
         return None;
     }
-    let qvec = vec3::cross(&tvec, &edge1);
-    let v = invdet * vec3::dot(ray_dir, &qvec);
+    let qvec = tvec.cross(&edge1);
+    let v = invdet * ray_dir.dot(&qvec);
     if v < T::zero() || u + v > T::one() {
         return None;
     }
     // At this stage we can compute t to find out where the intersection point is on the line.
-    let t = invdet * vec3::dot(&edge2, &qvec);
+    let t = invdet * edge2.dot(&qvec);
     Some(t)
 }
 
@@ -235,7 +233,7 @@ where
 
     pub fn unit_normal(&self) -> [Real; 3] {
         let n = normal(self.p0, self.p1, self.p2);
-        crate::vec3::normalized(&n)
+        n.normalized()
     }
 
     pub fn position_from_barycentric_coordinates(&self, r0: Real, r1: Real) -> [Real; 3] {
