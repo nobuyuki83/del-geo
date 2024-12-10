@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 //! 3D Oriented Bounding Box (OBB)
 
 use crate::vec3::Vec3;

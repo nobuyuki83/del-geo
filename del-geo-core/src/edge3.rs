@@ -11,10 +11,10 @@ where
 }
 impl Edge3Trait<f64> for [f64; 3] {
     fn length(&self, other: &[f64; 3]) -> f64 {
-        length(&self, &other)
+        length(self, other)
     }
     fn squared_length(&self, other: &[f64; 3]) -> f64 {
-        squared_length(&self, other)
+        squared_length(self, other)
     }
     fn nearest_to_point3(&self, p1: &[f64; 3], point_pos: &[f64; 3]) -> [f64; 3] {
         nearest_to_point3(self, p1, point_pos)
