@@ -2,6 +2,25 @@
 
 use rand::distributions::{Distribution, Standard};
 
+pub trait AABB3Trait<T> {
+    fn sample<Reng>(self, reng: &mut Reng) -> [T; 3]
+    where
+        Reng: rand::Rng,
+        Standard: Distribution<T>;
+}
+impl<T> AABB3Trait<T> for [T; 6]
+where
+    T: num_traits::Float,
+{
+    fn sample<Reng>(self, reng: &mut Reng) -> [T; 3]
+    where
+        Reng: rand::Rng,
+        Standard: Distribution<T>,
+    {
+        sample(&self, reng)
+    }
+}
+
 pub fn from_two_aabbs<T>(i0: &[T; 6], i1: &[T; 6]) -> [T; 6]
 where
     T: num_traits::Float,

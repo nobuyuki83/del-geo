@@ -65,12 +65,11 @@ where
     Real: num_traits::Float,
 {
     assert_eq!(NDIM * 2, SIZE_AABB);
-    for i_dim in 0..NDIM {
-        if point[i_dim] < aabb[i_dim] || point[i_dim] > aabb[i_dim + NDIM] {
-            return false;
-        }
-    }
-    true
+    point
+        .iter()
+        .zip(&aabb[..NDIM])
+        .zip(&aabb[NDIM..])
+        .all(|((p, &min), &max)| *p >= min && *p <= max)
 }
 
 pub fn center<Real, const NDIM: usize, const SIZE_AABB: usize>(
