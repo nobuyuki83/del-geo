@@ -65,7 +65,8 @@ where
     Real: num_traits::Float,
 {
     assert_eq!(NDIM * 2, SIZE_AABB);
-    point.iter()
+    point
+        .iter()
         .zip(&aabb[..NDIM])
         .zip(&aabb[NDIM..])
         .all(|((p, &min), &max)| *p >= min && *p <= max)
