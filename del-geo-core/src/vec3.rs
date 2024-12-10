@@ -1,4 +1,39 @@
 //! methods for 3D vector
+pub trait Vec3<Real>
+where
+    Self: Sized,
+{
+    fn normalized(&self) -> Self;
+    fn squared_norm(&self) -> Real;
+    fn sub(&self, other: &Self) -> Self;
+    fn dot(&self, other: &Self) -> Real;
+    fn norm(&self) -> Real;
+    fn cross(&self, other: &Self) -> Self;
+}
+
+impl<Real> Vec3<Real> for [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    fn normalized(&self) -> Self {
+        normalized(self)
+    }
+    fn squared_norm(&self) -> Real {
+        squared_norm(self)
+    }
+    fn sub(&self, other: &Self) -> Self {
+        sub(self, other)
+    }
+    fn dot(&self, other: &Self) -> Real {
+        dot(self, other)
+    }
+    fn norm(&self) -> Real {
+        norm(self)
+    }
+    fn cross(&self, other: &Self) -> Self {
+        cross(self, other)
+    }
+}
 
 use std::ops::MulAssign;
 
@@ -146,7 +181,7 @@ where
 {
     let l = norm(v);
     let linv = T::one() / l;
-    [v[0] * linv, v[1] * linv, v[2] * linv]
+    std::array::from_fn(|i| v[i] * linv)
 }
 
 pub fn cross_mut<T>(vo: &mut [T; 3], v1: &[T; 3], v2: &[T; 3])
