@@ -39,15 +39,15 @@ where
 // above: from method
 // -----------------------
 
-pub fn add_point<T>(aabb2: &mut [T; 4], p: &[T; 2], rad: T)
+pub fn add_point<T>(aabb2: &mut [T; 4], &[p0, p1]: &[T; 2], rad: T)
 where
     T: num_traits::Float,
 {
     assert!(rad >= T::zero());
-    aabb2[0] = aabb2[0].min(p[0] - rad);
-    aabb2[1] = aabb2[1].min(p[1] - rad);
-    aabb2[2] = aabb2[2].max(p[0] + rad);
-    aabb2[3] = aabb2[3].max(p[1] + rad);
+    aabb2[0] = aabb2[0].min(p0 - rad);
+    aabb2[1] = aabb2[1].min(p1 - rad);
+    aabb2[2] = aabb2[2].max(p0 + rad);
+    aabb2[3] = aabb2[3].max(p1 + rad);
 }
 
 pub fn rasterize<T>(aabb: &[T; 4], img_size: &(usize, usize)) -> [usize; 4]
@@ -141,27 +141,15 @@ fn test_to_transformation_world2unit_ortho_preserve_asp() {
     }
 }
 
-pub fn is_include_point2<Real>(aabb: &[Real; 4], p: &[Real; 2]) -> bool
+pub fn is_include_point2<Real>(aabb: &[Real; 4], &[p0, p1]: &[Real; 2]) -> bool
 where
     Real: num_traits::Float,
 {
-    if p[0] < aabb[0] {
-        return false;
-    }
-    if p[1] < aabb[1] {
-        return false;
-    }
-    if p[0] > aabb[2] {
-        return false;
-    }
-    if p[1] > aabb[3] {
-        return false;
-    }
-    true
+    p0 >= aabb[0] && p0 <= aabb[2] && p1 >= aabb[1] && p1 <= aabb[3]
 }
 
-pub fn nearest_point2(aabb: &[f32; 4], p: &[f32; 2]) -> [f32; 2] {
-    [p[0].clamp(aabb[0], aabb[2]), p[1].clamp(aabb[1], aabb[3])]
+pub fn nearest_point2(aabb: &[f32; 4], &[p0, p1]: &[f32; 2]) -> [f32; 2] {
+    [p0.clamp(aabb[0], aabb[2]), p1.clamp(aabb[1], aabb[3])]
 }
 
 /// <https://iquilezles.org/articles/distfunctions2d/>
@@ -182,12 +170,12 @@ where
 #[test]
 pub fn test_sdf() {
     let aabb: [f64; 4] = [0.2, 0.4, 3.0, 4.0];
-    assert!((sdf(&aabb, &[0.2, 0.4]) - 0.0) < 1.0e-8);
-    assert!((sdf(&aabb, &[0.0, 0.0]) - (0.2f64 * 0.2 + 0.4 * 0.4).sqrt()) < 1.0e-8);
-    assert!((sdf(&aabb, &[1.6, 2.2]) + 1.4) < 1.0e-8);
-    assert!(sdf(&aabb, &[0.2, 2.0]).abs() < 1.0e-8);
-    assert!((sdf(&aabb, &[0.4, 2.0]) + 0.2).abs() < 1.0e-8);
-    assert!((sdf(&aabb, &[0.0, 2.0]) - 0.2).abs() < 1.0e-8);
+    assert!((sdf(&aabb, &[0.2, 0.4])) < f64::EPSILON);
+    assert!((sdf(&aabb, &[0.0, 0.0]) - (0.2f64 * 0.2 + 0.4 * 0.4).sqrt()) < f64::EPSILON);
+    assert!((sdf(&aabb, &[1.6, 2.2]) + 1.4) < f64::EPSILON);
+    assert!(sdf(&aabb, &[0.2, 2.0]).abs() < f64::EPSILON);
+    assert!((sdf(&aabb, &[0.4, 2.0]) + 0.2).abs() < f64::EPSILON);
+    assert!((sdf(&aabb, &[0.0, 2.0]) - 0.2).abs() < f64::EPSILON);
 }
 
 pub fn scale<Real>(aabb: &[Real; 4], s: Real) -> [Real; 4]
