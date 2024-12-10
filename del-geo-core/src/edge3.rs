@@ -1,7 +1,25 @@
 //! methods for 3D edge (line segment)
 
 use num_traits::AsPrimitive;
-
+pub trait Edge3Trait<T>
+where
+    Self: Sized,
+{
+    fn length(&self, other: &Self) -> T;
+    fn squared_length(&self, other: &Self) -> T;
+    fn nearest_to_point3(&self, p1: &[T; 3], point_pos: &[T; 3]) -> [T; 3];
+}
+impl Edge3Trait<f64> for [f64; 3] {
+    fn length(&self, other: &[f64; 3]) -> f64 {
+        length(&self, &other)
+    }
+    fn squared_length(&self, other: &[f64; 3]) -> f64 {
+        squared_length(&self, other)
+    }
+    fn nearest_to_point3(&self, p1: &[f64; 3], point_pos: &[f64; 3]) -> [f64; 3] {
+        nearest_to_point3(self, p1, point_pos)
+    }
+}
 pub fn length<T>(p0: &[T; 3], p1: &[T; 3]) -> T
 where
     T: num_traits::Float,

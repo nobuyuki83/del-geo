@@ -45,7 +45,7 @@ pub fn orthogonalize<Real>(u: &[Real; 3], v: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
 {
-    let t = dot(u, v) / dot(u, u);
+    let t = u.dot(v) / u.dot(u);
     [v[0] - t * u[0], v[1] - t * u[1], v[2] - t * u[2]]
 }
 

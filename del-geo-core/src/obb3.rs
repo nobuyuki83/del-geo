@@ -1,8 +1,18 @@
 //! 3D Oriented Bounding Box (OBB)
 
-use crate::aabb3::AABB3Trait;
 use crate::vec3::Vec3;
+use crate::{aabb3::AABB3Trait, edge3::Edge3Trait};
 use rand::distributions::{Distribution, Standard};
+
+pub trait OBB3Trait<T> {
+    fn nearest_to_point3(self, p: &[T; 3]) -> [T; 3];
+}
+impl OBB3Trait<f64> for [f64; 12] {
+    fn nearest_to_point3(self, p: &[f64; 3]) -> [f64; 3] {
+        nearest_to_point3(&self, p)
+    }
+}
+
 pub fn from_random<RAND, Real>(reng: &mut RAND) -> [Real; 12]
 where
     RAND: rand::Rng,
@@ -228,14 +238,14 @@ fn test_is_intersect_to_obb3() {
         let obb_i = from_random::<_, f64>(&mut reng);
         let obb_j = from_random(&mut reng);
         let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
-        let p1 = nearest_to_point3(&obb_j, p0);
-        let p2 = nearest_to_point3(&obb_i, &p1);
-        let p3 = nearest_to_point3(&obb_j, &p2);
-        let p4 = nearest_to_point3(&obb_i, &p3);
-        let p5 = nearest_to_point3(&obb_j, &p4);
-        let p6 = nearest_to_point3(&obb_i, &p5);
-        let len45 = crate::edge3::length(&p4, &p5);
-        let len56 = crate::edge3::length(&p5, &p6);
+        let p1 = obb_j.nearest_to_point3(p0);
+        let p2 = obb_i.nearest_to_point3(&p1);
+        let p3 = obb_j.nearest_to_point3(&p2);
+        let p4 = obb_i.nearest_to_point3(&p3);
+        let p5 = obb_j.nearest_to_point3(&p4);
+        let p6 = obb_i.nearest_to_point3(&p5);
+        let len45 = p4.length(&p5);
+        let len56 = p5.length(&p6);
         assert!(len56 <= len45);
         if len56 > 0. && len56 < len45 * 0.9999 {
             continue;
@@ -287,15 +297,15 @@ fn test2_is_intersect_to_obb3() {
         ];
 
         let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
-        let p1 = nearest_to_point3(&obb_j, p0);
-        let p2 = nearest_to_point3(&obb_i, &p1);
-        let p3 = nearest_to_point3(&obb_j, &p2);
-        let p4 = nearest_to_point3(&obb_i, &p3);
-        let p5 = nearest_to_point3(&obb_j, &p4);
-        let p6 = nearest_to_point3(&obb_i, &p5);
+        let p1 = obb_j.nearest_to_point3(p0);
+        let p2 = obb_i.nearest_to_point3(&p1);
+        let p3 = obb_j.nearest_to_point3(&p2);
+        let p4 = obb_i.nearest_to_point3(&p3);
+        let p5 = obb_j.nearest_to_point3(&p4);
+        let p6 = obb_i.nearest_to_point3(&p5);
 
-        let len45 = crate::edge3::length(&p4, &p5);
-        let len56 = crate::edge3::length(&p5, &p6);
+        let len45 = p4.length(&p5);
+        let len56 = p5.length(&p6);
         assert!(len56 <= len45);
 
         let res1 = len56 < 0.0001; // this will be false since not intersected
