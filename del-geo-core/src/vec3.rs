@@ -9,6 +9,7 @@ where
     fn dot(&self, other: &Self) -> Real;
     fn norm(&self) -> Real;
     fn cross(&self, other: &Self) -> Self;
+    fn orthogonalize(&self, v: &Self) -> Self;
 }
 
 impl<Real> Vec3<Real> for [Real; 3]
@@ -32,6 +33,9 @@ where
     }
     fn cross(&self, other: &Self) -> Self {
         cross(self, other)
+    }
+    fn orthogonalize(&self, v: &Self) -> Self {
+        orthogonalize(self, v)
     }
 }
 
