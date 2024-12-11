@@ -112,6 +112,13 @@ pub fn orthogonalize(u: &[f32; 2], v: &[f32; 2]) -> [f32; 2] {
     [v[0] - t * u[0], v[1] - t * u[1]]
 }
 
+pub fn axpy<Real>(alpha: Real, x: &[Real; 2], y: &[Real; 2]) -> [Real; 2]
+where
+    Real: num_traits::Float,
+{
+    [alpha * x[0] + y[0], alpha * x[1] + y[1]]
+}
+
 // -------------------------------
 // below: about the Vec2 class
 pub struct XY<'a, Real> {
