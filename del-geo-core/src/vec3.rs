@@ -4,10 +4,12 @@ where
     Self: Sized,
 {
     fn normalized(&self) -> Self;
-    fn squared_norm(&self) -> Real;
-    fn sub(&self, other: &Self) -> Self;
-    fn dot(&self, other: &Self) -> Real;
+    fn scaled(&self, s: Real) -> Self;
     fn norm(&self) -> Real;
+    fn squared_norm(&self) -> Real;
+    fn dot(&self, other: &Self) -> Real;
+    fn sub(&self, other: &Self) -> Self;
+    fn add(&self, other: &Self) -> Self;
     fn cross(&self, other: &Self) -> Self;
     fn orthogonalize(&self, v: &Self) -> Self;
 }
@@ -19,11 +21,17 @@ where
     fn normalized(&self) -> Self {
         normalized(self)
     }
+    fn scaled(&self, s: Real) -> Self {
+        scaled(self, s)
+    }
     fn squared_norm(&self) -> Real {
         squared_norm(self)
     }
     fn sub(&self, other: &Self) -> Self {
         sub(self, other)
+    }
+    fn add(&self, other: &Self) -> Self {
+        add(self, other)
     }
     fn dot(&self, other: &Self) -> Real {
         dot(self, other)
