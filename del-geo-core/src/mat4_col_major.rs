@@ -260,7 +260,7 @@ fn test_jacobian_transform() {
     }
 }
 
-pub fn transform_vector<Real>(transform: &[Real; 16], x: &[Real; 3]) -> [Real; 3]
+pub fn transform_direction<Real>(transform: &[Real; 16], x: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
 {

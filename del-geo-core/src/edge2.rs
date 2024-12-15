@@ -57,29 +57,44 @@ where
     true
 }
 
-pub fn intersection_edge2<T>(
-    po_s0: &[T; 2],
-    po_e0: &[T; 2],
-    po_s1: &[T; 2],
-    po_e1: &[T; 2],
-) -> Option<(T, T)>
+///
+/// * Return
+///
+/// Some((r0,r1)): ratio of edge
+///
+/// r0 * s0 + (1-r0) * e0 == r1 * s1 + (1-r1) * e1
+pub fn intersection_edge2<T>(s0: &[T; 2], e0: &[T; 2], s1: &[T; 2], e1: &[T; 2]) -> Option<(T, T)>
 where
-    T: num_traits::Float + 'static + Copy,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
-    let area1 = crate::tri2::area(po_s0, po_e0, po_s1);
-    let area2 = crate::tri2::area(po_s0, po_e0, po_e1);
-    let area3 = crate::tri2::area(po_s1, po_e1, po_s0);
-    let area4 = crate::tri2::area(po_s1, po_e1, po_e0);
-    if area1 * area2 > 0_f64.as_() {
+    let area1 = crate::tri2::area(s0, e0, s1);
+    let area2 = crate::tri2::area(s0, e0, e1);
+    let area3 = crate::tri2::area(s1, e1, s0);
+    let area4 = crate::tri2::area(s1, e1, e0);
+    if area1 * area2 > T::zero() {
         return None;
     }
-    if area3 * area4 > 0_f64.as_() {
+    if area3 * area4 > T::zero() {
         return None;
     }
     let r1 = area1 / (area1 - area2);
     let r0 = area3 / (area3 - area4);
     Some((r0, r1))
+}
+
+#[test]
+fn test_intersection_edge2() {
+    let s0 = [0., 0.];
+    let e0 = [1., 0.];
+    let s1 = [0., -0.1];
+    let e1 = [0.2, 0.1];
+    let Some((r0, r1)) = intersection_edge2(&s0, &e0, &s1, &e1) else {
+        panic!()
+    };
+    let p0 = crate::vec2::axpy(r0, &crate::vec2::sub(&e0, &s0), &s0);
+    let p1 = crate::vec2::axpy(r1, &crate::vec2::sub(&e1, &s1), &s1);
+    assert!(length(&p0, &[0.1, 0.0]) < 1.0e-5);
+    assert!(length(&p1, &[0.1, 0.0]) < 1.0e-5);
 }
 
 pub fn winding_number<T>(ps: &[T; 2], pe: &[T; 2], po: &[T; 2]) -> T
