@@ -18,6 +18,7 @@ where
     fn xy(&self) -> [Real; 2];
     fn normalize(&mut self) -> Real;
     fn element_wise_mult(&self, other: &Self) -> Self;
+    fn cross_mut(&mut self, v1: &Self, v2: &Self);
 }
 
 impl<Real> Vec3<Real> for [Real; 3]
@@ -62,6 +63,9 @@ where
     }
     fn element_wise_mult(&self, other: &Self) -> Self {
         element_wise_mult(self, other)
+    }
+    fn cross_mut(&mut self, v1: &Self, v2: &Self) {
+        cross_mut(self, v1, v2)
     }
 }
 
