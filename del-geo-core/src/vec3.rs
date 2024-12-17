@@ -270,7 +270,7 @@ pub fn distance<T>(p0: &[T; 3], p1: &[T; 3]) -> T
 where
     T: num_traits::Float + MulAssign,
 {
-    let [v0, v1, v2] = p1.sub(&p0);
+    let [v0, v1, v2] = p1.sub(p0);
     (v0 * v0 + v1 * v1 + v2 * v2).sqrt()
 }
 
