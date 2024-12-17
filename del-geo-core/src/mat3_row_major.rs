@@ -12,7 +12,7 @@ impl<Real> Mat3RowMajor<Real> for [Real; 9]
 where
     Real: num_traits::Float + std::ops::AddAssign + std::iter::Sum,
 {
-    fn from_identity() -> [Real; 9] {
+    fn from_identity() -> Self {
         from_identity()
     }
     fn determinant(&self) -> Real {
@@ -21,13 +21,13 @@ where
     fn squared_norm(&self) -> Real {
         squared_norm(self)
     }
-    fn transpose(&self) -> [Real; 9] {
+    fn transpose(&self) -> Self {
         transpose(self)
     }
-    fn mult_mat_row_major(&self, b: &[Real; 9]) -> [Real; 9] {
+    fn mult_mat_row_major(&self, b: &Self) -> Self {
         mult_mat_row_major(self, b)
     }
-    fn sub(&self, b: &[Real; 9]) -> [Real; 9] {
+    fn sub(&self, b: &Self) -> Self {
         sub(self, b)
     }
 }

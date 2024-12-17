@@ -13,22 +13,22 @@ impl<Real> Mat3ColMajor<Real> for [Real; 9]
 where
     Real: num_traits::Float + std::ops::AddAssign,
 {
-    fn from_diagonal(diagonal: &[Real; 3]) -> [Real; 9] {
+    fn from_diagonal(diagonal: &[Real; 3]) -> Self {
         from_diagonal(diagonal)
     }
-    fn from_identity() -> [Real; 9] {
+    fn from_identity() -> Self {
         from_identity()
     }
     fn determinant(&self) -> Real {
         determinant(self)
     }
-    fn try_inverse(&self) -> Option<[Real; 9]> {
+    fn try_inverse(&self) -> Option<Self> {
         try_inverse(self)
     }
-    fn transpose(&self) -> [Real; 9] {
+    fn transpose(&self) -> Self {
         transpose(self)
     }
-    fn mult_mat_col_major(&self, other: &[Real; 9]) -> [Real; 9] {
+    fn mult_mat_col_major(&self, other: &Self) -> Self {
         mult_mat_col_major(self, other)
     }
 }
