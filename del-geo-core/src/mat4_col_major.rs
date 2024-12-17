@@ -13,7 +13,7 @@ where
     Real: num_traits::Float,
 {
     fn transform_homogeneous(&self, v: &[Real; 3]) -> Option<[Real; 3]> {
-        transform_homogeneous(&self, v)
+        transform_homogeneous(self, v)
     }
 }
 
@@ -444,15 +444,12 @@ pub fn ray_from_transform_world2ndc(
     pos_world: &[f32; 3],
     transform_ndc2world: &[f32; 16],
 ) -> ([f32; 3], [f32; 3]) {
-    let pos_mid_ndc = transform_homogeneous(transform_world2ndc, &pos_world).unwrap();
+    let pos_mid_ndc = transform_homogeneous(transform_world2ndc, pos_world).unwrap();
     let ray_stt_world =
-        transform_homogeneous(&transform_ndc2world, &[pos_mid_ndc[0], pos_mid_ndc[1], 1.0])
+        transform_homogeneous(transform_ndc2world, &[pos_mid_ndc[0], pos_mid_ndc[1], 1.0]).unwrap();
+    let ray_end_world =
+        transform_homogeneous(transform_ndc2world, &[pos_mid_ndc[0], pos_mid_ndc[1], -1.0])
             .unwrap();
-    let ray_end_world = transform_homogeneous(
-        &transform_ndc2world,
-        &[pos_mid_ndc[0], pos_mid_ndc[1], -1.0],
-    )
-    .unwrap();
     (
         ray_stt_world,
         crate::vec3::sub(&ray_end_world, &ray_stt_world),

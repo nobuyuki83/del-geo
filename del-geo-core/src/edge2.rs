@@ -352,7 +352,7 @@ pub fn overlapping_pixels_dda<Real>(
     p0: &[Real; 2],
     p1: &[Real; 2],
 ) -> Vec<usize>
-    where
+where
     Real: num_traits::Float + 'static + Copy + AsPrimitive<usize> + std::fmt::Debug,
     usize: AsPrimitive<Real>,
 {
@@ -370,7 +370,7 @@ pub fn overlapping_pixels_dda<Real>(
     let slope_x = dx / step;
     let mut x = p0[0];
     let mut y = p0[1];
-    let mut res = vec!();
+    let mut res = vec![];
     while (x - p0[0]).abs() <= (p1[0] - p0[0]).abs() && (y - p0[1]).abs() <= (p1[1] - p0[1]).abs() {
         if x >= zero && x < width_f && y >= zero && y < height_f {
             let ix: usize = x.as_();

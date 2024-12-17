@@ -16,7 +16,7 @@ where
         sub(self, other)
     }
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<Self> {
-        crate::mat3_col_major::transform_homogeneous(v, &self)
+        crate::mat3_col_major::transform_homogeneous(v, self)
     }
 }
 
