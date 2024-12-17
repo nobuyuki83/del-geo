@@ -1,5 +1,7 @@
 // quaternion defined as [i,j,k,w] where w is the real part
 
+use crate::vec3::Vec3;
+
 pub fn to_mat3_col_major<Real>(q: &[Real; 4]) -> [Real; 9]
 where
     Real: num_traits::Float,
@@ -137,9 +139,9 @@ pub fn identity() -> [f64; 4] {
 /// return rotation around axis with radian
 pub fn around_axis<Real>(a: &[Real; 3], rad: Real) -> [Real; 4]
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + std::ops::MulAssign,
 {
-    let v = crate::vec3::normalized(a);
+    let v = a.normalized();
     let half = rad / Real::from(2).unwrap();
     let sin = half.sin();
     [v[0] * sin, v[1] * sin, v[2] * sin, half.cos()]

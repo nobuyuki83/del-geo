@@ -1,5 +1,38 @@
 //! methods for 3x3 matrix where storage is column major order
 
+pub trait Mat3ColMajor<T: num_traits::Float> {
+    fn from_diagonal(diagonal: &[T; 3]) -> [T; 9];
+    fn from_identity() -> [T; 9];
+    fn determinant(&self) -> T;
+    fn try_inverse(&self) -> Option<[T; 9]>;
+    fn transpose(&self) -> [T; 9];
+    fn mult_mat_col_major(&self, other: &[T; 9]) -> [T; 9];
+}
+
+impl<Real> Mat3ColMajor<Real> for [Real; 9]
+where
+    Real: num_traits::Float + std::ops::AddAssign,
+{
+    fn from_diagonal(diagonal: &[Real; 3]) -> Self {
+        from_diagonal(diagonal)
+    }
+    fn from_identity() -> Self {
+        from_identity()
+    }
+    fn determinant(&self) -> Real {
+        determinant(self)
+    }
+    fn try_inverse(&self) -> Option<Self> {
+        try_inverse(self)
+    }
+    fn transpose(&self) -> Self {
+        transpose(self)
+    }
+    fn mult_mat_col_major(&self, other: &Self) -> Self {
+        mult_mat_col_major(self, other)
+    }
+}
+
 use std::ops::AddAssign;
 
 pub fn from_diagonal<Real>(s: &[Real; 3]) -> [Real; 9]
@@ -45,9 +78,9 @@ where
 #[test]
 fn test_try_inverse() {
     let m: [f32; 9] = [1.7, 3., 2.3, 4.5, 5., 1.5, 3.3, 2., 4.2];
-    let mi = try_inverse(&m).unwrap();
-    let mmi = mult_mat_col_major(&m, &mi);
-    let mim = mult_mat_col_major(&mi, &m);
+    let mi = m.try_inverse().unwrap();
+    let mmi = m.mult_mat_col_major(&mi);
+    let mim = mi.mult_mat_col_major(&m);
     for i in 0..3 {
         for j in 0..3 {
             let v = if i == j { 1. } else { 0. };
@@ -276,7 +309,7 @@ pub fn from_transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 9] {
     ]
 }
 
-/// transformation converting unit coodinate (NDC) [0,+1]^2 to pixel coordinate
+/// transformation converting unit coodinate (NDC) `[0,+1]^2` to pixel coordinate
 /// * `image_shape` - (width, height)
 pub fn from_transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
     [

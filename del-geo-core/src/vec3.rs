@@ -1,6 +1,6 @@
 //! methods for 3D vector
 //!
-
+use std::ops::MulAssign;
 pub trait Vec3<Real>
 where
     Self: Sized,
@@ -16,11 +16,14 @@ where
     fn orthogonalize(&self, v: &Self) -> Self;
     fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<Self>;
     fn xy(&self) -> [Real; 2];
+    fn normalize(&mut self) -> Real;
+    fn element_wise_mult(&self, other: &Self) -> Self;
+    fn cross_mut(&mut self, v1: &Self, v2: &Self);
 }
 
 impl<Real> Vec3<Real> for [Real; 3]
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + std::ops::MulAssign,
 {
     fn normalized(&self) -> Self {
         normalized(self)
@@ -55,13 +58,20 @@ where
     fn xy(&self) -> [Real; 2] {
         [self[0], self[1]]
     }
+    fn normalize(&mut self) -> Real {
+        normalize(self)
+    }
+    fn element_wise_mult(&self, other: &Self) -> Self {
+        element_wise_mult(self, other)
+    }
+    fn cross_mut(&mut self, v1: &Self, v2: &Self) {
+        cross_mut(self, v1, v2)
+    }
 }
-
-use std::ops::MulAssign;
 
 pub fn orthogonalize<Real>(u: &[Real; 3], v: &[Real; 3]) -> [Real; 3]
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + MulAssign,
 {
     let t = u.dot(v) / u.dot(u);
     [v[0] - t * u[0], v[1] - t * u[1], v[2] - t * u[2]]
@@ -188,7 +198,7 @@ pub fn normalize<T>(v: &mut [T; 3]) -> T
 where
     T: num_traits::Float + std::ops::MulAssign,
 {
-    let l = norm(v);
+    let l = v.norm();
     let linv = T::one() / l;
     v[0] *= linv;
     v[1] *= linv;
@@ -199,9 +209,9 @@ where
 /// in-place normalize function
 pub fn normalized<T>(v: &[T; 3]) -> [T; 3]
 where
-    T: num_traits::Float,
+    T: num_traits::Float + MulAssign,
 {
-    let l = norm(v);
+    let l = v.norm();
     let linv = T::one() / l;
     std::array::from_fn(|i| v[i] * linv)
 }
@@ -262,11 +272,9 @@ where
 
 pub fn distance<T>(p0: &[T; 3], p1: &[T; 3]) -> T
 where
-    T: num_traits::Float,
+    T: num_traits::Float + MulAssign,
 {
-    let v0 = p1[0] - p0[0];
-    let v1 = p1[1] - p0[1];
-    let v2 = p1[2] - p0[2];
+    let [v0, v1, v2] = p1.sub(p0);
     (v0 * v0 + v1 * v1 + v2 * v2).sqrt()
 }
 
@@ -284,11 +292,7 @@ pub fn axpy<Real>(alpha: Real, x: &[Real; 3], y: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
 {
-    [
-        alpha * x[0] + y[0],
-        alpha * x[1] + y[1],
-        alpha * x[2] + y[2],
-    ]
+    std::array::from_fn(|i| alpha * x[i] + y[i])
 }
 
 pub fn to_quaternion_from_axis_angle_vector<Real>(a: &[Real; 3]) -> [Real; 4]
@@ -312,17 +316,19 @@ where
     ]
 }
 
-pub fn mirror_reflection(v: &[f32; 3], nrm: &[f32; 3]) -> [f32; 3] {
-    let a = dot(nrm, v);
-    [
-        v[0] - nrm[0] * 2. * a,
-        v[1] - nrm[1] * 2. * a,
-        v[2] - nrm[2] * 2. * a,
-    ]
+pub fn mirror_reflection<Real>(v: &[Real; 3], nrm: &[Real; 3]) -> [Real; 3]
+where
+    Real: num_traits::Float + MulAssign,
+{
+    let a = nrm.dot(v);
+    std::array::from_fn(|i| v[i] - nrm[i] * Real::from(2).unwrap() * a)
 }
 
-pub fn element_wise_mult(a: &[f32; 3], b: &[f32; 3]) -> [f32; 3] {
-    [a[0] * b[0], a[1] * b[1], a[2] * b[2]]
+pub fn element_wise_mult<Real>(a: &[Real; 3], b: &[Real; 3]) -> [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    std::array::from_fn(|i| a[i] * b[i])
 }
 
 // ------------------------------------------

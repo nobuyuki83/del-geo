@@ -171,7 +171,7 @@ where
 pub fn test_sdf() {
     let aabb: [f64; 4] = [0.2, 0.4, 3.0, 4.0];
     assert!((sdf(&aabb, &[0.2, 0.4])) < f32::EPSILON as f64);
-    assert!((sdf(&aabb, &[0.0, 0.0]) - (0.2f64 * 0.2 + 0.4 * 0.4).sqrt()) < f64::EPSILON);
+    assert!((sdf(&aabb, &[0.0, 0.0]) - (0.2f64 * 0.2 + 0.4 * 0.4).sqrt()).abs() < f64::EPSILON);
     assert!((sdf(&aabb, &[1.6, 2.2]) + 1.4) < f64::EPSILON);
     assert!(sdf(&aabb, &[0.2, 2.0]).abs() < f32::EPSILON as f64);
     assert!((sdf(&aabb, &[0.4, 2.0]) + 0.2).abs() < f32::EPSILON as f64);

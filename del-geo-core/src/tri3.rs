@@ -1,4 +1,6 @@
 //! methods for 3d triangle
+use std::ops::MulAssign;
+
 use crate::vec3::Vec3;
 
 /// clamp barycentric coordinates inside a triangle
@@ -46,7 +48,7 @@ where
 /// area of a 3D triangle (coordinates given by stack-allocated arrays)
 pub fn area<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> T
 where
-    T: num_traits::Float,
+    T: num_traits::Float + MulAssign,
 {
     let na = normal(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
@@ -55,7 +57,7 @@ where
 
 pub fn unit_normal_area<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> ([T; 3], T)
 where
-    T: num_traits::Float,
+    T: num_traits::Float + MulAssign,
 {
     let n = normal(p0, p1, p2);
     let half = T::one() / (T::one() + T::one());
@@ -67,7 +69,7 @@ where
 /// compute cotangents of the three angles of a triangle
 pub fn cot<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [T; 3]
 where
-    T: num_traits::Float,
+    T: num_traits::Float + MulAssign,
 {
     assert!(p0.len() == 3 && p1.len() == 3 && p2.len() == 3);
     let v0 = [p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]];
@@ -96,7 +98,7 @@ where
 
 pub fn emat_cotangent_laplacian<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [[[T; 1]; 3]; 3]
 where
-    T: num_traits::Float,
+    T: num_traits::Float + MulAssign,
 {
     let cots = cot(p0, p1, p2);
     let half = T::one() / (T::one() + T::one());
@@ -140,7 +142,7 @@ pub fn intersection_against_line<T>(
     ray_dir: &[T; 3],
 ) -> Option<T>
 where
-    T: num_traits::Float,
+    T: num_traits::Float + MulAssign,
 {
     let eps: T = T::epsilon();
     let edge1 = p1.sub(p0);
@@ -168,7 +170,7 @@ where
 
 pub fn to_barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
 where
-    T: num_traits::Float,
+    T: num_traits::Float + MulAssign,
 {
     let a0 = area(q, p1, p2);
     let a1 = area(q, p2, p0);
@@ -204,7 +206,7 @@ pub struct Tri3<'a, Real> {
 #[allow(clippy::needless_lifetimes)]
 impl<'a, Real> Tri3<'a, Real>
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + MulAssign,
 {
     pub fn intersection_against_ray(
         &self,

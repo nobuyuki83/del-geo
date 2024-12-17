@@ -1,23 +1,36 @@
 #![allow(unused_imports)]
 //! 3D Oriented Bounding Box (OBB)
 
+use std::ops::MulAssign;
+
 use crate::vec3::Vec3;
 use crate::{aabb3::AABB3Trait, edge3::Edge3Trait};
 use rand::distributions::{Distribution, Standard};
 
 pub trait OBB3Trait<T> {
-    fn nearest_to_point3(self, p: &[T; 3]) -> [T; 3];
+    fn is_include_point(&self, p: &[T; 3], eps: T) -> bool;
+    fn unit_axes_and_half_edge_lengths(&self) -> ([[T; 3]; 3], [T; 3]);
+    fn nearest_to_point3(&self, p: &[T; 3]) -> [T; 3];
 }
-impl OBB3Trait<f64> for [f64; 12] {
-    fn nearest_to_point3(self, p: &[f64; 3]) -> [f64; 3] {
-        nearest_to_point3(&self, p)
+impl<Real> OBB3Trait<Real> for [Real; 12]
+where
+    Real: num_traits::Float + MulAssign,
+{
+    fn is_include_point(&self, p: &[Real; 3], eps: Real) -> bool {
+        is_include_point(self, p, eps)
+    }
+    fn unit_axes_and_half_edge_lengths(&self) -> ([[Real; 3]; 3], [Real; 3]) {
+        unit_axes_and_half_edge_lengths(self)
+    }
+    fn nearest_to_point3(&self, p: &[Real; 3]) -> [Real; 3] {
+        nearest_to_point3(self, p)
     }
 }
 
 pub fn from_random<RAND, Real>(reng: &mut RAND) -> [Real; 12]
 where
     RAND: rand::Rng,
-    Real: num_traits::Float,
+    Real: num_traits::Float + std::ops::MulAssign,
     Standard: Distribution<Real>,
 {
     let one = Real::one();
@@ -87,7 +100,7 @@ where
 /// Projection of an OBB at axis, return (min,max)
 fn range_axis<Real, const N: usize>(ps: &[[Real; 3]; N], axis: &[Real; 3]) -> (Real, Real)
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + MulAssign,
 {
     let min0 = ps
         .iter()
@@ -156,16 +169,16 @@ where
 
 pub fn nearest_to_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + MulAssign,
 {
-    if is_include_point(obb, p, Real::zero()) {
+    if obb.is_include_point(p, Real::zero()) {
         return *p;
     }
-    let (axes, hlen) = unit_axes_and_half_edge_lengths(obb);
+    let (axes, hlen) = obb.unit_axes_and_half_edge_lengths();
     let d = [p[0] - obb[0], p[1] - obb[1], p[2] - obb[2]];
-    let t0 = crate::vec3::dot(&axes[0], &d).clamp(-hlen[0], hlen[0]);
-    let t1 = crate::vec3::dot(&axes[1], &d).clamp(-hlen[1], hlen[1]);
-    let t2 = crate::vec3::dot(&axes[2], &d).clamp(-hlen[2], hlen[2]);
+    let t0 = axes[0].dot(&d).clamp(-hlen[0], hlen[0]);
+    let t1 = axes[1].dot(&d).clamp(-hlen[1], hlen[1]);
+    let t2 = axes[2].dot(&d).clamp(-hlen[2], hlen[2]);
     [
         obb[0] + t0 * axes[0][0] + t1 * axes[1][0] + t2 * axes[2][0],
         obb[1] + t0 * axes[0][1] + t1 * axes[1][1] + t2 * axes[2][1],
@@ -180,14 +193,14 @@ fn test_nearest_to_point3() {
     for _itr in 0..1000 {
         let obb = from_random::<_, f64>(&mut reng);
         let p = [-1., -1., -1., 1., 1., 1.].sample(&mut reng);
-        let p_near = nearest_to_point3(&obb, &p);
+        let p_near = obb.nearest_to_point3(&p);
         for _iter in 0..100 {
             let eps = 1.0e-4;
             let dp = [-eps, -eps, -eps, eps, eps, eps].sample(&mut reng);
-            let q = [p_near[0] + dp[0], p_near[1] + dp[1], p_near[2] + dp[2]];
+            let q = std::array::from_fn(|i| p_near[i] + dp[i]);
             let q = nearest_to_point3(&obb, &q);
-            let len0 = crate::edge3::length(&p, &p_near);
-            let len1 = crate::edge3::length(&p, &q);
+            let len0 = p.length(&p_near);
+            let len1 = p.length(&q);
             assert!(len0 <= len1);
         }
     }
@@ -196,11 +209,11 @@ fn test_nearest_to_point3() {
 /// Use Separating Axis Theorem (SAT) to check if two OBBs are intersected
 pub fn is_intersect_to_obb3<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> bool
 where
-    Real: num_traits::Float + std::fmt::Debug,
+    Real: num_traits::Float + std::fmt::Debug + MulAssign,
 {
     let axes = {
-        let (axes_i, _) = unit_axes_and_half_edge_lengths(obb_i);
-        let (axes_j, _) = unit_axes_and_half_edge_lengths(obb_j);
+        let (axes_i, _) = obb_i.unit_axes_and_half_edge_lengths();
+        let (axes_j, _) = obb_j.unit_axes_and_half_edge_lengths();
         [
             axes_i[0],
             axes_i[1],
