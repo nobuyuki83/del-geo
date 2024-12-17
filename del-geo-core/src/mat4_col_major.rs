@@ -1,4 +1,21 @@
 //! methods for 4x4 matrix
+//!
+
+pub trait Mat4ColMajor<Real>
+where
+    Self: Sized,
+{
+    fn transform_homogeneous(&self, a: &[Real; 3]) -> Option<[Real; 3]>;
+}
+
+impl<Real> Mat4ColMajor<Real> for [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    fn transform_homogeneous(&self, v: &[Real; 3]) -> Option<[Real; 3]> {
+        transform_homogeneous(&self, v)
+    }
+}
 
 use crate::aabb3::max_edge_size;
 use num_traits::AsPrimitive;
@@ -180,7 +197,15 @@ pub fn from_aabb3_fit_into_unit(aabb_world: &[f32; 6]) -> [f32; 16] {
     [ax, 0., 0., 0., 0., ay, 0., 0., 0., 0., az, 0., b, c, d, 1.]
 }
 
-pub fn from_mat3_col_major(m: &[f32; 9]) -> [f32; 16] {
+/// this function is typically used to make 3D homogeneous tranformation matrix
+/// from 2D homogeneous transformation mtrix
+pub fn from_mat3_col_major_adding_z(m: &[f32; 9]) -> [f32; 16] {
+    [
+        m[0], m[1], 0., m[2], m[3], m[4], 0., m[5], 0., 0., 1., 0., m[6], m[7], 0., m[8],
+    ]
+}
+
+pub fn from_mat3_col_major_adding_w(m: &[f32; 9]) -> [f32; 16] {
     [
         m[0], m[1], m[2], 0., m[3], m[4], m[5], 0., m[6], m[7], m[8], 0., 0., 0., 0., 1.,
     ]
@@ -410,4 +435,26 @@ where
         m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3], m[7],
         m[11], m[15],
     ]
+}
+
+/// ray that goes through `pos_world: [f32;3]` that will be -z direction in the normalized device coordinate (NDC).
+/// return `(ray_org: [f32;3], ray_dir: [f32;2])`
+pub fn ray_from_transform_world2ndc(
+    transform_world2ndc: &[f32; 16],
+    pos_world: &[f32; 3],
+    transform_ndc2world: &[f32; 16],
+) -> ([f32; 3], [f32; 3]) {
+    let pos_mid_ndc = transform_homogeneous(transform_world2ndc, &pos_world).unwrap();
+    let ray_stt_world =
+        transform_homogeneous(&transform_ndc2world, &[pos_mid_ndc[0], pos_mid_ndc[1], 1.0])
+            .unwrap();
+    let ray_end_world = transform_homogeneous(
+        &transform_ndc2world,
+        &[pos_mid_ndc[0], pos_mid_ndc[1], -1.0],
+    )
+    .unwrap();
+    (
+        ray_stt_world,
+        crate::vec3::sub(&ray_end_world, &ray_stt_world),
+    )
 }

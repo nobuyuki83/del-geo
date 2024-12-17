@@ -1,5 +1,25 @@
 //! methods for 2D vector
 
+pub trait Vec2<Real>
+where
+    Self: Sized,
+{
+    fn sub(&self, other: &Self) -> Self;
+    fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<[Real; 2]>;
+}
+
+impl<Real> Vec2<Real> for [Real; 2]
+where
+    Real: num_traits::Float,
+{
+    fn sub(&self, other: &Self) -> Self {
+        sub(self, other)
+    }
+    fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<Self> {
+        crate::mat3_col_major::transform_homogeneous(v, &self)
+    }
+}
+
 pub fn length<Real>(p: &[Real; 2]) -> Real
 where
     Real: num_traits::Float,

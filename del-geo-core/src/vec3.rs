@@ -1,4 +1,6 @@
 //! methods for 3D vector
+//!
+
 pub trait Vec3<Real>
 where
     Self: Sized,
@@ -12,6 +14,8 @@ where
     fn add(&self, other: &Self) -> Self;
     fn cross(&self, other: &Self) -> Self;
     fn orthogonalize(&self, v: &Self) -> Self;
+    fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<Self>;
+    fn xy(&self) -> [Real; 2];
 }
 
 impl<Real> Vec3<Real> for [Real; 3]
@@ -44,6 +48,12 @@ where
     }
     fn orthogonalize(&self, v: &Self) -> Self {
         orthogonalize(self, v)
+    }
+    fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<[Real; 3]> {
+        crate::mat4_col_major::transform_homogeneous(v, self)
+    }
+    fn xy(&self) -> [Real; 2] {
+        [self[0], self[1]]
     }
 }
 

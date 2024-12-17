@@ -346,3 +346,39 @@ fn test_area_of_aabb2_left_side_of_edge2() {
         assert!((a - 0.955).abs() < 1.0e-7);
     }
 }
+
+pub fn overlapping_pixels_dda<Real>(
+    (img_width, img_height): (usize, usize),
+    p0: &[Real; 2],
+    p1: &[Real; 2],
+) -> Vec<usize>
+    where
+    Real: num_traits::Float + 'static + Copy + AsPrimitive<usize> + std::fmt::Debug,
+    usize: AsPrimitive<Real>,
+{
+    let width_f: Real = img_width.as_();
+    let height_f: Real = img_height.as_();
+    let zero = Real::zero();
+    let dx = p1[0] - p0[0];
+    let dy = p1[1] - p0[1];
+    let step = if dx.abs() > dy.abs() {
+        dx.abs()
+    } else {
+        dy.abs()
+    };
+    let slope_y = dy / step;
+    let slope_x = dx / step;
+    let mut x = p0[0];
+    let mut y = p0[1];
+    let mut res = vec!();
+    while (x - p0[0]).abs() <= (p1[0] - p0[0]).abs() && (y - p0[1]).abs() <= (p1[1] - p0[1]).abs() {
+        if x >= zero && x < width_f && y >= zero && y < height_f {
+            let ix: usize = x.as_();
+            let iy: usize = y.as_();
+            res.push(iy * img_width + ix);
+        }
+        x = x + slope_x;
+        y = y + slope_y;
+    }
+    res
+}
