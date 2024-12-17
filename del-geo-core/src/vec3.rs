@@ -1,6 +1,6 @@
 //! methods for 3D vector
 //!
-
+use std::ops::MulAssign;
 pub trait Vec3<Real>
 where
     Self: Sized,
@@ -16,11 +16,12 @@ where
     fn orthogonalize(&self, v: &Self) -> Self;
     fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<Self>;
     fn xy(&self) -> [Real; 2];
+    fn normalize(&mut self) -> Real;
 }
 
 impl<Real> Vec3<Real> for [Real; 3]
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + std::ops::MulAssign,
 {
     fn normalized(&self) -> Self {
         normalized(self)
@@ -55,13 +56,14 @@ where
     fn xy(&self) -> [Real; 2] {
         [self[0], self[1]]
     }
+    fn normalize(&mut self) -> Real {
+        normalize(self)
+    }
 }
-
-use std::ops::MulAssign;
 
 pub fn orthogonalize<Real>(u: &[Real; 3], v: &[Real; 3]) -> [Real; 3]
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + MulAssign,
 {
     let t = u.dot(v) / u.dot(u);
     [v[0] - t * u[0], v[1] - t * u[1], v[2] - t * u[2]]
