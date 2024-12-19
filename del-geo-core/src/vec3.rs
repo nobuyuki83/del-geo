@@ -5,7 +5,7 @@ pub trait Vec3<Real>
 where
     Self: Sized,
 {
-    fn normalized(&self) -> Self;
+    fn normalize(&self) -> Self;
     fn scaled(&self, s: Real) -> Self;
     fn norm(&self) -> Real;
     fn squared_norm(&self) -> Real;
@@ -16,7 +16,7 @@ where
     fn orthogonalize(&self, v: &Self) -> Self;
     fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<Self>;
     fn xy(&self) -> [Real; 2];
-    fn normalize(&mut self) -> Real;
+    fn normalize_in_place(&mut self) -> Real;
     fn element_wise_mult(&self, other: &Self) -> Self;
     fn cross_mut(&mut self, v1: &Self, v2: &Self);
 }
@@ -25,11 +25,11 @@ impl<Real> Vec3<Real> for [Real; 3]
 where
     Real: num_traits::Float + std::ops::MulAssign,
 {
-    fn normalized(&self) -> Self {
-        normalized(self)
+    fn normalize(&self) -> Self {
+        normalize(self)
     }
     fn scaled(&self, s: Real) -> Self {
-        scaled(self, s)
+        scale(self, s)
     }
     fn squared_norm(&self) -> Real {
         squared_norm(self)
@@ -58,8 +58,8 @@ where
     fn xy(&self) -> [Real; 2] {
         [self[0], self[1]]
     }
-    fn normalize(&mut self) -> Real {
-        normalize(self)
+    fn normalize_in_place(&mut self) -> Real {
+        normalize_in_place(self)
     }
     fn element_wise_mult(&self, other: &Self) -> Self {
         element_wise_mult(self, other)
@@ -141,7 +141,7 @@ where
 
 #[test]
 fn test_basis_xy_from_basis_z() {
-    let vec_z = normalized(&[0.3, 0.1, -0.5]);
+    let vec_z = normalize(&[0.3, 0.1, -0.5]);
     let (vec_x, vec_y) = basis_xy_from_basis_z(&vec_z);
     let bases = [vec_x, vec_y, vec_z];
     for i in 0..3 {
@@ -194,7 +194,7 @@ where
 }
 
 /// in-place normalize function
-pub fn normalize<T>(v: &mut [T; 3]) -> T
+pub fn normalize_in_place<T>(v: &mut [T; 3]) -> T
 where
     T: num_traits::Float + std::ops::MulAssign,
 {
@@ -206,8 +206,8 @@ where
     l
 }
 
-/// in-place normalize function
-pub fn normalized<T>(v: &[T; 3]) -> [T; 3]
+/// return normalized 3D vector
+pub fn normalize<T>(v: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float + MulAssign,
 {
@@ -254,14 +254,14 @@ where
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
-pub fn scaled<T>(a: &[T; 3], s: T) -> [T; 3]
+pub fn scale<T>(a: &[T; 3], s: T) -> [T; 3]
 where
     T: Copy + std::ops::Mul<Output = T>,
 {
     [s * a[0], s * a[1], s * a[2]]
 }
 
-pub fn scale<T>(a: &mut [T; 3], s: T)
+pub fn scale_in_place<T>(a: &mut [T; 3], s: T)
 where
     T: MulAssign + Copy,
 {

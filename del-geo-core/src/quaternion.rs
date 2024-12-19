@@ -141,7 +141,7 @@ pub fn around_axis<Real>(a: &[Real; 3], rad: Real) -> [Real; 4]
 where
     Real: num_traits::Float + std::ops::MulAssign,
 {
-    let v = a.normalized();
+    let v = a.normalize();
     let half = rad / Real::from(2).unwrap();
     let sin = half.sin();
     [v[0] * sin, v[1] * sin, v[2] * sin, half.cos()]

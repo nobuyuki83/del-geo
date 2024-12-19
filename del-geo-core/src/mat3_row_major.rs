@@ -159,16 +159,16 @@ pub fn svd(m: &[f64; 9], nitr: usize) {
 
     let sql0 = u0.squared_norm();
     if sql0 > 1.0e-20 {
-        u0.normalize();
+        u0.normalize_in_place();
         let sql1 = u1.squared_norm();
         if sql1 < 1.0e-20 {
             u1 = u0.map(|x| 1.0 - x.abs());
         } else {
-            u1.normalize();
+            u1.normalize_in_place();
         }
         let d01 = u0[0] * u1[0] + u0[1] * u1[1] + u0[2] * u1[2];
         u1 = std::array::from_fn(|i| u1[i] - d01 * u0[i]);
-        u1.normalize();
+        u1.normalize_in_place();
         let s2 = u0.cross(&u1);
         let d22 = u2[0] * s2[0] + u2[1] * s2[1] + u2[2] * s2[2];
         u2 = s2;
