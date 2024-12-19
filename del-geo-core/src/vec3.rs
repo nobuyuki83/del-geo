@@ -6,7 +6,7 @@ where
     Self: Sized,
 {
     fn normalize(&self) -> Self;
-    fn scaled(&self, s: Real) -> Self;
+    fn scale(&self, s: Real) -> Self;
     fn norm(&self) -> Real;
     fn squared_norm(&self) -> Real;
     fn dot(&self, other: &Self) -> Real;
@@ -28,7 +28,7 @@ where
     fn normalize(&self) -> Self {
         normalize(self)
     }
-    fn scaled(&self, s: Real) -> Self {
+    fn scale(&self, s: Real) -> Self {
         scale(self, s)
     }
     fn squared_norm(&self) -> Real {
