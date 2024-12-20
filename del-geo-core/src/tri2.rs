@@ -8,6 +8,50 @@ where
     half * ((p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]))
 }
 
+/// # Return
+/// `(dldp0: [T;2], dldp1: [T;2], dldp2: [T;2])`
+pub fn dldw_area<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2], dldarea: T) -> ([T; 2], [T; 2], [T; 2])
+where
+    T: num_traits::Float,
+{
+    let two = T::one() + T::one();
+    let half = T::one() / two;
+    let dareadp0x2 = [p1[1] - p2[1], p2[0] - p1[0]];
+    let dareadp1x2 = [p2[1] - p0[1], p0[0] - p2[0]];
+    let dareadp2x2 = [p0[1] - p1[1], p1[0] - p0[0]];
+    (
+        crate::vec2::scale(&dareadp0x2, dldarea * half),
+        crate::vec2::scale(&dareadp1x2, dldarea * half),
+        crate::vec2::scale(&dareadp2x2, dldarea * half),
+    )
+}
+
+#[test]
+fn test_dldw_area() {
+    let p0s = [[0.1, -0.2], [1.3, 0.2], [0.6, 0.45]];
+    let dldarea = 1.3f32;
+    let area0 = area(&p0s[0], &p0s[1], &p0s[2]);
+    let l0 = dldarea * area0;
+    let dl = dldw_area(&p0s[0], &p0s[1], &p0s[2], dldarea);
+    let dl = [dl.0, dl.1, dl.2];
+    let eps = 1.0e-4;
+    for inode in 0..3 {
+        for idim in 0..2 {
+            let p1s = {
+                let mut p1s = p0s;
+                p1s[inode][idim] += eps;
+                p1s
+            };
+            let area1 = area(&p1s[0], &p1s[1], &p1s[2]);
+            let l1 = dldarea * area1;
+            let val_num = (l1 - l0) / eps;
+            let val_ana = dl[inode][idim];
+            let diff_abs = (val_num - val_ana).abs();
+            assert!(diff_abs < 5.0e-4, "{}", diff_abs);
+        }
+    }
+}
+
 pub fn is_inside<Real>(
     p0: &[Real; 2],
     p1: &[Real; 2],

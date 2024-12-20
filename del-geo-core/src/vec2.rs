@@ -5,6 +5,7 @@ where
     Self: Sized,
 {
     fn sub(&self, other: &Self) -> Self;
+    fn add(&self, other: &Self) -> Self;
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<[Real; 2]>;
 }
 
@@ -14,6 +15,9 @@ where
 {
     fn sub(&self, other: &Self) -> Self {
         sub(self, other)
+    }
+    fn add(&self, other: &Self) -> Self {
+        add(self, other)
     }
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<Self> {
         crate::mat3_col_major::transform_homogeneous(v, self)
@@ -39,6 +43,20 @@ where
     T: std::ops::Sub<Output = T> + Copy,
 {
     [a[0] - b[0], a[1] - b[1]]
+}
+
+pub fn add<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
+where
+    T: std::ops::Add<Output = T> + Copy,
+{
+    [a[0] + b[0], a[1] + b[1]]
+}
+
+pub fn scale<T>(a: &[T; 2], s: T) -> [T; 2]
+where
+    T: num_traits::Float,
+{
+    [a[0] * s, a[1] * s]
 }
 
 pub fn dot<T>(a: &[T; 2], b: &[T; 2]) -> T

@@ -98,6 +98,71 @@ fn test_intersection_edge2() {
     assert!((r1 - 0.5).abs() < 1e-5f32);
 }
 
+/// # return
+///
+///  `(dls0: [T;2], dle0: [T;2], dlds1: [T;2], dlde1: [T;2])`
+pub fn dldw_intersection_edge2<T>(
+    s0: &[T; 2],
+    e0: &[T; 2],
+    s1: &[T; 2],
+    e1: &[T; 2],
+    dldr0: T,
+    dldr1: T,
+) -> ([T; 2], [T; 2], [T; 2], [T; 2])
+where
+    T: num_traits::Float + std::fmt::Debug,
+{
+    let one = T::one();
+    let a1 = crate::tri2::area(s0, e0, s1);
+    let a2 = crate::tri2::area(s0, e0, e1);
+    let a3 = crate::tri2::area(s1, e1, s0);
+    let a4 = crate::tri2::area(s1, e1, e0);
+    //let r1 = a1 / (a1 - a2);
+    //let r0 = a3 / (a3 - a4);
+    let dlda1 = dldr1 * (one / (a1 - a2) - a1 / (a1 - a2).powi(2));
+    let dlda2 = dldr1 * (a1 / (a1 - a2).powi(2));
+    let dlda3 = dldr0 * (one / (a3 - a4) - a3 / (a3 - a4).powi(2));
+    let dlda4 = dldr0 * (a3 / (a3 - a4).powi(2));
+    let (dlds0_1, dlde0_1, dlds1_1) = crate::tri2::dldw_area(s0, e0, s1, dlda1);
+    let (dlds0_2, dlde0_2, dlde1_2) = crate::tri2::dldw_area(s0, e0, e1, dlda2);
+    let (dlds1_3, dlde1_3, dlds0_3) = crate::tri2::dldw_area(s1, e1, s0, dlda3);
+    let (dlds1_4, dlde1_4, dlde0_4) = crate::tri2::dldw_area(s1, e1, e0, dlda4);
+    use crate::vec2::Vec2;
+    (
+        dlds0_1.add(&dlds0_2).add(&dlds0_3),
+        dlde0_1.add(&dlde0_2).add(&dlde0_4),
+        dlds1_1.add(&dlds1_3).add(&dlds1_4),
+        dlde1_2.add(&dlde1_3).add(&dlde1_4),
+    )
+}
+
+#[test]
+fn test_dldw_intersection_edge2() {
+    let dldr0 = 0.3f64;
+    let dldr1 = 0.65;
+    let p0 = [[0.01, 0.03], [1.02, 0.05], [0.03, -0.102], [0.203, 0.105]];
+    let (r0_0, r1_0) = intersection_edge2(&p0[0], &p0[1], &p0[2], &p0[3]).unwrap();
+    let l0 = dldr0 * r0_0 + dldr1 * r1_0;
+    let dl = dldw_intersection_edge2(&p0[0], &p0[1], &p0[2], &p0[3], dldr0, dldr1);
+    let dl = [dl.0, dl.1, dl.2, dl.3];
+    let eps = 1.0e-6;
+    for inode in 0..4 {
+        for idim in 0..2 {
+            let p1 = {
+                let mut p1 = p0;
+                p1[inode][idim] += eps;
+                p1
+            };
+            let (r0_1, r1_1) = intersection_edge2(&p1[0], &p1[1], &p1[2], &p1[3]).unwrap();
+            let l1 = dldr0 * r0_1 + dldr1 * r1_1;
+            let diff_num = (l1 - l0) / eps;
+            let diff_ana = dl[inode][idim];
+            let diff_abs = (diff_num - diff_ana).abs();
+            assert!(diff_abs < 2.0e-5, "{}", diff_abs);
+        }
+    }
+}
+
 pub fn winding_number<T>(ps: &[T; 2], pe: &[T; 2], po: &[T; 2]) -> T
 where
     T: num_traits::Float + num_traits::FloatConst,
