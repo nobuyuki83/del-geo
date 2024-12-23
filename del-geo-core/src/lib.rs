@@ -31,6 +31,7 @@ pub mod matn;
 pub mod obb2;
 pub mod polynomial_root;
 pub mod quaternion;
+pub mod sphere;
 pub mod spherical_harmonics;
 pub mod tet;
 pub mod tri2;
