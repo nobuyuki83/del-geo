@@ -334,7 +334,7 @@ pub fn from_transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
 
 /// # Argument
 /// * `n` - world 3D vector that corresponds local z
-pub fn transform_lcl2world(n: &[f32; 3]) -> [f32; 9] {
+pub fn transform_lcl2world_given_local_z(n: &[f32; 3]) -> [f32; 9] {
     use crate::vec3;
     let n = vec3::normalize(n);
     let t = if n[0].abs() > 0.1 {
