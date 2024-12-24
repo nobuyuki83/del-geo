@@ -1,12 +1,12 @@
 use crate::vec3::Vec3;
-
+/// trait for 3x3 matrix in row-major order
 pub trait Mat3RowMajor<Real: num_traits::Float> {
-    fn from_identity() -> [Real; 9];
+    fn from_identity() -> Self;
     fn determinant(&self) -> Real;
     fn squared_norm(&self) -> Real;
-    fn transpose(&self) -> [Real; 9];
-    fn mult_mat_row_major(&self, b: &[Real; 9]) -> [Real; 9];
-    fn sub(&self, b: &[Real; 9]) -> [Real; 9];
+    fn transpose(&self) -> Self;
+    fn mult_mat_row_major(&self, b: &Self) -> Self;
+    fn sub(&self, b: &Self) -> Self;
 }
 impl<Real> Mat3RowMajor<Real> for [Real; 9]
 where

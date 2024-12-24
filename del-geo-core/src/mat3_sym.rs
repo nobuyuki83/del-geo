@@ -90,6 +90,7 @@ pub fn eigen_decomp(sm: [f64; 6], nitr: usize) -> Option<([f64; 9], [f64; 3])> {
 
 #[test]
 fn hoge() {
+    use crate::mat3_row_major::Mat3RowMajor;
     use rand::Rng;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
@@ -100,11 +101,11 @@ fn hoge() {
             todo!()
         };
         {
-            let ut = crate::mat3_row_major::transpose(&u);
-            let utu = crate::mat3_row_major::mult_mat_row_major(&u, &ut);
+            let ut = u.transpose();
+            let utu = u.mult_mat_row_major(&ut);
             let id = crate::mat3_row_major::from_identity();
-            let diff = crate::mat3_row_major::sub(&id, &utu);
-            let diffnorm = crate::mat3_row_major::squared_norm(&diff);
+            let diff = id.sub(&utu);
+            let diffnorm = diff.squared_norm();
             assert!(diffnorm < 1.0e-20);
         }
     }

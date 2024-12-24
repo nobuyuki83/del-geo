@@ -14,7 +14,7 @@ pub fn map_to_unit2_octahedron(dir: &[f32; 3]) -> [f32; 2] {
     [oct[0] * 0.5 + 0.5, oct[1] * 0.5 + 0.5]
 }
 
-/// https://github.com/mmp/pbrt-v4/blob/1ae72cfa7344e79a7815a21ed3da746cdccee59b/src/pbrt/util/math.cpp#L317
+/// <https://github.com/mmp/pbrt-v4/blob/1ae72cfa7344e79a7815a21ed3da746cdccee59b/src/pbrt/util/math.cpp#L317>
 pub fn map_to_unit2_equal_area(d: &[f32; 3]) -> [f32; 2] {
     let x = d[0].abs();
     let y = d[1].abs();
