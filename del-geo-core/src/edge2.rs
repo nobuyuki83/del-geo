@@ -176,7 +176,7 @@ where
 }
 
 /// Find the nearest point on a line segment to the origin(0,0)
-/// Returns (k,v), where k is the coeffcient between [0,1], v is the point
+/// Returns (k,v), where k is the coeffcient between `[0,1]`, v is the point
 pub fn nearest_origin<T>(ps: &[T; 2], pe: &[T; 2]) -> (T, [T; 2])
 where
     T: num_traits::Float + 'static,
