@@ -1,12 +1,15 @@
 //! methods for 3x3 matrix where storage is column major order
-
-pub trait Mat3ColMajor<T: num_traits::Float> {
-    fn from_diagonal(diagonal: &[T; 3]) -> [T; 9];
-    fn from_identity() -> [T; 9];
+/// trait for 3x3 matrix where storage is column major order
+pub trait Mat3ColMajor<T: num_traits::Float>
+where
+    Self: Sized,
+{
+    fn from_diagonal(diagonal: &[T; 3]) -> Self;
+    fn from_identity() -> Self;
     fn determinant(&self) -> T;
-    fn try_inverse(&self) -> Option<[T; 9]>;
-    fn transpose(&self) -> [T; 9];
-    fn mult_mat_col_major(&self, other: &[T; 9]) -> [T; 9];
+    fn try_inverse(&self) -> Option<Self>;
+    fn transpose(&self) -> Self;
+    fn mult_mat_col_major(&self, other: &Self) -> Self;
     fn mult_vec(&self, vec: &[T; 3]) -> [T; 3];
 }
 

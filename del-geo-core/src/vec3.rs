@@ -1,6 +1,7 @@
 //! methods for 3D vector
 //!
 use std::ops::MulAssign;
+/// trait for 3D vector
 pub trait Vec3<Real>
 where
     Self: Sized,

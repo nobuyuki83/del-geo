@@ -1,7 +1,7 @@
 // quaternion defined as [i,j,k,w] where w is the real part
 
 use crate::vec3::Vec3;
-
+/// trait for quaternion
 pub trait Quaternion<Real>
 where
     Self: Sized,

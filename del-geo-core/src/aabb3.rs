@@ -1,7 +1,7 @@
 //! methods for 3D Axis-aligned Bounding Box (AABB)
 
 use rand::distributions::{Distribution, Standard};
-
+/// trait for 3D Axis-aligned Bounding Box (AABB)
 pub trait AABB3Trait<T> {
     fn sample<Reng>(self, reng: &mut Reng) -> [T; 3]
     where

@@ -1,14 +1,14 @@
 //! methods for 4x4 matrix
 //!
-
+/// trait for 4x4 matrix
 pub trait Mat4ColMajor<Real>
 where
     Self: Sized,
 {
     fn transform_homogeneous(&self, a: &[Real; 3]) -> Option<[Real; 3]>;
-    fn mult_mat(&self, b: &[Real; 16]) -> [Real; 16];
+    fn mult_mat(&self, b: &Self) -> Self;
     fn transform_direction(&self, a: &[Real; 3]) -> [Real; 3];
-    fn try_inverse(&self) -> Option<[Real; 16]>;
+    fn try_inverse(&self) -> Option<Self>;
 }
 
 impl<Real> Mat4ColMajor<Real> for [Real; 16]
@@ -18,13 +18,13 @@ where
     fn transform_homogeneous(&self, v: &[Real; 3]) -> Option<[Real; 3]> {
         transform_homogeneous(self, v)
     }
-    fn mult_mat(&self, b: &[Real; 16]) -> [Real; 16] {
+    fn mult_mat(&self, b: &Self) -> Self {
         mult_mat(self, b)
     }
     fn transform_direction(&self, a: &[Real; 3]) -> [Real; 3] {
         transform_direction(self, a)
     }
-    fn try_inverse(&self) -> Option<[Real; 16]> {
+    fn try_inverse(&self) -> Option<Self> {
         try_inverse(self)
     }
 }
