@@ -324,3 +324,18 @@ pub fn from_transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
         1.,
     ]
 }
+
+/// # Argument
+/// * `n` - world 3D vector that corresponds local z
+pub fn transform_lcl2world(n: &[f32;3]) -> [f32;9] {
+    use crate::vec3;
+    let n = vec3::normalize(n);
+    let t = if n[0].abs() > 0.1 {
+        [0., 1., 0.]
+    } else {
+        [1., 0., 0.]
+    };
+    let u = vec3::normalize(&vec3::cross(&t,&n));
+    let v = vec3::cross(&n, &u);
+    [u[0], u[1], u[2], v[0], v[1], v[2], n[0], n[1], n[2]]
+}
