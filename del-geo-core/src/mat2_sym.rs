@@ -1,4 +1,4 @@
-//! symmetric matrix [[a,b],[b,c]] parameterized as [a,b,c]
+//! symmetric matrix `[[a,b],[b,c]]` parameterized as `[a,b,c]`
 
 pub fn mult_mat_sym<Real>(a: &[Real; 3], b: &[Real; 3]) -> [Real; 4]
 where

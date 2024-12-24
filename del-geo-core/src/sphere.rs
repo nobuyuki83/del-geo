@@ -1,13 +1,13 @@
+use crate::vec3::Vec3;
 pub fn intersection_ray<T>(rad: T, center: &[T; 3], ray_src: &[T; 3], ray_dir: &[T; 3]) -> Option<T>
 where
-    T: num_traits::Float + Copy,
+    T: num_traits::Float + Copy + std::ops::MulAssign,
 {
-    use crate::vec3;
     // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
-    let op = vec3::sub(ray_src, center);
-    let a = vec3::dot(ray_dir, ray_dir);
-    let b = vec3::dot(&op, ray_dir);
-    let c = vec3::dot(&op, &op) - rad * rad;
+    let op = ray_src.sub(center);
+    let a = ray_dir.dot(ray_dir);
+    let b = op.dot(ray_dir);
+    let c = op.dot(&op) - rad * rad;
     let det: T = b * b - c * a;
     if det < T::zero() {
         None

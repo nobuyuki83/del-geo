@@ -6,7 +6,7 @@ use std::ops::MulAssign;
 use crate::vec3::Vec3;
 use crate::{aabb3::AABB3Trait, edge3::Edge3Trait};
 use rand::distributions::{Distribution, Standard};
-
+/// trait for 3D Oriented Bounding Box (OBB)
 pub trait OBB3Trait<T> {
     fn is_include_point(&self, p: &[T; 3], eps: T) -> bool;
     fn unit_axes_and_half_edge_lengths(&self) -> ([[T; 3]; 3], [T; 3]);

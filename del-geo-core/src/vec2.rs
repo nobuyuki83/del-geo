@@ -1,5 +1,5 @@
 //! methods for 2D vector
-
+/// trait for 2D vector
 pub trait Vec2<Real>
 where
     Self: Sized,
