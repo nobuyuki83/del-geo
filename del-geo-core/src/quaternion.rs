@@ -2,6 +2,40 @@
 
 use crate::vec3::Vec3;
 
+pub trait Quaternion<Real>
+where
+    Self: Sized,
+{
+    fn to_mat3_col_major(&self) -> [Real; 9];
+    fn to_mat4_col_major(&self) -> [Real; 16];
+    fn normalized(&self) -> Self;
+    fn inverse(&self) -> Self;
+    fn mult_quaternion(&self, q: &Self) -> Self;
+    fn identity() -> Self;
+}
+impl<Real> Quaternion<Real> for [Real; 4]
+where
+    Real: num_traits::Float + std::ops::MulAssign,
+{
+    fn to_mat3_col_major(&self) -> [Real; 9] {
+        to_mat3_col_major(self)
+    }
+    fn to_mat4_col_major(&self) -> [Real; 16] {
+        to_mat4_col_major(self)
+    }
+    fn normalized(&self) -> Self {
+        normalized(self)
+    }
+    fn inverse(&self) -> Self {
+        inverse(*self)
+    }
+    fn mult_quaternion(&self, q: &Self) -> Self {
+        mult_quaternion(self, q)
+    }
+    fn identity() -> Self {
+        identity()
+    }
+}
 pub fn to_mat3_col_major<Real>(q: &[Real; 4]) -> [Real; 9]
 where
     Real: num_traits::Float,
@@ -68,12 +102,14 @@ where
 
 #[test]
 fn hoge() {
-    let quat: [f32; 4] = [1., 2., 3., 1.];
-    let quat = normalized(&quat);
-    let r_mat = to_mat3_col_major(&quat);
-    let r_mat_transp = crate::mat3_col_major::transpose(&r_mat);
+    use crate::mat3_col_major::Mat3ColMajor;
+    use crate::vec3::Vec3;
+    let quat: [f64; 4] = [1., 2., 3., 1.];
+    let quat = quat.normalized();
+    let r_mat = quat.to_mat3_col_major();
+    let r_mat_transp = r_mat.transpose();
     {
-        let identity0 = crate::mat3_col_major::mult_mat_col_major(&r_mat, &r_mat_transp);
+        let identity0 = r_mat.mult_mat_col_major(&r_mat_transp);
         dbg!(&identity0);
         for i in 0..3 {
             for j in 0..3 {
@@ -89,11 +125,11 @@ fn hoge() {
             }
         }
     }
-    let s_mat = crate::mat3_col_major::from_diagonal(&[1.0, 2.0, 0.3]);
-    let rs = crate::mat3_col_major::mult_mat_col_major(&r_mat, &s_mat);
+    let s_mat = crate::mat3_col_major::from_diagonal(&[1.0f64, 2.0, 0.3]);
+    let rs = r_mat.mult_mat_col_major(&s_mat);
     let a_vec = [0.2, 2.3, 0.1];
-    let x_vec = crate::mat3_col_major::mult_vec(&crate::mat3_col_major::transpose(&rs), &a_vec);
-    let l = crate::vec3::squared_norm(&x_vec);
+    let x_vec = rs.transpose().mult_vec(&a_vec);
+    let l = x_vec.squared_norm();
     dbg!(&x_vec, l);
 }
 
@@ -132,8 +168,11 @@ where
     ]
 }
 
-pub fn identity() -> [f64; 4] {
-    [0., 0., 0., 1.]
+pub fn identity<Real>() -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
+    [Real::zero(), Real::zero(), Real::zero(), Real::one()]
 }
 
 /// return rotation around axis with radian

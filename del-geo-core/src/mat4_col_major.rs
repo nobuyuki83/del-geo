@@ -6,14 +6,26 @@ where
     Self: Sized,
 {
     fn transform_homogeneous(&self, a: &[Real; 3]) -> Option<[Real; 3]>;
+    fn mult_mat(&self, b: &[Real; 16]) -> [Real; 16];
+    fn transform_direction(&self, a: &[Real; 3]) -> [Real; 3];
+    fn try_inverse(&self) -> Option<[Real; 16]>;
 }
 
 impl<Real> Mat4ColMajor<Real> for [Real; 16]
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + AddAssign + std::ops::MulAssign + std::ops::SubAssign,
 {
     fn transform_homogeneous(&self, v: &[Real; 3]) -> Option<[Real; 3]> {
         transform_homogeneous(self, v)
+    }
+    fn mult_mat(&self, b: &[Real; 16]) -> [Real; 16] {
+        mult_mat(self, b)
+    }
+    fn transform_direction(&self, a: &[Real; 3]) -> [Real; 3] {
+        transform_direction(self, a)
+    }
+    fn try_inverse(&self) -> Option<[Real; 16]> {
+        try_inverse(self)
     }
 }
 

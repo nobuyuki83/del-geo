@@ -7,6 +7,7 @@ pub trait Mat3ColMajor<T: num_traits::Float> {
     fn try_inverse(&self) -> Option<[T; 9]>;
     fn transpose(&self) -> [T; 9];
     fn mult_mat_col_major(&self, other: &[T; 9]) -> [T; 9];
+    fn mult_vec(&self, vec: &[T; 3]) -> [T; 3];
 }
 
 impl<Real> Mat3ColMajor<Real> for [Real; 9]
@@ -30,6 +31,9 @@ where
     }
     fn mult_mat_col_major(&self, other: &Self) -> Self {
         mult_mat_col_major(self, other)
+    }
+    fn mult_vec(&self, vec: &[Real; 3]) -> [Real; 3] {
+        mult_vec(self, vec)
     }
 }
 
