@@ -26,7 +26,7 @@ pub fn area(r: f32) -> f32 {
     r * r * 4f32 * std::f32::consts::PI
 }
 
-/// https://corysimon.github.io/articles/uniformdistn-on-sphere/
+/// <https://corysimon.github.io/articles/uniformdistn-on-sphere/>
 pub fn sample(rnd: &[f32; 2]) -> [f32; 3] {
     let phi = (1. - 2. * rnd[0]).acos();
     let theta = 2. * std::f32::consts::PI * rnd[1];
