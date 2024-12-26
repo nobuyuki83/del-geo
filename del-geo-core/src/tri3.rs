@@ -229,6 +229,16 @@ where
         area(self.p0, self.p1, self.p2)
     }
 
+    pub fn cog(&self) -> [Real; 3] {
+        let one = Real::one();
+        let one3rd = one / (one * one * one);
+        [
+            (self.p0[0] + self.p1[0] + self.p2[0]) * one3rd,
+            (self.p0[1] + self.p1[1] + self.p2[1]) * one3rd,
+            (self.p0[2] + self.p1[2] + self.p2[2]) * one3rd,
+        ]
+    }
+
     pub fn normal(&self) -> [Real; 3] {
         normal(self.p0, self.p1, self.p2)
     }

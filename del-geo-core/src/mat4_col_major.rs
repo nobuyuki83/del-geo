@@ -226,6 +226,13 @@ pub fn from_mat3_col_major_adding_w(m: &[f32; 9]) -> [f32; 16] {
 // above: from method (making 4x4 matrix)
 // ----------------------------------------
 
+pub fn to_mat3_col_major_xyz(m: &[f32; 16]) -> [f32; 9] {
+    [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]]
+}
+
+// above: to method
+// ----------------------------------------
+
 pub fn transform_homogeneous<Real>(transform: &[Real; 16], x: &[Real; 3]) -> Option<[Real; 3]>
 where
     Real: num_traits::Float,
