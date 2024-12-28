@@ -333,7 +333,7 @@ pub fn from_transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
 }
 
 /// # Argument
-/// * `n` - world 3D vector that corresponds local z
+/// * `n` - world 3D vector that corresponds local z (no need to be unit vector)
 pub fn transform_lcl2world_given_local_z(n: &[f32; 3]) -> [f32; 9] {
     use crate::vec3;
     let n = vec3::normalize(n);
