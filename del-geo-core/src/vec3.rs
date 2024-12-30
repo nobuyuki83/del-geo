@@ -25,7 +25,7 @@ where
 
 impl<Real> Vec3<Real> for [Real; 3]
 where
-    Real: num_traits::Float + std::ops::MulAssign
+    Real: num_traits::Float + std::ops::MulAssign,
 {
     fn normalize(&self) -> Self {
         normalize(self)
@@ -42,7 +42,9 @@ where
     fn add(&self, other: &Self) -> Self {
         add(self, other)
     }
-    fn add_in_place(&mut self, other: &Self){ add_in_place (self, other); }
+    fn add_in_place(&mut self, other: &Self) {
+        add_in_place(self, other);
+    }
     fn dot(&self, other: &Self) -> Real {
         dot(self, other)
     }
@@ -183,7 +185,7 @@ where
 
 pub fn add_in_place<T>(a: &mut [T; 3], b: &[T; 3])
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     a[0] = a[0] + b[0];
     a[1] = a[1] + b[1];
