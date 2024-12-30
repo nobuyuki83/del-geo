@@ -22,6 +22,15 @@ where
     ]
 }
 
+
+pub fn mult_transpose_vec3(a: &[f32;6], v: &[f32]) -> [f32;3] {
+    [
+        a[0] * v[0] + a[1] * v[1],
+        a[2] * v[0] + a[3] * v[1],
+        a[4] * v[0] + a[5] * v[1]
+    ]
+}
+
 pub fn transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 6] {
     [
         0.5 * (img_shape.0 as f32),

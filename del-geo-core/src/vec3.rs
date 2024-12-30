@@ -13,6 +13,7 @@ where
     fn dot(&self, other: &Self) -> Real;
     fn sub(&self, other: &Self) -> Self;
     fn add(&self, other: &Self) -> Self;
+    fn add_in_place(&mut self, other: &Self);
     fn cross(&self, other: &Self) -> Self;
     fn orthogonalize(&self, v: &Self) -> Self;
     fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<Self>;
@@ -24,7 +25,7 @@ where
 
 impl<Real> Vec3<Real> for [Real; 3]
 where
-    Real: num_traits::Float + std::ops::MulAssign,
+    Real: num_traits::Float + std::ops::MulAssign
 {
     fn normalize(&self) -> Self {
         normalize(self)
@@ -41,6 +42,7 @@ where
     fn add(&self, other: &Self) -> Self {
         add(self, other)
     }
+    fn add_in_place(&mut self, other: &Self){ add_in_place (self, other); }
     fn dot(&self, other: &Self) -> Real {
         dot(self, other)
     }
@@ -112,7 +114,7 @@ where
 fn test_to_mat3_from_axisangle_vec() {
     let aa0 = [1.0, 0.3, -0.5f64];
     let rmat = to_mat3_from_axisangle_vec(&aa0);
-    let aa1 = crate::mat3_col_major::to_vec3_axisangle_from_rot_mat(rmat);
+    let aa1 = crate::mat3_col_major::to_vec3_axisangle_from_rot_mat(&rmat);
     let aa0 = del_geo_nalgebra::vec3::from_array(&aa0);
     let aa1 = del_geo_nalgebra::vec3::from_array(&aa1);
     assert!((aa0 - aa1).norm() < 1.0e-5);
@@ -177,6 +179,15 @@ where
     T: num_traits::Float,
 {
     [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
+}
+
+pub fn add_in_place<T>(a: &mut [T; 3], b: &[T; 3])
+where
+    T: num_traits::Float
+{
+    a[0] = a[0] + b[0];
+    a[1] = a[1] + b[1];
+    a[2] = a[2] + b[2];
 }
 
 pub fn squared_norm<T>(p: &[T; 3]) -> T
