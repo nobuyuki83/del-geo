@@ -38,7 +38,15 @@ auto dot(const float* a, const float* b) -> float
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-
+__device__
+auto axpy(float a, const float* x, const float* y) -> cuda::std::array<float,3>
+{
+    return {
+        a * x[0] + y[0],
+        a * x[1] + y[1],
+        a * x[2] + y[2],
+    };
+}
 
 
 }

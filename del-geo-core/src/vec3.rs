@@ -1,6 +1,5 @@
 //! methods for 3D vector
-//!
-use std::ops::MulAssign;
+
 /// trait for 3D vector
 pub trait Vec3<Real>
 where
@@ -25,7 +24,7 @@ where
 
 impl<Real> Vec3<Real> for [Real; 3]
 where
-    Real: num_traits::Float + std::ops::MulAssign,
+    Real: num_traits::Float,
 {
     fn normalize(&self) -> Self {
         normalize(self)
@@ -76,7 +75,7 @@ where
 
 pub fn orthogonalize<Real>(u: &[Real; 3], v: &[Real; 3]) -> [Real; 3]
 where
-    Real: num_traits::Float + MulAssign,
+    Real: num_traits::Float,
 {
     let t = u.dot(v) / u.dot(u);
     [v[0] - t * u[0], v[1] - t * u[1], v[2] - t * u[2]]
@@ -210,20 +209,20 @@ where
 /// in-place normalize function
 pub fn normalize_in_place<T>(v: &mut [T; 3]) -> T
 where
-    T: num_traits::Float + std::ops::MulAssign,
+    T: num_traits::Float,
 {
     let l = v.norm();
     let linv = T::one() / l;
-    v[0] *= linv;
-    v[1] *= linv;
-    v[2] *= linv;
+    v[0] = v[0] * linv;
+    v[1] = v[1] * linv;
+    v[2] = v[2] * linv;
     l
 }
 
 /// return normalized 3D vector
 pub fn normalize<T>(v: &[T; 3]) -> [T; 3]
 where
-    T: num_traits::Float + MulAssign,
+    T: num_traits::Float,
 {
     let l = v.norm();
     let linv = T::one() / l;
@@ -277,16 +276,16 @@ where
 
 pub fn scale_in_place<T>(a: &mut [T; 3], s: T)
 where
-    T: MulAssign + Copy,
+    T: num_traits::Float,
 {
     for x in a.iter_mut() {
-        *x *= s;
+        *x = *x * s;
     }
 }
 
 pub fn distance<T>(p0: &[T; 3], p1: &[T; 3]) -> T
 where
-    T: num_traits::Float + MulAssign,
+    T: num_traits::Float,
 {
     let [v0, v1, v2] = p1.sub(p0);
     (v0 * v0 + v1 * v1 + v2 * v2).sqrt()
@@ -332,7 +331,7 @@ where
 
 pub fn mirror_reflection<Real>(v: &[Real; 3], nrm: &[Real; 3]) -> [Real; 3]
 where
-    Real: num_traits::Float + MulAssign,
+    Real: num_traits::Float,
 {
     let a = nrm.dot(v);
     std::array::from_fn(|i| v[i] - nrm[i] * Real::from(2).unwrap() * a)
