@@ -48,5 +48,22 @@ auto axpy(float a, const float* x, const float* y) -> cuda::std::array<float,3>
     };
 }
 
+__device__
+auto scale(const float* x, float a) -> cuda::std::array<float,3>
+{
+    return {
+        a * x[0],
+        a * x[1],
+        a * x[2],
+    };
+}
+
+__device__
+void add_inplace(float* x, const float* y) {
+    x[0] += y[0];
+    x[1] += y[1];
+    x[2] += y[2];
+}
+
 
 }
