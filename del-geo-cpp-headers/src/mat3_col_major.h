@@ -1,3 +1,4 @@
+#pragma once
 #include <cuda/std/optional>
 #include <cuda/std/array>
 

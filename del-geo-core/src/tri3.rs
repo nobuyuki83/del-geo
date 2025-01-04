@@ -187,7 +187,7 @@ pub fn intersection_against_line_bwd_wrt_tri<Real>(
     d_t: Real,
     d_u: Real,
     d_v: Real,
-) -> Option<(Real, Real, Real, [Real; 3], [Real; 3], [Real; 3])>
+) -> (Real, Real, Real, [Real; 3], [Real; 3], [Real; 3])
 where
     Real: num_traits::Float + Copy,
 {
@@ -196,32 +196,40 @@ where
     let e2 = p2.sub(p0);
     let n = e1.cross(&e2);
     let n_dot_dir = n.dot(dir);
+    /*
     if n_dot_dir.is_zero() {
         return None;
     }
+     */
     let inv_det = Real::one() / n_dot_dir;
     let c = p0.sub(org);
     let n_dot_c = n.dot(&c);
     let t = inv_det * n_dot_c;
+    /*
     if t < Real::zero() {
         return None;
     }
+     */
     let r = dir.cross(&c);
     //
     let r_dot_e2 = r.dot(&e2);
     let u = inv_det * r_dot_e2;
+    /*
     if u < Real::zero() {
         return None;
     }
+     */
     //
     let r_dot_e1 = r.dot(&e1);
     let v = inv_det * r_dot_e1;
+    /*
     if v < Real::zero() {
         return None;
     }
     if u + v >= Real::one() {
         return None;
     }
+     */
     // --------------
     // below: bwd
     let d_n_dot_c = d_t * inv_det;
@@ -244,7 +252,7 @@ where
     let d_p0 = d_e1.sub(&d_e2).add(&d_c);
     let d_p1 = d_e1.scale(-Real::one());
     let d_p2 = d_e2;
-    Some((t, u, v, d_p0, d_p1, d_p2))
+    (t, u, v, d_p0, d_p1, d_p2)
 }
 
 #[test]
@@ -262,9 +270,7 @@ fn test_dw_ray_triangle_intersection() {
     let d_v = 1.1;
 
     let (t0, u0, v0, d_p0, d_p1, d_p2) =
-        intersection_against_line_bwd_wrt_tri(&p0[0], &p0[1], &p0[2], &origin, &dir, d_t, d_u, d_v)
-            .unwrap();
-
+        intersection_against_line_bwd_wrt_tri(&p0[0], &p0[1], &p0[2], &origin, &dir, d_t, d_u, d_v);
     {
         let t1 = intersection_against_line(&p0[0], &p0[1], &p0[2], &origin, &dir).unwrap();
         assert!((t0 - t1).abs() < 1.0e-5);
@@ -289,8 +295,7 @@ fn test_dw_ray_triangle_intersection() {
         };
         let (t1, u1, v1, _d_p0, _d_p1, _d_p2) = intersection_against_line_bwd_wrt_tri(
             &p1[0], &p1[1], &p1[2], &origin, &dir, d_t, d_u, d_v,
-        )
-        .unwrap();
+        );
         let dloss = ((t1 - t0) * d_t + (u1 - u0) * d_u + (v1 - v0) * d_v) / eps;
         let dloss_analytic = dp[i_node][i_dim];
         // dbg!(dloss, dloss_analytic);
