@@ -1,6 +1,3 @@
-#![allow(clippy::needless_range_loop)]
-#![allow(clippy::comparison_chain)]
-
 use num_complex::{Complex, ComplexFloat};
 use std::f64::consts::PI;
 

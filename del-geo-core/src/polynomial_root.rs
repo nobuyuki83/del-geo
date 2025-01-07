@@ -122,7 +122,7 @@ where
             }
             let dfr = c1 + two * c2 * r + three * c3 * r * r;
             r = r - fr / dfr;
-            r = num_traits::clamp(r, T::zero(), t);
+            r = r.clamp(T::zero(), t);
         }
         if r < T::zero() || r > t {
             return None;
