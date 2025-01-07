@@ -1,5 +1,5 @@
 use num_complex::{Complex, ComplexFloat};
-use std::f64::consts::PI;
+use std::{cmp::Ordering, f64::consts::PI};
 
 /// Calculate the normalization of the vector.
 #[inline]
@@ -328,6 +328,7 @@ fn calculate_assoc_legendre_poly(l: u64, m: i64, x: f64) -> f64 {
     let legendre = legendre_coeff_vec(l);
     let legendre_coeff_vec = &legendre[l as usize];
     let mut sum_coeff = Vec::new();
+    #[allow(clippy::needless_range_loop)]
     for i in m_abs as usize..=l as usize {
         let mut tmp = legendre_coeff_vec[i];
         tmp *= factorial(i as u128) as f64 / factorial((i as u32 - m_abs as u32).into()) as f64;
@@ -359,22 +360,27 @@ pub fn get_spherical_harmonics_coeff(l: i64, m: i64, x: f64, y: f64, z: f64) -> 
     assert!(l >= 0 && l >= m_abs);
     let r = f64::sqrt(x * x + y * y);
     let ep = Complex::new(x / r, y / r);
-    if m == 0 {
-        f64::sqrt((2.0 * l as f64 + 1.0) / 4.0 / PI) * calculate_assoc_legendre_poly(l as u64, 0, z)
-    } else if m < 0 {
-        f64::sqrt(
-            (2.0 * l as f64 + 1.0) / (4.0 * PI)
-                * factorial((l as u32 - m_abs as u32).into()) as f64
-                / factorial((l as u32 + m_abs as u32).into()) as f64,
-        ) * calculate_assoc_legendre_poly(l as u64, m_abs, z)
-            * ep.powf(m_abs as f64).im()
-    } else {
-        f64::sqrt(
-            (2.0 * l as f64 + 1.0) * factorial((l as u32 - m_abs as u32).into()) as f64
-                / factorial((l as u32 + m_abs as u32).into()) as f64
-                / (4.0 * PI),
-        ) * calculate_assoc_legendre_poly(l as u64, m_abs, z)
-            * ep.powf(m_abs as f64).re()
+    match m.cmp(&0) {
+        Ordering::Equal => {
+            f64::sqrt((2.0 * l as f64 + 1.0) / 4.0 / PI)
+                * calculate_assoc_legendre_poly(l as u64, 0, z)
+        }
+        Ordering::Less => {
+            f64::sqrt(
+                (2.0 * l as f64 + 1.0) / (4.0 * PI)
+                    * factorial((l as u32 - m_abs as u32).into()) as f64
+                    / factorial((l as u32 + m_abs as u32).into()) as f64,
+            ) * calculate_assoc_legendre_poly(l as u64, m_abs, z)
+                * ep.powf(m_abs as f64).im()
+        }
+        _ => {
+            f64::sqrt(
+                (2.0 * l as f64 + 1.0) * factorial((l as u32 - m_abs as u32).into()) as f64
+                    / factorial((l as u32 + m_abs as u32).into()) as f64
+                    / (4.0 * PI),
+            ) * calculate_assoc_legendre_poly(l as u64, m_abs, z)
+                * ep.powf(m_abs as f64).re()
+        }
     }
 }
 
