@@ -11,6 +11,7 @@ where
     fn transpose(&self) -> Self;
     fn mult_mat_col_major(&self, other: &Self) -> Self;
     fn mult_vec(&self, vec: &[T; 3]) -> [T; 3];
+    fn transform_homogeneous(&self, x: &[T; 2]) -> Option<[T; 2]>;
 }
 
 impl<Real> Mat3ColMajor<Real> for [Real; 9]
@@ -37,6 +38,9 @@ where
     }
     fn mult_vec(&self, vec: &[Real; 3]) -> [Real; 3] {
         mult_vec(self, vec)
+    }
+    fn transform_homogeneous(&self, x: &[Real; 2]) -> Option<[Real; 2]> {
+        transform_homogeneous(self, x)
     }
 }
 

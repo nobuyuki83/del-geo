@@ -1,3 +1,5 @@
+use crate::mat4_col_major::Mat4ColMajor;
+
 pub struct Perspective {
     pub lens: f32,
     pub near: f32,
@@ -23,8 +25,7 @@ impl Perspective {
             -self.cam_pos[2],
         ]);
         let scale = crate::mat4_col_major::from_scale_uniform(self.scale);
-        let ts = crate::mat4_col_major::mult_mat(&transl, &scale);
-        crate::mat4_col_major::mult_mat(&cam_projection, &ts)
+        cam_projection.mult_mat(&transl.mult_mat(&scale))
     }
 
     pub fn camera_translation(&mut self, asp: f32, cursor_dx: f32, cursor_dy: f32) {

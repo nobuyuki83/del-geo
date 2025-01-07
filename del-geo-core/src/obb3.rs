@@ -197,8 +197,8 @@ fn test_nearest_to_point3() {
         for _iter in 0..100 {
             let eps = 1.0e-4;
             let dp = [-eps, -eps, -eps, eps, eps, eps].sample(&mut reng);
-            let q = std::array::from_fn(|i| p_near[i] + dp[i]);
-            let q = nearest_to_point3(&obb, &q);
+            let q = p_near.add(&dp);
+            let q = obb.nearest_to_point3(&q);
             let len0 = p.length(&p_near);
             let len1 = p.length(&q);
             assert!(len0 <= len1);

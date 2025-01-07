@@ -1,3 +1,5 @@
+use crate::quaternion::Quaternion;
+
 pub struct Trackball {
     pub quaternion: [f32; 4],
 }
@@ -10,7 +12,7 @@ impl Trackball {
     }
 
     pub fn mat4_col_major(&self) -> [f32; 16] {
-        crate::quaternion::to_mat4_col_major(&self.quaternion)
+        self.quaternion.to_mat4_col_major()
     }
 
     pub fn camera_rotation(&mut self, cursor_dx: f64, cursor_dy: f64) {
@@ -20,8 +22,8 @@ impl Trackball {
         if a == 0.0 {
             return;
         }
-        let dq = crate::quaternion::normalized(&crate::quaternion::from_axisangle(&[-dy, dx, 0.]));
-        self.quaternion = crate::quaternion::mult_quaternion(&dq, &self.quaternion);
+        let dq = crate::quaternion::from_axisangle(&[-dy, dx, 0.]).normalized();
+        self.quaternion = dq.mult_quaternion(&self.quaternion);
     }
 }
 
