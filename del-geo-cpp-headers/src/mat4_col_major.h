@@ -59,4 +59,23 @@ auto jacobian_transform(const float* t, const float* p) -> cuda::std::array<floa
     };
 }
 
+/// ray that goes through `pos_world: [f32;3]` that will be -z direction in the normalized device coordinate (NDC).
+/// return `(ray_org: [f32;3], ray_dir: [f32;2])`
+__device__
+auto ray_from_transform_world2ndc(
+    const float* transform_world2ndc,
+    const float* pos_world,
+    const float* transform_ndc2world
+) -> cuda::std::pair<cuda::std::array<float,3>, cuda::std::array<float,3>> {
+    const auto pos_mid_ndc = transform_homogeneous(transform_world2ndc, pos_world);
+    const float pos_stt_ndc[3] = {pos_mid_ndc[0], pos_mid_ndc[1], 1.0};
+    const float pos_end_ndc[3] = {pos_mid_ndc[0], pos_mid_ndc[1], -1.0};
+    const auto ray_stt_world = transform_homogeneous(transform_ndc2world, pos_stt_ndc);
+    const auto ray_end_world = transform_homogeneous(transform_ndc2world, pos_end_ndc);
+    return cuda::std::make_pair(
+        ray_stt_world,
+        vec3::sub(ray_end_world.data(), ray_stt_world.data())
+    );
+}
+
 }

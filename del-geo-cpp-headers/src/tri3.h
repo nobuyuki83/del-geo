@@ -4,6 +4,17 @@
 
 namespace tri3 {
 
+/// normal vector of a 3D triangle (coordinates given by stack-allocated arrays)
+__device__
+auto normal(const float* v1, const  float* v2, const float* v3) -> cuda::std::array<float,3>
+{
+    return {
+        (v2[1] - v1[1]) * (v3[2] - v1[2]) - (v2[2] - v1[2]) * (v3[1] - v1[1]),
+        (v2[2] - v1[2]) * (v3[0] - v1[0]) - (v2[0] - v1[0]) * (v3[2] - v1[2]),
+        (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0]),
+    };
+}
+
 __device__
 auto intersection_against_ray(
     const float *p0,
