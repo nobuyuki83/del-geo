@@ -1,5 +1,5 @@
 use crate::quaternion::Quaternion;
-
+#[derive(Debug, Clone, Copy)]
 pub struct Trackball {
     pub quaternion: [f32; 4],
 }
