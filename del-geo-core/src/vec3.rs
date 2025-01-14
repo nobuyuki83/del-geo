@@ -30,7 +30,7 @@ where
         normalize(self)
     }
     fn scale(&self, s: Real) -> Self {
-        scale(self, s)
+        scale3(self, s)
     }
     fn squared_norm(&self) -> Real {
         squared_norm(self)
@@ -39,7 +39,7 @@ where
         sub(self, other)
     }
     fn add(&self, other: &Self) -> Self {
-        add(self, other)
+        add3(self, other)
     }
     fn add_in_place(&mut self, other: &Self) {
         add_in_place(self, other);
@@ -175,7 +175,7 @@ where
     }
 }
 
-pub fn add<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
+pub fn add3<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float,
 {
@@ -267,7 +267,7 @@ where
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
-pub fn scale<T>(a: &[T; 3], s: T) -> [T; 3]
+pub fn scale3<T>(a: &[T; 3], s: T) -> [T; 3]
 where
     T: Copy + std::ops::Mul<Output = T>,
 {

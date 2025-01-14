@@ -258,7 +258,7 @@ where
     let c = [t[3], t[7], t[11]];
     let e = Real::one() / (crate::vec3::dot(&c, p) + d);
     let ee = e * e;
-    let f = crate::vec3::add(&crate::mat3_col_major::mult_vec(&a, p), &b);
+    let f = crate::vec3::add3(&crate::mat3_col_major::mult_vec(&a, p), &b);
     [
         a[0] * e - f[0] * c[0] * ee,
         a[1] * e - f[1] * c[0] * ee,

@@ -6,7 +6,9 @@ pub trait Mat3RowMajor<Real: num_traits::Float> {
     fn squared_norm(&self) -> Real;
     fn transpose(&self) -> Self;
     fn mult_mat_row_major(&self, b: &Self) -> Self;
+    fn add(&self, b: &Self) -> Self;
     fn sub(&self, b: &Self) -> Self;
+    fn scale(&self, s: Real) -> Self;
 }
 impl<Real> Mat3RowMajor<Real> for [Real; 9]
 where
@@ -27,8 +29,14 @@ where
     fn mult_mat_row_major(&self, b: &Self) -> Self {
         mult_mat_row_major(self, b)
     }
+    fn add(&self, b: &Self) -> Self {
+        add(self, b)
+    }
     fn sub(&self, b: &Self) -> Self {
         sub(self, b)
+    }
+    fn scale(&self, s: Real) -> Self {
+        scale(self, s)
     }
 }
 
@@ -83,11 +91,25 @@ where
     r
 }
 
+pub fn add<Real>(a: &[Real; 9], b: &[Real; 9]) -> [Real; 9]
+where
+    Real: num_traits::Float,
+{
+    std::array::from_fn(|i| a[i] + b[i])
+}
+
 pub fn sub<Real>(a: &[Real; 9], b: &[Real; 9]) -> [Real; 9]
 where
     Real: num_traits::Float,
 {
     std::array::from_fn(|i| a[i] - b[i])
+}
+
+pub fn scale<Real>(a: &[Real; 9], s: Real) -> [Real; 9]
+where
+    Real: num_traits::Float,
+{
+    std::array::from_fn(|i| a[i] * s)
 }
 
 fn sort_eigen(g: &mut [f64; 3], v: &mut [f64; 9]) {
@@ -112,7 +134,7 @@ fn sort_eigen(g: &mut [f64; 3], v: &mut [f64; 9]) {
 }
 
 // m = UGV^T
-pub fn svd(m: &[f64; 9], nitr: usize) {
+pub fn svd(m: &[f64; 9], nitr: usize) -> ([f64; 9], [f64; 9], [f64; 9]) {
     // M^TM = VGGV^T
     let mtm = [
         m[0] * m[0] + m[3] * m[3] + m[6] * m[6],
@@ -189,4 +211,53 @@ pub fn svd(m: &[f64; 9], nitr: usize) {
     u[6] = u0[2];
     u[7] = u1[2];
     u[8] = u2[2];
+    let s = [g[0], 0.0, 0.0, 0.0, g[1], 0.0, 0.0, 0.0, g[2]];
+    (u, s, v)
+}
+
+/**
+ * Jacobian of singular value decomposition
+ * @details this is put in the header because MAT can be Eigen::Matrix3
+ * Papadopoulo, Théodore & Lourakis, Manolis. (2000).
+ * Estimating the Jacobian of the Singular Value Decomposition
+ * : Theory and Applications. 554-570.
+ */
+pub fn svd_differential(u: [f64; 9], s: [f64; 9], v: [f64; 9]) -> [[[f64; 3]; 3]; 9] {
+    let inv_mat2 = |mut a0: f64, a1: f64| -> (f64, f64) {
+        if (a0 - a1).abs() < 1.0e-6 {
+            a0 += 1.0e-6;
+        }
+        let det_inv = 1.0 / (a0 * a0 - a1 * a1);
+        (a0 * det_inv, -a1 * det_inv)
+    };
+
+    let ai0 = inv_mat2(s[4], s[8]);
+    let ai1 = inv_mat2(s[8], s[0]);
+    let ai2 = inv_mat2(s[0], s[4]);
+
+    let mut diff = [[[0.0; 3]; 3]; 9];
+    for i in 0..3 {
+        for j in 0..3 {
+            // dSdu
+            diff[3][i][j] = u[3 * i] * v[3 * j];
+            diff[4][i][j] = u[3 * i + 1] * v[3 * j + 1];
+            diff[5][i][j] = u[3 * i + 2] * v[3 * j + 2];
+            {
+                let b0 = [-u[3 * i + 2] * v[3 * j + 1], u[3 * i + 1] * v[3 * j + 2]];
+                diff[0][i][j] = b0[0] * ai0.0 + b0[1] * ai0.1;
+                diff[6][i][j] = -b0[0] * ai0.1 - b0[1] * ai0.0;
+            }
+            {
+                let b1 = [-u[3 * i] * v[3 * j + 2], u[3 * i + 2] * v[3 * j]];
+                diff[1][i][j] = b1[0] * ai1.0 + b1[1] * ai1.1;
+                diff[7][i][j] = -b1[0] * ai1.1 - b1[1] * ai1.0;
+            }
+            {
+                let b2 = [-u[3 * i + 1] * v[3 * j], u[3 * i] * v[3 * j + 1]];
+                diff[2][i][j] = b2[0] * ai2.0 + b2[1] * ai2.1;
+                diff[8][i][j] = -b2[0] * ai2.1 - b2[1] * ai2.0;
+            }
+        }
+    }
+    diff
 }
