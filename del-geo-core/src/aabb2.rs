@@ -251,6 +251,6 @@ where
     Real: num_traits::Float,
 {
     AABB2 {
-        aabb: aabbs[(i_aabb * 4)..4].try_into().unwrap(),
+        aabb: aabbs[(i_aabb * 4)..(i_aabb * 4) + 4].try_into().unwrap(),
     }
 }
