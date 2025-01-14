@@ -4,6 +4,37 @@
 //! next 2 Reals are for half of major axis direction
 //! next 2 Reals are for half of minar axis direction
 
+use crate::vec2::Vec2;
+
+pub trait OBB2Trait<T>
+where
+    Self: Sized,
+{
+    fn is_include_point2(&self, p: &[T; 2]) -> bool;
+    fn corner_points(&self) -> [[T; 2]; 4];
+    fn nearest_point2(&self, p: &[T; 2]) -> [T; 2];
+    fn is_intersect_aabb2(&self, aabb: &[T; 4]) -> bool;
+    fn is_intersect_obb2(&self, obb: &[T; 6]) -> bool;
+}
+
+impl OBB2Trait<f32> for [f32; 6] {
+    fn is_include_point2(&self, p: &[f32; 2]) -> bool {
+        is_include_point2(self, p)
+    }
+    fn corner_points(&self) -> [[f32; 2]; 4] {
+        corner_points(self)
+    }
+    fn nearest_point2(&self, p: &[f32; 2]) -> [f32; 2] {
+        nearest_point2(self, p)
+    }
+    fn is_intersect_aabb2(&self, aabb: &[f32; 4]) -> bool {
+        is_intersect_aabb2(self, aabb)
+    }
+    fn is_intersect_obb2(&self, obb: &[f32; 6]) -> bool {
+        is_intersect_obb2(self, obb)
+    }
+}
+
 pub fn from_random<RAND>(reng: &mut RAND) -> [f32; 6]
 where
     RAND: rand::Rng,
@@ -16,19 +47,19 @@ where
 }
 
 fn is_include_point2(obb: &[f32; 6], p: &[f32; 2]) -> bool {
-    let d = crate::vec2::sub(p, arrayref::array_ref!(obb, 0, 2));
+    let d = p.sub(obb[..2].try_into().unwrap());
     {
-        let v = arrayref::array_ref!(obb, 2, 2);
-        let vd = crate::vec2::dot(&d, v);
-        let vv = crate::vec2::dot(v, v);
+        let v = obb[2..4].try_into().unwrap();
+        let vd = d.dot(v);
+        let vv = v.dot(v);
         if vd < -vv || vd > vv {
             return false;
         }
     }
     {
-        let v = arrayref::array_ref!(obb, 4, 2);
-        let vd = crate::vec2::dot(&d, v);
-        let vv = crate::vec2::dot(v, v);
+        let v = obb[4..6].try_into().unwrap();
+        let vd = d.dot(v);
+        let vv = v.dot(v);
         if vd < -vv || vd > vv {
             return false;
         }

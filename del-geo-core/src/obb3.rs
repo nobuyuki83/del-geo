@@ -251,7 +251,7 @@ fn test_is_intersect_to_obb3() {
     for _iter in 0..1000 {
         let obb_i = from_random::<_, f64>(&mut reng);
         let obb_j = from_random(&mut reng);
-        let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
+        let p0 = obb_i[..3].try_into().unwrap(); // center
         let p1 = obb_j.nearest_to_point3(p0);
         let p2 = obb_i.nearest_to_point3(&p1);
         let p3 = obb_j.nearest_to_point3(&p2);
@@ -310,7 +310,7 @@ fn test2_is_intersect_to_obb3() {
             d, 0., -d, u[0], u[1], u[2], v[0], v[1], v[2], w[0], w[1], w[2],
         ];
 
-        let p0 = arrayref::array_ref![obb_i, 0, 3]; // center
+        let p0 = obb_i[..3].try_into().unwrap(); // center
         let p1 = obb_j.nearest_to_point3(p0);
         let p2 = obb_i.nearest_to_point3(&p1);
         let p3 = obb_j.nearest_to_point3(&p2);

@@ -165,7 +165,7 @@ fn test_prinsipal_directions() {
         {
             let tmp0 = nalgebra::Vector2::<f32>::from_row_slice(&matvec(
                 &mat,
-                arrayref::array_ref![evec0.as_slice(), 0, 2],
+                evec0.as_slice()[..2].try_into().unwrap(),
             ));
             let diff = (tmp0 - lam0 * evec0).norm();
             assert!(diff < 1.0e-6, "{}", diff);
@@ -173,7 +173,7 @@ fn test_prinsipal_directions() {
         {
             let tmp0 = nalgebra::Vector2::<f32>::from_row_slice(&matvec(
                 &mat,
-                arrayref::array_ref![evec1.as_slice(), 0, 2],
+                evec1.as_slice()[..2].try_into().unwrap(),
             ));
             assert!((tmp0 - lam1 * evec1).norm() < 1.0e-6);
         }
