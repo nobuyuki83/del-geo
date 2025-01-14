@@ -338,6 +338,7 @@ where
 }
 
 // ------------------------------------------
+#[derive(Debug, Clone, Copy)]
 pub struct XYZ<Real> {
     pub p: [Real; 3],
 }
