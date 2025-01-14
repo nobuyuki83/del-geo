@@ -91,24 +91,22 @@ pub fn dldx<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> ([[T; 3]; 2], [T; 3])
 where
     T: num_traits::Float,
 {
+    use crate::vec3::Vec3;
     assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
     let half = T::one() / (T::one() + T::one());
     let a0 = area(p0, p1, p2);
     let tmp1: T = half / a0;
     (
         [
-            [(p1[1] - p2[1]), (p2[1] - p0[1]), (p0[1] - p1[1])],
-            [
-                tmp1 * (p2[0] - p1[0]),
-                tmp1 * (p0[0] - p2[0]),
-                tmp1 * (p1[0] - p0[0]),
-            ],
+            [p1[1] - p2[1], p2[1] - p0[1], p0[1] - p1[1]].scale(tmp1),
+            [p2[0] - p1[0], p0[0] - p2[0], p1[0] - p0[0]].scale(tmp1),
         ],
         [
-            tmp1 * (p1[0] * p2[1] - p2[0] * p1[1]),
-            tmp1 * (p2[0] * p0[1] - p0[0] * p2[1]),
-            tmp1 * (p0[0] * p1[1] - p1[0] * p0[1]),
-        ],
+            p1[0] * p2[1] - p2[0] * p1[1],
+            p2[0] * p0[1] - p0[0] * p2[1],
+            p0[0] * p1[1] - p1[0] * p0[1],
+        ]
+        .scale(tmp1),
     )
 }
 
@@ -143,12 +141,9 @@ impl<Real> Tri2<Real>
 where
     Real: num_traits::Float,
 {
-    pub fn is_inside<P>(&self, q: P, sign: Real) -> Option<(Real, Real)>
-    where
-        P: AsRef<[Real; 2]>,
-    {
+    pub fn is_inside(&self, q: &[Real; 2], sign: Real) -> Option<(Real, Real)> {
         let Tri2 { p0, p1, p2 } = self;
-        is_inside(p0, p1, p2, q.as_ref(), sign)
+        is_inside(p0, p1, p2, q, sign)
     }
 
     pub fn area(&self) -> Real {

@@ -14,7 +14,7 @@ where
     fn corner_points(&self) -> [[T; 2]; 4];
     fn nearest_point2(&self, p: &[T; 2]) -> [T; 2];
     fn is_intersect_aabb2(&self, aabb: &[T; 4]) -> bool;
-    fn is_intersect_obb2(&self, obb: &[T; 6]) -> bool;
+    fn is_intersect_obb2(&self, obb: &Self) -> bool;
 }
 
 impl OBB2Trait<f32> for [f32; 6] {
@@ -30,7 +30,7 @@ impl OBB2Trait<f32> for [f32; 6] {
     fn is_intersect_aabb2(&self, aabb: &[f32; 4]) -> bool {
         is_intersect_aabb2(self, aabb)
     }
-    fn is_intersect_obb2(&self, obb: &[f32; 6]) -> bool {
+    fn is_intersect_obb2(&self, obb: &Self) -> bool {
         is_intersect_obb2(self, obb)
     }
 }
@@ -39,10 +39,11 @@ pub fn from_random<RAND>(reng: &mut RAND) -> [f32; 6]
 where
     RAND: rand::Rng,
 {
+    use crate::vec2::Vec2;
     let cntr = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
     let u = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
     let v = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
-    let v = crate::vec2::orthogonalize(&u, &v);
+    let v = u.orthogonalize(&v);
     [cntr[0], cntr[1], u[0], u[1], v[0], v[1]]
 }
 

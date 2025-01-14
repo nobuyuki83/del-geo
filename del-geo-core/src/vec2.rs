@@ -9,6 +9,7 @@ where
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<[Real; 2]>;
     fn dot(&self, other: &Self) -> Real;
     fn scale(&self, s: Real) -> Self;
+    fn orthogonalize(&self, v: &Self) -> Self;
 }
 
 impl<Real> Vec2<Real> for [Real; 2]
@@ -29,6 +30,9 @@ where
     }
     fn scale(&self, s: Real) -> Self {
         scale(self, s)
+    }
+    fn orthogonalize(&self, v: &Self) -> Self {
+        orthogonalize(self, v)
     }
 }
 
@@ -153,8 +157,11 @@ pub fn normalize(p: &[f32; 2]) -> [f32; 2] {
     p.scale(invl)
 }
 
-pub fn orthogonalize(u: &[f32; 2], v: &[f32; 2]) -> [f32; 2] {
-    let t = dot(u, v) / dot(u, u);
+pub fn orthogonalize<T>(u: &[T; 2], v: &[T; 2]) -> [T; 2]
+where
+    T: num_traits::Float,
+{
+    let t = u.dot(v) / u.dot(u);
     v.sub(&u.scale(t))
 }
 
