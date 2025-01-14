@@ -246,6 +246,6 @@ where
     Real: num_traits::Float,
 {
     AABB3 {
-        aabb: aabbs[(i_aabb * 6)..6].try_into().unwrap(),
+        aabb: aabbs[(i_aabb * 6)..((i_aabb * 6) + 6)].try_into().unwrap(),
     }
 }
