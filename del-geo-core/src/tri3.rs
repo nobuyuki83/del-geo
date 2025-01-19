@@ -339,15 +339,14 @@ where
 }
 
 // -------------------------
-
-pub struct Tri3<'a, Real> {
-    pub p0: &'a [Real; 3],
-    pub p1: &'a [Real; 3],
-    pub p2: &'a [Real; 3],
+#[derive(Debug, Copy, Clone)]
+pub struct Tri3<Real> {
+    pub p0: [Real; 3],
+    pub p1: [Real; 3],
+    pub p2: [Real; 3],
 }
 
-#[allow(clippy::needless_lifetimes)]
-impl<'a, Real> Tri3<'a, Real>
+impl<Real> Tri3<Real>
 where
     Real: num_traits::Float,
 {
@@ -356,7 +355,7 @@ where
         ray_org: &[Real; 3],
         ray_dir: &[Real; 3],
     ) -> Option<Real> {
-        intersection_against_line(self.p0, self.p1, self.p2, ray_org, ray_dir)
+        intersection_against_line(&self.p0, &self.p1, &self.p2, ray_org, ray_dir)
             .filter(|&t| t >= Real::zero())
     }
 
@@ -365,29 +364,31 @@ where
         line_org: &[Real; 3],
         line_dir: &[Real; 3],
     ) -> Option<Real> {
-        intersection_against_line(self.p0, self.p1, self.p2, line_org, line_dir)
+        intersection_against_line(&self.p0, &self.p1, &self.p2, line_org, line_dir)
     }
 
     pub fn area(&self) -> Real {
-        area(self.p0, self.p1, self.p2)
+        area(&self.p0, &self.p1, &self.p2)
     }
 
     pub fn cog(&self) -> [Real; 3] {
+        use crate::vec3::Vec3;
         let one = Real::one();
         let one3rd = one / (one * one * one);
         [
-            (self.p0[0] + self.p1[0] + self.p2[0]) * one3rd,
-            (self.p0[1] + self.p1[1] + self.p2[1]) * one3rd,
-            (self.p0[2] + self.p1[2] + self.p2[2]) * one3rd,
+            (self.p0[0] + self.p1[0] + self.p2[0]),
+            (self.p0[1] + self.p1[1] + self.p2[1]),
+            (self.p0[2] + self.p1[2] + self.p2[2]),
         ]
+        .scale(one3rd)
     }
 
     pub fn normal(&self) -> [Real; 3] {
-        normal(self.p0, self.p1, self.p2)
+        normal(&self.p0, &self.p1, &self.p2)
     }
 
     pub fn unit_normal(&self) -> [Real; 3] {
-        let n = normal(self.p0, self.p1, self.p2);
+        let n = normal(&self.p0, &self.p1, &self.p2);
         use crate::vec3::Vec3;
         n.normalize()
     }

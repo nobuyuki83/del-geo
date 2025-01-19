@@ -1,5 +1,5 @@
 use crate::mat4_col_major::Mat4ColMajor;
-
+#[derive(Debug, Clone, Copy)]
 pub struct Perspective {
     pub lens: f32,
     pub near: f32,

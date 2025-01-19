@@ -78,7 +78,7 @@ where
     Real: num_traits::Float,
 {
     let t = u.dot(v) / u.dot(u);
-    [v[0] - t * u[0], v[1] - t * u[1], v[2] - t * u[2]]
+    v.sub(&u.scale(t))
 }
 
 pub fn to_mat3_from_axisangle_vec<T>(vec: &[T; 3]) -> [T; 9]
@@ -86,7 +86,7 @@ where
     T: num_traits::Float,
 {
     let one = T::one();
-    let sqt = vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2];
+    let sqt = vec.squared_norm();
     if sqt <= T::epsilon() {
         // infinitesimal rotation approximation
         return [
@@ -128,29 +128,29 @@ where
     let one = Real::one();
     let zero = Real::zero();
     let vec_s: [Real; 3] = [zero, one, zero];
-    let vec_x = cross(&vec_s, vec_n);
-    let len = norm(&vec_x);
+    let vec_x = vec_s.cross(vec_n);
+    let len = vec_x.norm();
     if len < Real::epsilon() {
         let vec_t = [one, zero, zero];
-        let vec_x = cross(&vec_t, vec_n); // z????
-        let vec_y = cross(vec_n, &vec_x); // x????
+        let vec_x = vec_t.cross(vec_n); // z????
+        let vec_y = vec_n.cross(&vec_x); // x????
         (vec_x, vec_y)
     } else {
         let invlen = one / len;
-        let vec_x = [vec_x[0] * invlen, vec_x[1] * invlen, vec_x[2] * invlen];
-        let vec_y = cross(vec_n, &vec_x);
+        let vec_x = vec_x.scale(invlen);
+        let vec_y = vec_n.cross(&vec_x);
         (vec_x, vec_y)
     }
 }
 
 #[test]
 fn test_basis_xy_from_basis_z() {
-    let vec_z = normalize(&[0.3, 0.1, -0.5]);
+    let vec_z = [0.3, 0.1, -0.5].normalize();
     let (vec_x, vec_y) = basis_xy_from_basis_z(&vec_z);
     let bases = [vec_x, vec_y, vec_z];
     for i in 0..3 {
         for j in i..3 {
-            let dij: f64 = dot(&bases[i], &bases[j]);
+            let dij: f64 = bases[i].dot(&bases[j]);
             if i == j {
                 assert!((dij - 1.0).abs() < 1.0e-5);
             } else {
@@ -179,16 +179,14 @@ pub fn add<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float,
 {
-    [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
+    std::array::from_fn(|i| a[i] + b[i])
 }
 
 pub fn add_in_place<T>(a: &mut [T; 3], b: &[T; 3])
 where
     T: num_traits::Float,
 {
-    a[0] = a[0] + b[0];
-    a[1] = a[1] + b[1];
-    a[2] = a[2] + b[2];
+    *a = a.add(b);
 }
 
 pub fn squared_norm<T>(p: &[T; 3]) -> T
@@ -203,7 +201,7 @@ pub fn norm<T>(v: &[T; 3]) -> T
 where
     T: num_traits::Float,
 {
-    (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt()
+    v.squared_norm().sqrt()
 }
 
 /// in-place normalize function
@@ -213,9 +211,7 @@ where
 {
     let l = v.norm();
     let linv = T::one() / l;
-    v[0] = v[0] * linv;
-    v[1] = v[1] * linv;
-    v[2] = v[2] * linv;
+    *v = v.scale(linv);
     l
 }
 
@@ -226,7 +222,7 @@ where
 {
     let l = v.norm();
     let linv = T::one() / l;
-    std::array::from_fn(|i| v[i] * linv)
+    v.scale(linv)
 }
 
 pub fn cross_mut<T>(vo: &mut [T; 3], v1: &[T; 3], v2: &[T; 3])
@@ -264,31 +260,28 @@ pub fn sub<T>(a: &[T; 3], b: &[T; 3]) -> [T; 3]
 where
     T: std::ops::Sub<Output = T> + Copy,
 {
-    [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+    std::array::from_fn(|i| a[i] - b[i])
 }
 
 pub fn scale<T>(a: &[T; 3], s: T) -> [T; 3]
 where
     T: Copy + std::ops::Mul<Output = T>,
 {
-    [s * a[0], s * a[1], s * a[2]]
+    std::array::from_fn(|i| a[i] * s)
 }
 
 pub fn scale_in_place<T>(a: &mut [T; 3], s: T)
 where
     T: num_traits::Float,
 {
-    for x in a.iter_mut() {
-        *x = *x * s;
-    }
+    *a = a.scale(s);
 }
 
 pub fn distance<T>(p0: &[T; 3], p1: &[T; 3]) -> T
 where
     T: num_traits::Float,
 {
-    let [v0, v1, v2] = p1.sub(p0);
-    (v0 * v0 + v1 * v1 + v2 * v2).sqrt()
+    p1.sub(p0).norm()
 }
 
 pub fn scalar_triple_product<T>(a: &[T; 3], b: &[T; 3], c: &[T; 3]) -> T
@@ -305,7 +298,7 @@ pub fn axpy<Real>(alpha: Real, x: &[Real; 3], y: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
 {
-    std::array::from_fn(|i| alpha * x[i] + y[i])
+    x.scale(alpha).add(y)
 }
 
 pub fn to_quaternion_from_axis_angle_vector<Real>(a: &[Real; 3]) -> [Real; 4]
@@ -316,7 +309,7 @@ where
     let two = one + one;
     let half = one / two;
     let one8th = one / (two * two * two);
-    let sqlen = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
+    let sqlen = a.squared_norm();
     if sqlen <= Real::epsilon() {
         return [half * a[0], half * a[1], half * a[2], one - one8th * sqlen];
     }
@@ -345,12 +338,12 @@ where
 }
 
 // ------------------------------------------
-pub struct XYZ<'a, Real> {
-    pub p: &'a [Real; 3],
+#[derive(Debug, Clone, Copy)]
+pub struct XYZ<Real> {
+    pub p: [Real; 3],
 }
 
-#[allow(clippy::needless_lifetimes)]
-impl<'a, Real> XYZ<'a, Real>
+impl<Real> XYZ<Real>
 where
     Real: num_traits::Float,
 {

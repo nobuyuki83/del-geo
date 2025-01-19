@@ -83,18 +83,17 @@ where
 }
 
 // -----------------------------
-
-pub struct AABB<'a, Real, const NDIM: usize, const SIZE_AABB: usize> {
-    pub aabb: &'a [Real; SIZE_AABB],
+#[derive(Debug, Clone, Copy)]
+pub struct AABB<Real, const NDIM: usize, const SIZE_AABB: usize> {
+    pub aabb: [Real; SIZE_AABB],
 }
 
-#[allow(clippy::needless_lifetimes)]
-impl<'a, Real, const NDIM: usize, const SIZE_AABB: usize> AABB<'a, Real, NDIM, SIZE_AABB>
+impl<Real, const NDIM: usize, const SIZE_AABB: usize> AABB<Real, NDIM, SIZE_AABB>
 where
     Real: num_traits::Float,
 {
     pub fn is_include_point(&self, point: &[Real; NDIM]) -> bool {
-        is_include_point::<Real, NDIM, SIZE_AABB>(self.aabb, point)
+        is_include_point::<Real, NDIM, SIZE_AABB>(&self.aabb, point)
     }
 
     pub fn intersections_against_ray(
@@ -102,7 +101,7 @@ where
         ray_org: &[Real; NDIM],
         ray_dir: &[Real; NDIM],
     ) -> Option<(Real, Real)> {
-        intersections_against_ray::<Real, NDIM, SIZE_AABB>(self.aabb, ray_org, ray_dir)
+        intersections_against_ray::<Real, NDIM, SIZE_AABB>(&self.aabb, ray_org, ray_dir)
     }
 
     pub fn intersections_against_line(
@@ -110,10 +109,10 @@ where
         line_org: &[Real; NDIM],
         line_dir: &[Real; NDIM],
     ) -> Option<(Real, Real)> {
-        intersections_against_line::<Real, NDIM, SIZE_AABB>(self.aabb, line_org, line_dir)
+        intersections_against_line::<Real, NDIM, SIZE_AABB>(&self.aabb, line_org, line_dir)
     }
 
     pub fn center(&self) -> [Real; NDIM] {
-        center(self.aabb)
+        center(&self.aabb)
     }
 }

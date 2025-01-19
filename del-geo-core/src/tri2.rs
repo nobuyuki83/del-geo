@@ -1,5 +1,7 @@
 //! methods for 2D triangle
 
+use crate::vec2::Vec2;
+
 pub fn area<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> T
 where
     T: num_traits::Float,
@@ -20,9 +22,9 @@ where
     let dareadp1x2 = [p2[1] - p0[1], p0[0] - p2[0]];
     let dareadp2x2 = [p0[1] - p1[1], p1[0] - p0[0]];
     (
-        crate::vec2::scale(&dareadp0x2, dldarea * half),
-        crate::vec2::scale(&dareadp1x2, dldarea * half),
-        crate::vec2::scale(&dareadp2x2, dldarea * half),
+        dareadp0x2.scale(dldarea * half),
+        dareadp1x2.scale(dldarea * half),
+        dareadp2x2.scale(dldarea * half),
     )
 }
 
@@ -89,28 +91,22 @@ pub fn dldx<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> ([[T; 3]; 2], [T; 3])
 where
     T: num_traits::Float,
 {
+    use crate::vec3::Vec3;
     assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
     let half = T::one() / (T::one() + T::one());
     let a0 = area(p0, p1, p2);
     let tmp1: T = half / a0;
     (
         [
-            [
-                tmp1 * (p1[1] - p2[1]),
-                tmp1 * (p2[1] - p0[1]),
-                tmp1 * (p0[1] - p1[1]),
-            ],
-            [
-                tmp1 * (p2[0] - p1[0]),
-                tmp1 * (p0[0] - p2[0]),
-                tmp1 * (p1[0] - p0[0]),
-            ],
+            [p1[1] - p2[1], p2[1] - p0[1], p0[1] - p1[1]].scale(tmp1),
+            [p2[0] - p1[0], p0[0] - p2[0], p1[0] - p0[0]].scale(tmp1),
         ],
         [
-            tmp1 * (p1[0] * p2[1] - p2[0] * p1[1]),
-            tmp1 * (p2[0] * p0[1] - p0[0] * p2[1]),
-            tmp1 * (p0[0] * p1[1] - p1[0] * p0[1]),
-        ],
+            p1[0] * p2[1] - p2[0] * p1[1],
+            p2[0] * p0[1] - p0[0] * p2[1],
+            p0[0] * p1[1] - p1[0] * p0[1],
+        ]
+        .scale(tmp1),
     )
 }
 
@@ -134,23 +130,24 @@ where
 }
 
 // -------------------------------------------
-
-pub struct Tri2<'a, Real> {
-    pub p0: &'a [Real; 2],
-    pub p1: &'a [Real; 2],
-    pub p2: &'a [Real; 2],
+#[derive(Debug, Clone, Copy)]
+pub struct Tri2<Real> {
+    pub p0: [Real; 2],
+    pub p1: [Real; 2],
+    pub p2: [Real; 2],
 }
 
-#[allow(clippy::needless_lifetimes)]
-impl<'a, Real> Tri2<'a, Real>
+impl<Real> Tri2<Real>
 where
     Real: num_traits::Float,
 {
     pub fn is_inside(&self, q: &[Real; 2], sign: Real) -> Option<(Real, Real)> {
-        is_inside(self.p0, self.p1, self.p2, q, sign)
+        let Tri2 { p0, p1, p2 } = self;
+        is_inside(p0, p1, p2, q, sign)
     }
 
     pub fn area(&self) -> Real {
-        area(self.p0, self.p1, self.p2)
+        let Tri2 { p0, p1, p2 } = self;
+        area(p0, p1, p2)
     }
 }

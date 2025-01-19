@@ -1,4 +1,16 @@
 //! methods for unit 3D vector
+pub trait UVec3 {
+    fn map_to_unit2_octahedron(&self) -> [f32; 2];
+    fn map_to_unit2_equal_area(&self) -> [f32; 2];
+}
+impl UVec3 for [f32; 3] {
+    fn map_to_unit2_octahedron(&self) -> [f32; 2] {
+        map_to_unit2_octahedron(self)
+    }
+    fn map_to_unit2_equal_area(&self) -> [f32; 2] {
+        map_to_unit2_equal_area(self)
+    }
+}
 
 pub fn map_to_unit2_octahedron(dir: &[f32; 3]) -> [f32; 2] {
     let n = dir[0].abs() + dir[1].abs() + dir[2].abs();

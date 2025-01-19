@@ -7,6 +7,9 @@ where
     fn sub(&self, other: &Self) -> Self;
     fn add(&self, other: &Self) -> Self;
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<[Real; 2]>;
+    fn dot(&self, other: &Self) -> Real;
+    fn scale(&self, s: Real) -> Self;
+    fn orthogonalize(&self, v: &Self) -> Self;
 }
 
 impl<Real> Vec2<Real> for [Real; 2]
@@ -21,6 +24,15 @@ where
     }
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<Self> {
         crate::mat3_col_major::transform_homogeneous(v, self)
+    }
+    fn dot(&self, other: &Self) -> Real {
+        dot(self, other)
+    }
+    fn scale(&self, s: Real) -> Self {
+        scale(self, s)
+    }
+    fn orthogonalize(&self, v: &Self) -> Self {
+        orthogonalize(self, v)
     }
 }
 
@@ -42,21 +54,21 @@ pub fn sub<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
 where
     T: std::ops::Sub<Output = T> + Copy,
 {
-    [a[0] - b[0], a[1] - b[1]]
+    std::array::from_fn(|i| a[i] - b[i])
 }
 
 pub fn add<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
 where
     T: std::ops::Add<Output = T> + Copy,
 {
-    [a[0] + b[0], a[1] + b[1]]
+    std::array::from_fn(|i| a[i] + b[i])
 }
 
 pub fn scale<T>(a: &[T; 2], s: T) -> [T; 2]
 where
     T: num_traits::Float,
 {
-    [a[0] * s, a[1] * s]
+    std::array::from_fn(|i| a[i] * s)
 }
 
 pub fn dot<T>(a: &[T; 2], b: &[T; 2]) -> T
@@ -77,7 +89,7 @@ pub fn angle_between_two_vecs<T>(a: &[T; 2], b: &[T; 2]) -> T
 where
     T: num_traits::Float,
 {
-    let dot = dot(a, b);
+    let dot = a.dot(b);
     let area = area_quadrilateral(a, b);
     area.atan2(dot)
 }
@@ -142,29 +154,32 @@ pub fn rotate(p: &[f32; 2], theta: f32) -> [f32; 2] {
 
 pub fn normalize(p: &[f32; 2]) -> [f32; 2] {
     let invl = 1.0 / (p[0] * p[0] + p[1] * p[1]).sqrt();
-    [p[0] * invl, p[1] * invl]
+    p.scale(invl)
 }
 
-pub fn orthogonalize(u: &[f32; 2], v: &[f32; 2]) -> [f32; 2] {
-    let t = dot(u, v) / dot(u, u);
-    [v[0] - t * u[0], v[1] - t * u[1]]
+pub fn orthogonalize<T>(u: &[T; 2], v: &[T; 2]) -> [T; 2]
+where
+    T: num_traits::Float,
+{
+    let t = u.dot(v) / u.dot(u);
+    v.sub(&u.scale(t))
 }
 
 pub fn axpy<Real>(alpha: Real, x: &[Real; 2], y: &[Real; 2]) -> [Real; 2]
 where
     Real: num_traits::Float,
 {
-    [alpha * x[0] + y[0], alpha * x[1] + y[1]]
+    x.scale(alpha).add(y)
 }
 
 // -------------------------------
 // below: about the Vec2 class
-pub struct XY<'a, Real> {
-    pub p: &'a [Real; 2],
+#[derive(Debug, Clone, Copy)]
+pub struct XY<Real> {
+    pub p: [Real; 2],
 }
 
-#[allow(clippy::needless_lifetimes)]
-impl<'a, Real> XY<'a, Real>
+impl<Real> XY<Real>
 where
     Real: num_traits::Float,
 {

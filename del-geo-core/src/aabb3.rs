@@ -230,14 +230,14 @@ pub fn is_possible_distance_to_aabb2_smaller_than_threshold(
 
 // --------------------------
 
-pub type AABB3<'a, Real> = crate::aabb::AABB<'a, Real, 3, 6>;
+pub type AABB3<Real> = crate::aabb::AABB<Real, 3, 6>;
 
 pub fn from_slice<Real>(s: &[Real]) -> AABB3<Real>
 where
     Real: num_traits::Float,
 {
     AABB3 {
-        aabb: arrayref::array_ref!(s, 0, 6),
+        aabb: s[..6].try_into().unwrap(),
     }
 }
 
@@ -246,6 +246,6 @@ where
     Real: num_traits::Float,
 {
     AABB3 {
-        aabb: arrayref::array_ref!(aabbs, i_aabb * 6, 6),
+        aabb: aabbs[(i_aabb * 6)..((i_aabb * 6) + 6)].try_into().unwrap(),
     }
 }

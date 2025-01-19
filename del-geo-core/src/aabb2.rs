@@ -235,14 +235,14 @@ pub fn overlapping_tiles(
 
 // -------------------------------------------------------------------------------
 
-pub type AABB2<'a, Real> = crate::aabb::AABB<'a, Real, 2, 4>;
+pub type AABB2<Real> = crate::aabb::AABB<Real, 2, 4>;
 
 pub fn from_slice<Real>(s: &[Real]) -> AABB2<Real>
 where
     Real: num_traits::Float,
 {
     AABB2 {
-        aabb: arrayref::array_ref!(s, 0, 4),
+        aabb: s[..4].try_into().unwrap(),
     }
 }
 
@@ -251,6 +251,6 @@ where
     Real: num_traits::Float,
 {
     AABB2 {
-        aabb: arrayref::array_ref!(aabbs, i_aabb * 4, 4),
+        aabb: aabbs[(i_aabb * 4)..(i_aabb * 4) + 4].try_into().unwrap(),
     }
 }
