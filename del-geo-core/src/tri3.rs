@@ -340,13 +340,13 @@ where
 
 // -------------------------
 #[derive(Debug, Copy, Clone)]
-pub struct Tri3<Real> {
-    pub p0: [Real; 3],
-    pub p1: [Real; 3],
-    pub p2: [Real; 3],
+pub struct Tri3<'a, Real> {
+    pub p0: &'a [Real; 3],
+    pub p1: &'a [Real; 3],
+    pub p2: &'a [Real; 3],
 }
 
-impl<Real> Tri3<Real>
+impl<Real> Tri3<'_, Real>
 where
     Real: num_traits::Float,
 {
@@ -355,7 +355,7 @@ where
         ray_org: &[Real; 3],
         ray_dir: &[Real; 3],
     ) -> Option<Real> {
-        intersection_against_line(&self.p0, &self.p1, &self.p2, ray_org, ray_dir)
+        intersection_against_line(self.p0, self.p1, self.p2, ray_org, ray_dir)
             .filter(|&t| t >= Real::zero())
     }
 
@@ -364,11 +364,11 @@ where
         line_org: &[Real; 3],
         line_dir: &[Real; 3],
     ) -> Option<Real> {
-        intersection_against_line(&self.p0, &self.p1, &self.p2, line_org, line_dir)
+        intersection_against_line(self.p0, self.p1, self.p2, line_org, line_dir)
     }
 
     pub fn area(&self) -> Real {
-        area(&self.p0, &self.p1, &self.p2)
+        area(self.p0, self.p1, self.p2)
     }
 
     pub fn cog(&self) -> [Real; 3] {
@@ -384,11 +384,11 @@ where
     }
 
     pub fn normal(&self) -> [Real; 3] {
-        normal(&self.p0, &self.p1, &self.p2)
+        normal(self.p0, self.p1, self.p2)
     }
 
     pub fn unit_normal(&self) -> [Real; 3] {
-        let n = normal(&self.p0, &self.p1, &self.p2);
+        let n = normal(self.p0, self.p1, self.p2);
         use crate::vec3::Vec3;
         n.normalize()
     }

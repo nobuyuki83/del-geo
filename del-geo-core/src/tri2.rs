@@ -131,13 +131,13 @@ where
 
 // -------------------------------------------
 #[derive(Debug, Clone, Copy)]
-pub struct Tri2<Real> {
-    pub p0: [Real; 2],
-    pub p1: [Real; 2],
-    pub p2: [Real; 2],
+pub struct Tri2<'a, Real> {
+    pub p0: &'a [Real; 2],
+    pub p1: &'a [Real; 2],
+    pub p2: &'a [Real; 2],
 }
 
-impl<Real> Tri2<Real>
+impl<Real> Tri2<'_, Real>
 where
     Real: num_traits::Float,
 {

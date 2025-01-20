@@ -339,11 +339,11 @@ where
 
 // ------------------------------------------
 #[derive(Debug, Clone, Copy)]
-pub struct XYZ<Real> {
-    pub p: [Real; 3],
+pub struct XYZ<'a, Real> {
+    pub p: &'a [Real; 3],
 }
 
-impl<Real> XYZ<Real>
+impl<Real> XYZ<'_, Real>
 where
     Real: num_traits::Float,
 {

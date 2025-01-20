@@ -175,11 +175,11 @@ where
 // -------------------------------
 // below: about the Vec2 class
 #[derive(Debug, Clone, Copy)]
-pub struct XY<Real> {
-    pub p: [Real; 2],
+pub struct XY<'a, Real> {
+    pub p: &'a [Real; 2],
 }
 
-impl<Real> XY<Real>
+impl<Real> XY<'_, Real>
 where
     Real: num_traits::Float,
 {
