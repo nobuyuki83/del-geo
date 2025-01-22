@@ -22,7 +22,6 @@ nalgebra = "0.33.0"
 num-complex = "0.4.6"
 rand = "0.8.5"
 itertools = "0.13.0"
-ordered-float = "4.2.2"
 rand_chacha = "0.3.1"
 # internal
 del-geo-nalgebra = { path="del-geo-nalgebra"}
