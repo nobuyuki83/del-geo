@@ -79,7 +79,7 @@ where
     Real: num_traits::Float,
 {
     let half = Real::one() / (Real::one() + Real::one());
-    array_macro::array!(i => (aabb[i] + aabb[i+NDIM]) * half; NDIM)
+    std::array::from_fn::<_, NDIM, _>(|i| (aabb[i] + aabb[i + NDIM]) * half)
 }
 
 // -----------------------------

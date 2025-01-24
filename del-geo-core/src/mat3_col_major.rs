@@ -46,6 +46,8 @@ where
 
 use std::ops::AddAssign;
 
+use itertools::Itertools;
+
 // --------------------------------------------------
 // below from methods
 
@@ -131,11 +133,11 @@ pub fn from_transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
 
 pub fn to_quaternion<Real>(p: &[Real; 9]) -> [Real; 4]
 where
-    Real: num_traits::Float + ordered_float::FloatCore + std::fmt::Debug,
+    Real: num_traits::Float + std::fmt::Debug,
 {
     let one = Real::one();
     let one4th = one / (one + one + one + one);
-    let smat: [Real; 16] = [
+    let smat = [
         one + p[0] - p[4] - p[8], // 00
         p[3] + p[1],              // 01
         p[6] + p[2],              // 02
@@ -155,8 +157,9 @@ where
     ];
 
     let dias = [smat[0], smat[5], smat[10], smat[15]];
-    let imax = (0usize..4usize)
-        .max_by_key(|&a| ordered_float::OrderedFloat(dias[a]))
+    let imax = dias
+        .iter()
+        .position_max_by(|x, y| x.partial_cmp(y).unwrap())
         .unwrap();
     assert!(dias[0] <= dias[imax], "{:?} {}", dias, imax);
     assert!(dias[1] <= dias[imax]);
@@ -177,6 +180,7 @@ where
 
 #[test]
 fn test_to_quaternion() {
+    use crate::quaternion::Quaternion;
     let quats = [
         [-3., -2., 0., -1.],
         [3., -2., 0., -1.],
@@ -188,8 +192,8 @@ fn test_to_quaternion() {
         [-1., -2., -1., -4.],
     ];
     for quat0 in quats {
-        let quat0 = crate::quaternion::normalized(&quat0);
-        let r_mat = crate::quaternion::to_mat3_col_major(&quat0);
+        let quat0 = quat0.normalized();
+        let r_mat = quat0.to_mat3_col_major();
         let quat1 = to_quaternion(&r_mat);
         let quat0 = nalgebra::Vector4::<f32>::from_row_slice(&quat0);
         let quat1 = nalgebra::Vector4::<f32>::from_row_slice(&quat1);

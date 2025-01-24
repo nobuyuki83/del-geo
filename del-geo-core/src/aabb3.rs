@@ -3,21 +3,72 @@
 use rand::distributions::{Distribution, Standard};
 /// trait for 3D Axis-aligned Bounding Box (AABB)
 pub trait AABB3Trait<T> {
-    fn sample<Reng>(self, reng: &mut Reng) -> [T; 3]
+    fn sample<Reng: rand::Rng>(&self, reng: &mut Reng) -> [T; 3]
     where
-        Reng: rand::Rng,
         Standard: Distribution<T>;
+    fn center(&self) -> [T; 3];
+    fn size(&self) -> [T; 3];
+    fn scale(&self, s: T) -> Self;
+    fn volume(&self) -> T;
+    fn xyz_from_hex_index(&self, i_vtx: usize) -> [T; 3];
+    fn max_edge_size(&self) -> T;
+    fn is_active(&self) -> bool;
+    fn is_intersect(&self, i1: &Self) -> bool;
+    fn set_as_cube(&mut self, xyz: &[T; 3], eps: T);
+    fn add_point(&mut self, xyz: &[T; 3], eps: T);
+    fn is_possible_distance_to_aabb2_smaller_than_threshold(
+        &self,
+        aabb1: &Self,
+        threshold: T,
+    ) -> bool;
 }
 impl<T> AABB3Trait<T> for [T; 6]
 where
     T: num_traits::Float,
 {
-    fn sample<Reng>(self, reng: &mut Reng) -> [T; 3]
+    fn sample<Reng>(&self, reng: &mut Reng) -> [T; 3]
     where
         Reng: rand::Rng,
         Standard: Distribution<T>,
     {
-        sample(&self, reng)
+        sample(self, reng)
+    }
+    fn center(&self) -> [T; 3] {
+        center(self)
+    }
+    fn size(&self) -> [T; 3] {
+        size(self)
+    }
+    fn scale(&self, s: T) -> Self {
+        scale(self, s)
+    }
+    fn volume(&self) -> T {
+        volume(self)
+    }
+    fn xyz_from_hex_index(&self, i_vtx: usize) -> [T; 3] {
+        xyz_from_hex_index(self, i_vtx)
+    }
+    fn max_edge_size(&self) -> T {
+        max_edge_size(self)
+    }
+    fn is_active(&self) -> bool {
+        is_active(self)
+    }
+    fn is_intersect(&self, i1: &Self) -> bool {
+        is_intersect(self, i1)
+    }
+    fn set_as_cube(&mut self, xyz: &[T; 3], eps: T) {
+        set_as_cube(self, xyz, eps)
+    }
+    fn add_point(&mut self, xyz: &[T; 3], eps: T) {
+        add_point(self, xyz, eps)
+    }
+    fn is_possible_distance_to_aabb2_smaller_than_threshold(
+        &self,
+        aabb1: &Self,
+        threshold: T,
+    ) -> bool {
+        is_possible_distance_to_aabb2_smaller_than_threshold(self, aabb1, threshold)
     }
 }
 
@@ -49,8 +100,8 @@ pub fn scale<T>(aabb: &[T; 6], s: T) -> [T; 6]
 where
     T: num_traits::Float,
 {
-    let c = center(aabb);
-    let size = size(aabb);
+    let c = aabb.center();
+    let size = aabb.size();
     let half = T::one() / (T::one() + T::one());
     [
         c[0] - size[0] * s * half,
@@ -211,11 +262,14 @@ where
     aabb[5] = aabb[5].max(xyz[2] + eps);
 }
 
-pub fn is_possible_distance_to_aabb2_smaller_than_threshold(
-    aabb0: &[f32; 6],
-    aabb1: &[f32; 6],
-    threshold: f32,
-) -> bool {
+pub fn is_possible_distance_to_aabb2_smaller_than_threshold<Real>(
+    aabb0: &[Real; 6],
+    aabb1: &[Real; 6],
+    threshold: Real,
+) -> bool
+where
+    Real: num_traits::Float,
+{
     for i_dim in 0..3 {
         let range0 = (aabb0[i_dim], aabb0[i_dim + 3]);
         let range1 = (aabb1[i_dim], aabb1[i_dim + 3]);

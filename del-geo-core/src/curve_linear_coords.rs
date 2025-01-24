@@ -27,7 +27,7 @@ where
 
 #[test]
 fn hoge() {
-    let gds: [[f64; 3]; 3] = [[0., 2., 4.], [3., 5., 4.], [6., 7., 8.]];
+    let gds = [[0f64, 2., 4.], [3., 5., 4.], [6., 7., 8.]];
     let gus = inverse(&gds);
     for (i, gd) in gds.iter().enumerate() {
         for (j, gu) in gus.iter().enumerate() {

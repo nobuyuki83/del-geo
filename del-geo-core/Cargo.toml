@@ -13,9 +13,6 @@ repository.workspace = true
 [dependencies]
 num-traits = {workspace = true}
 rand = {workspace = true}
-arrayref = {workspace = true}
-array-macro = {workspace = true}
-ordered-float = {workspace = true}
 itertools = {workspace = true}
 num-complex = {workspace = true}
 
