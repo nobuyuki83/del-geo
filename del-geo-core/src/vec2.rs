@@ -10,6 +10,8 @@ where
     fn dot(&self, other: &Self) -> Real;
     fn scale(&self, s: Real) -> Self;
     fn orthogonalize(&self, v: &Self) -> Self;
+    fn length(&self) -> Real;
+    fn squared_length(&self) -> Real;
 }
 
 impl<Real> Vec2<Real> for [Real; 2]
@@ -33,6 +35,12 @@ where
     }
     fn orthogonalize(&self, v: &Self) -> Self {
         orthogonalize(self, v)
+    }
+    fn length(&self) -> Real {
+        length(self)
+    }
+    fn squared_length(&self) -> Real {
+        squared_length(self)
     }
 }
 
@@ -146,14 +154,20 @@ where
     Some([v[0] / v[2], v[0] / v[2]])
 }
 
-pub fn rotate(p: &[f32; 2], theta: f32) -> [f32; 2] {
+pub fn rotate<Real>(p: &[Real; 2], theta: Real) -> [Real; 2]
+where
+    Real: num_traits::Float,
+{
     let c = theta.cos();
     let s = theta.sin();
     [c * p[0] - s * p[1], s * p[0] + c * p[1]]
 }
 
-pub fn normalize(p: &[f32; 2]) -> [f32; 2] {
-    let invl = 1.0 / (p[0] * p[0] + p[1] * p[1]).sqrt();
+pub fn normalize<Real>(p: &[Real; 2]) -> [Real; 2]
+where
+    Real: num_traits::Float,
+{
+    let invl = Real::one() / (p[0] * p[0] + p[1] * p[1]).sqrt();
     p.scale(invl)
 }
 
