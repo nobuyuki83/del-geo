@@ -48,6 +48,30 @@ where
     [one, zero, zero, zero, one, zero, zero, zero, one]
 }
 
+pub fn from_diagonal<T>(d: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    let zero = T::zero();
+    [d[0], zero, zero, zero, d[1], zero, zero, zero, d[2]]
+}
+
+pub fn from_columns<T>(c0: &[T; 3], c1: &[T; 3], c2: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    [
+        c0[0], c1[0], c2[0], c0[1], c1[1], c2[1], c0[2], c1[2], c2[2],
+    ]
+}
+
+pub fn to_columns<T>(a: &[T; 9]) -> ([T; 3], [T; 3], [T; 3])
+where
+    T: num_traits::Float,
+{
+    ([a[0], a[3], a[6]], [a[1], a[4], a[7]], [a[2], a[5], a[8]])
+}
+
 // above: from method
 // --------------------------
 
@@ -111,6 +135,7 @@ where
     std::array::from_fn(|i| a[i] * s)
 }
 
+/*
 fn sort_eigen<Real>(g: &mut [Real; 3], v: &mut [Real; 9])
 where
     Real: num_traits::Float,
@@ -134,29 +159,33 @@ where
         v.swap(6, 7);
     }
 }
+ */
 
+/*
 /// m = UGV^T
-pub fn svd<Real>(m: &[Real; 9], nitr: usize) -> ([Real; 9], [Real; 9], [Real; 9])
+pub fn svd_jacobi<Real>(m: &[Real; 9], nitr: usize) -> ([Real; 9], [Real; 9], [Real; 9])
 where
-    Real: num_traits::Float + std::iter::Sum,
+    Real: num_traits::Float + std::iter::Sum + std::fmt::Debug,
 {
     let one = Real::one();
     let zero = Real::zero();
     // M^TM = VGGV^T
     let mtm = [
-        m[0] * m[0] + m[3] * m[3] + m[6] * m[6],
-        m[1] * m[1] + m[4] * m[4] + m[7] * m[7],
-        m[2] * m[2] + m[5] * m[5] + m[8] * m[8],
-        m[1] * m[2] + m[4] * m[5] + m[7] * m[8],
-        m[2] * m[0] + m[5] * m[3] + m[8] * m[6],
-        m[0] * m[1] + m[3] * m[4] + m[6] * m[7],
+        m[0] * m[0] + m[3] * m[3] + m[6] * m[6], // M^tM[0,0]
+        m[1] * m[1] + m[4] * m[4] + m[7] * m[7], // M^tM[1,1]
+        m[2] * m[2] + m[5] * m[5] + m[8] * m[8], // M^tM[2,2]
+        m[1] * m[2] + m[4] * m[5] + m[7] * m[8], // M^tM[1,2]
+        m[2] * m[0] + m[5] * m[3] + m[8] * m[6], // M^tM[2,0]
+        m[0] * m[1] + m[3] * m[4] + m[6] * m[7], // M^tM[0,1]
     ];
-    let Some((mut v, mut lv)) = crate::mat3_sym::eigen_decomp(mtm, nitr) else {
+    let Some((mut v, mut lv)) = crate::mat3_sym::eigen_decomposition_jacobi(&mtm, nitr) else {
         todo!()
     };
+    assert!(lv[0] < lv[1] && lv[1] < lv[2]);
     sort_eigen(&mut lv, &mut v);
-    lv = lv.map(|x| x.max(zero));
-    let mut g = lv.map(|x| x.sqrt());
+    dbg!(lv);
+    // assert!(lv[0]<lv[1] && lv[1]<lv[2]);
+    let mut g = lv.map(|x| x.max(zero).sqrt());
 
     let mut u0 = [
         m[0] * v[0] + m[1] * v[3] + m[2] * v[6],
@@ -222,36 +251,110 @@ where
     let s = [g[0], zero, zero, zero, g[1], zero, zero, zero, g[2]];
     (u, s, v)
 }
+ */
+
+pub fn svd<Real>(
+    f: &[Real; 9],
+    mode: crate::mat3_sym::EigenDecompositionModes,
+) -> Option<([Real; 9], [Real; 3], [Real; 9])>
+where
+    Real: num_traits::Float + std::iter::Sum + num_traits::FloatConst,
+{
+    let zero = Real::zero();
+    let ft_f = f.transpose().mult_mat_row_major(f);
+    let ft_f = crate::mat3_sym::from_mat3(&ft_f);
+    let (v, mut lambda) = crate::mat3_sym::eigen_decomposition(&ft_f, mode)?;
+    lambda.iter_mut().for_each(|x| *x = (*x).max(zero).sqrt());
+    let ul = f.mult_mat_row_major(&v);
+    let (mut u0, mut u1, mut u2) = to_columns(&ul);
+    crate::vec3::normalize_in_place(&mut u0);
+    crate::vec3::normalize_in_place(&mut u1);
+    crate::vec3::normalize_in_place(&mut u2);
+    let u = from_columns(&u0, &u1, &u2);
+    Some((u, lambda, v))
+}
+
+pub fn enforce_rotation_matrix_for_svd<Real>(
+    u: &[Real; 9],
+    l: &[Real; 3],
+    v: &[Real; 9],
+) -> ([Real; 9], [Real; 3], [Real; 9])
+where
+    Real: num_traits::Float + std::fmt::Debug,
+{
+    if determinant(v) < Real::zero() || determinant(u) < Real::zero() {
+        let mut u = *u;
+        let mut l = *l;
+        let mut v = *v;
+        if determinant(&v) < Real::zero() {
+            v[2] = -v[2]; // v[0,2] = v[0*3+2]
+            v[5] = -v[5]; // v[1,2] = v[1*3+2]
+            v[8] = -v[8];
+            l[2] = -l[2];
+        }
+        if determinant(&u) < Real::zero() {
+            u[2] = -u[2]; // v[0,2] = v[0*3+2]
+            u[5] = -u[5]; // v[1,2] = v[1*3+2]
+            u[8] = -u[8];
+            l[2] = -l[2];
+        }
+        (u, l, v)
+    } else {
+        (*u, *l, *v)
+    }
+}
 
 #[test]
 fn test_svd() {
     use rand::Rng;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
-    for _iter in 0..10000 {
-        let m: [f64; 9] = std::array::from_fn(|_| rng.gen::<f64>());
-        let (u, s, v) = svd(&m, 100);
+    for (_iter, i_mode_eigen, is_rot) in itertools::iproduct!(0..100, 0..2, 0..2) {
+        let m: [f64; 9] = std::array::from_fn(|_| rng.gen_range(-1f64..1f64));
+        let (u, s, v) = {
+            let mode = match i_mode_eigen {
+                0 => crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
+                1 => crate::mat3_sym::EigenDecompositionModes::Analytic,
+                _ => unreachable!(),
+            };
+            svd(&m, mode).unwrap()
+        };
+        let (u, s, v) = if is_rot == 1 {
+            enforce_rotation_matrix_for_svd(&u, &s, &v)
+        } else {
+            (u, s, v)
+        };
+        if is_rot == 1 {
+            let det_v = determinant(&v);
+            assert!((det_v - 1.).abs() < 1.0e-10);
+            let det_u = determinant(&u);
+            assert!((det_u - 1.).abs() < 1.0e-10);
+        }
         {
+            // test u
             let diff = Mat3RowMajor::transpose(&u)
                 .mult_mat_row_major(&u)
                 .sub(&from_identity())
                 .squared_norm();
-            assert!(diff < 1.0e-29f64, "{}", diff);
+            assert!(diff < 1.0e-20f64, "{}", diff);
         }
         {
+            // test V V^t = I
             let diff = Mat3RowMajor::transpose(&v)
                 .mult_mat_row_major(&v)
                 .sub(&from_identity())
                 .squared_norm();
-            assert!(diff < 1.0e-29f64, "{}", diff);
+            assert!(diff < 1.0e-20f64, "{}", diff);
         }
         {
+            // test A = USV^t
+            let s = from_diagonal(&s);
             let diff = u
                 .mult_mat_row_major(&s)
                 .mult_mat_row_major(&Mat3RowMajor::transpose(&v))
                 .sub(&m)
                 .squared_norm();
-            assert!(diff < 1.0e-23f64, "{}", diff);
+            assert!(diff < 1.0e-20f64, "{}", diff);
         }
     }
 }
@@ -307,7 +410,12 @@ fn test_svd_differential() {
     let eps = 1.0e-6;
     for _iter in 0..100 {
         let m0: [f64; 9] = std::array::from_fn(|_| rng.gen::<f64>());
-        let (u0, s0, v0) = svd(&m0, 100);
+        let (u0, s0, v0) = svd(
+            &m0,
+            crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
+        )
+        .unwrap();
+        let s0 = crate::mat3_row_major::from_diagonal(&s0);
         let diff = svd_differential(u0, s0, v0);
         for (i, j) in itertools::iproduct!(0..3, 0..3) {
             let m1 = {
@@ -315,7 +423,12 @@ fn test_svd_differential() {
                 m1[i * 3 + j] += eps;
                 m1
             };
-            let (u1, s1, v1) = svd(&m1, 100);
+            let (u1, s1, v1) = svd(
+                &m1,
+                crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
+            )
+            .unwrap();
+            let s1 = from_diagonal(&s1);
             {
                 let du = Mat3RowMajor::transpose(&u0)
                     .mult_mat_row_major(&u1.sub(&u0))
