@@ -85,14 +85,19 @@ pub fn transform_homogeneous<T>(aabb: &[T; 4], mat3_col_major: &[T; 9]) -> [T; 4
 where
     T: num_traits::Float,
 {
-    let p0 =
-        crate::mat3_col_major::transform_homogeneous(mat3_col_major, &[aabb[0], aabb[1]]).unwrap();
-    let p1 =
-        crate::mat3_col_major::transform_homogeneous(mat3_col_major, &[aabb[0], aabb[3]]).unwrap();
-    let p2 =
-        crate::mat3_col_major::transform_homogeneous(mat3_col_major, &[aabb[2], aabb[1]]).unwrap();
-    let p3 =
-        crate::mat3_col_major::transform_homogeneous(mat3_col_major, &[aabb[2], aabb[3]]).unwrap();
+    use crate::mat3_col_major::Mat3ColMajor;
+    let p0 = mat3_col_major
+        .transform_homogeneous(&[aabb[0], aabb[1]])
+        .unwrap();
+    let p1 = mat3_col_major
+        .transform_homogeneous(&[aabb[0], aabb[3]])
+        .unwrap();
+    let p2 = mat3_col_major
+        .transform_homogeneous(&[aabb[2], aabb[1]])
+        .unwrap();
+    let p3 = mat3_col_major
+        .transform_homogeneous(&[aabb[2], aabb[3]])
+        .unwrap();
     let ax = [p0[0], p1[0], p2[0], p3[0]];
     let ay = [p0[1], p1[1], p2[1], p3[1]];
     [

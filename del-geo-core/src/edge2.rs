@@ -1,13 +1,12 @@
 //! methods for 2D edge (line segment)
 
+use crate::vec2::Vec2;
 use num_traits::AsPrimitive;
-
 pub fn length<T>(ps: &[T; 2], pe: &[T; 2]) -> T
 where
     T: num_traits::Float,
 {
-    let dx = ps[0] - pe[0];
-    let dy = ps[1] - pe[1];
+    let [dx, dy] = ps.sub(pe);
     (dx * dx + dy * dy).sqrt()
 }
 
@@ -15,8 +14,7 @@ pub fn unit_edge_vector<T>(ps: &[T; 2], pe: &[T; 2]) -> [T; 2]
 where
     T: num_traits::Float,
 {
-    let dx = pe[0] - ps[0];
-    let dy = pe[1] - ps[1];
+    let [dx, dy] = pe.sub(ps);
     let linv: T = T::one() / (dx * dx + dy * dy).sqrt();
     [dx * linv, dy * linv]
 }
@@ -90,8 +88,8 @@ fn test_intersection_edge2() {
     let Some((r0, r1)) = intersection_edge2(&s0, &e0, &s1, &e1) else {
         panic!()
     };
-    let p0 = crate::vec2::axpy(r0, &crate::vec2::sub(&e0, &s0), &s0);
-    let p1 = crate::vec2::axpy(r1, &crate::vec2::sub(&e1, &s1), &s1);
+    let p0 = crate::vec2::axpy(r0, &e0.sub(&s0), &s0);
+    let p1 = crate::vec2::axpy(r1, &e1.sub(&s1), &s1);
     assert!(length(&p0, &[0.1, 0.0]) < 1.0e-5);
     assert!(length(&p1, &[0.1, 0.0]) < 1.0e-5);
     assert!((r0 - 0.1).abs() < 1e-5f32);
@@ -127,7 +125,6 @@ where
     let (dlds0_2, dlde0_2, dlde1_2) = crate::tri2::dldw_area(s0, e0, e1, dlda2);
     let (dlds1_3, dlde1_3, dlds0_3) = crate::tri2::dldw_area(s1, e1, s0, dlda3);
     let (dlds1_4, dlde1_4, dlde0_4) = crate::tri2::dldw_area(s1, e1, e0, dlda4);
-    use crate::vec2::Vec2;
     (
         dlds0_1.add(&dlds0_2).add(&dlds0_3),
         dlde0_1.add(&dlde0_2).add(&dlde0_4),
@@ -168,8 +165,8 @@ where
     T: num_traits::Float + num_traits::FloatConst,
 {
     let half = T::one() / (T::one() + T::one());
-    let p0 = crate::vec2::sub(ps, po);
-    let p1 = crate::vec2::sub(pe, po);
+    let p0 = ps.sub(po);
+    let p1 = pe.sub(po);
     let y: T = p1[1] * p0[0] - p1[0] * p0[1];
     let x: T = p0[0] * p1[0] + p0[1] * p1[1];
     y.atan2(x) * T::FRAC_1_PI() * half
@@ -182,15 +179,15 @@ where
     T: num_traits::Float + 'static,
     f64: AsPrimitive<T>,
 {
-    let d = crate::vec2::sub(pe, ps);
-    let a = crate::vec2::squared_length(&d);
+    let d = pe.sub(ps);
+    let a = d.squared_length();
     if a.is_zero() {
         return (
             0.5f64.as_(),
             std::array::from_fn(|i| (ps[i] + pe[i]) * 0.5f64.as_()),
         );
     }
-    let b = crate::vec2::dot(&d, ps);
+    let b = d.dot(ps);
     let r0 = (-b / a).clamp(0f64.as_(), 1f64.as_());
     (
         r0,
@@ -201,25 +198,28 @@ where
 #[test]
 fn test_nearest_origin() {
     let (_r, pm) = nearest_origin(&[-0.1, 1.0], &[1.0, 1.0]);
-    assert!(crate::vec2::length(&crate::vec2::sub(&pm, &[0., 1.])) < 1.0e-5);
+    assert!(pm.sub(&[0., 1.]).length() < 1.0e-5);
 }
 
 /// Find the nearest point on a line segment to point p
 /// Returns (k,v), where k is the coeffcient, v is the point
-pub fn nearest_point2(
-    s: &[f32; 2], // source
-    e: &[f32; 2], // end
-    p: &[f32; 2],
-) -> (f32, [f32; 2]) {
-    use crate::vec2;
-    let (r, p0) = nearest_origin(&vec2::sub(s, p), &vec2::sub(e, p));
+pub fn nearest_point2<T>(
+    s: &[T; 2], // source
+    e: &[T; 2], // end
+    p: &[T; 2],
+) -> (T, [T; 2])
+where
+    T: num_traits::Float + 'static,
+    f64: AsPrimitive<T>,
+{
+    let (r, p0) = nearest_origin(&s.sub(p), &e.sub(p));
     (r, [p0[0] + p[0], p0[1] + p[1]])
 }
 
 #[test]
 fn test_nearest_point2() {
     let (_r, pm) = nearest_point2(&[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
-    assert!(crate::vec2::length(&crate::vec2::sub(&pm, &[0., 1.])) < 1.0e-5);
+    assert!(pm.sub(&[0., 1.]).length() < 1.0e-5);
 }
 
 pub fn intersection_length_against_aabb2(ps: &[f32; 2], pe: &[f32; 2], aabb2: &[f32; 4]) -> f32 {
