@@ -1,5 +1,42 @@
 //! symmetric matrix `[[a,b],[b,c]]` parameterized as `[a,b,c]`
 
+/// symmetric matrix `[[a,b],[b,c]]` parameterized as `[a,b,c]`
+pub trait Mat2Sym<Real>
+where
+    Self: Sized,
+{
+    fn mult_mat_sym(&self, other: &Self) -> [Real; 4];
+    fn inverse(&self) -> Option<Self>;
+    fn safe_inverse(&self) -> Self;
+    fn principal_directions(&self) -> ([Real; 2], [[Real; 2]; 2]);
+    fn matvec(&self, v: &[Real; 2]) -> [Real; 2];
+    fn aabb2(&self) -> [Real; 4];
+}
+
+impl<Real> Mat2Sym<Real> for [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    fn mult_mat_sym(&self, other: &Self) -> [Real; 4] {
+        mult_mat_sym(self, other)
+    }
+    fn inverse(&self) -> Option<Self> {
+        inverse(self)
+    }
+    fn safe_inverse(&self) -> Self {
+        safe_inverse(self)
+    }
+    fn principal_directions(&self) -> ([Real; 2], [[Real; 2]; 2]) {
+        principal_directions(self)
+    }
+    fn matvec(&self, v: &[Real; 2]) -> [Real; 2] {
+        matvec(self, v)
+    }
+    fn aabb2(&self) -> [Real; 4] {
+        aabb2(self)
+    }
+}
+
 pub fn mult_mat_sym<Real>(a: &[Real; 3], b: &[Real; 3]) -> [Real; 4]
 where
     Real: num_traits::Float,
@@ -30,20 +67,17 @@ where
 #[test]
 fn test_inverse() {
     let a = [2.1, 0.1, 0.5];
-    let ai = inverse(&a).unwrap();
-    let aia = mult_mat_sym(&ai, &a);
+    let ai = a.inverse().unwrap();
+    let aia = ai.mult_mat_sym(&a);
     let diff = nalgebra::Vector4::<f32>::from_column_slice(&aia)
         - nalgebra::Vector4::<f32>::new(1., 0., 0., 1.);
     assert!(diff.norm() < 1.0e-7);
 }
 
-pub fn safe_inverse<Real>(coeff: &[Real; 3]) -> [Real; 3]
+pub fn safe_inverse<Real>(&[a, b, c]: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
 {
-    let a = coeff[0];
-    let b = coeff[1];
-    let c = coeff[2];
     let det = a * c - b * b;
     if det.abs() <= Real::epsilon() {
         let l = Real::one() / Real::epsilon();
@@ -55,24 +89,21 @@ where
     [di * c, -di * b, di * a]
 }
 
-pub fn safe_inverse_preserve_positive_definiteness<Real>(abc: &[Real; 3], eps: Real) -> [Real; 3]
+pub fn safe_inverse_preserve_positive_definiteness<Real>(
+    &[a, b, c]: &[Real; 3],
+    eps: Real,
+) -> [Real; 3]
 where
     Real: num_traits::Float + std::fmt::Display,
 {
-    assert!(
-        abc[0] + abc[2] > Real::zero(),
-        "{} {} {}",
-        abc[0] + abc[2],
-        abc[0],
-        abc[2]
-    );
-    let eig_min = (abc[0] + abc[2]) * eps;
-    if (abc[0] * abc[2] - abc[1] * abc[1]).abs() < eig_min {
+    assert!(a + c > Real::zero(), "{} {} {}", a + c, a, c);
+    let eig_min = (a + c) * eps;
+    if (a * c - b * b).abs() < eig_min {
         // one of the eigen value is nearly zero
         //let one = Real::one();
         let one = Real::one();
-        let (e, v) = principal_directions(abc);
-        // println!("　　　sig: {:?} {} {}",e, abc[0]*abc[2]-abc[1]*abc[1], abc[0]+abc[2]);
+        let (e, v) = [a, b, c].principal_directions();
+        // println!("　　　sig: {:?} {} {}",e, a*c-b*b, a+c);
         let e0inv = one / (e[0] + eps);
         let e1inv = one / (e[1] + eps);
         [
@@ -84,20 +115,17 @@ where
         // println!("　　　siginv: {:?}",e);
         //xyz
     } else {
-        safe_inverse(abc)
+        [a, b, c].safe_inverse()
     }
 }
 
 /// ax^2 + 2bxy + cy^2 = 1
-pub fn principal_directions<Real>(coeff: &[Real; 3]) -> ([Real; 2], [[Real; 2]; 2])
+pub fn principal_directions<Real>(&[a, b, c]: &[Real; 3]) -> ([Real; 2], [[Real; 2]; 2])
 where
     Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
-    let a = coeff[0];
-    let b = coeff[1];
-    let c = coeff[2];
     if b.is_zero() {
         return ([a, c], [[one, zero], [zero, one]]);
     }
@@ -120,23 +148,17 @@ where
     }
 }
 
-pub fn matvec<Real>(coeff: &[Real; 3], v: &[Real; 2]) -> [Real; 2]
+pub fn matvec<Real>(&[c0, c1, c2]: &[Real; 3], &[v0, v1]: &[Real; 2]) -> [Real; 2]
 where
     Real: num_traits::Float,
 {
-    [
-        coeff[0] * v[0] + coeff[1] * v[1],
-        coeff[1] * v[0] + coeff[2] * v[1],
-    ]
+    [c0 * v0 + c1 * v1, c1 * v0 + c2 * v1]
 }
 
-pub fn aabb2<Real>(coeff: &[Real; 3]) -> [Real; 4]
+pub fn aabb2<Real>(&[a, b, c]: &[Real; 3]) -> [Real; 4]
 where
-    Real: num_traits::Float + std::fmt::Debug,
+    Real: num_traits::Float,
 {
-    let a = coeff[0];
-    let b = coeff[1];
-    let c = coeff[2];
     let det = a * c - b.powi(2);
     let minx = (c / det).sqrt();
     let miny = (a / det).sqrt();
@@ -206,7 +228,7 @@ pub fn wdw_projected_spd_mat3<Real>(
     d: &[Real; 3],
 ) -> ([Real; 3], [[Real; 6]; 3])
 where
-    Real: num_traits::Float + std::ops::AddAssign,
+    Real: num_traits::Float,
 {
     let two = Real::one() + Real::one();
     let r = crate::quaternion::to_mat3_col_major(quat0);
@@ -325,7 +347,7 @@ fn test_wdw_projected_spd_mat3() {
 
 pub fn wdw_inverse<Real, const N: usize>(dabcdt: &[[Real; N]; 3], xyz: &[Real; 3]) -> [[Real; N]; 3]
 where
-    Real: num_traits::Float + std::ops::AddAssign + std::fmt::Debug,
+    Real: num_traits::Float,
 {
     let one = Real::one();
     let two = one + one;

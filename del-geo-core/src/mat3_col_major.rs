@@ -328,13 +328,13 @@ where
 
 pub fn mult_mat_row_major<Real>(a: &[Real; 9], b: &[Real; 9]) -> [Real; 9]
 where
-    Real: num_traits::Float + AddAssign,
+    Real: num_traits::Float,
 {
     let mut r = [Real::zero(); 9];
     for i in 0..3 {
         for j in 0..3 {
             for k in 0..3 {
-                r[i + 3 * j] += a[i + 3 * k] * b[j + 3 * k]
+                r[i + 3 * j] = r[i + 3 * j] + a[i + 3 * k] * b[j + 3 * k]
             }
         }
     }
