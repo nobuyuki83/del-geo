@@ -14,7 +14,7 @@ pub fn unit_edge_vector<T>(ps: &[T; 2], pe: &[T; 2]) -> [T; 2]
 where
     T: num_traits::Float,
 {
-    let [dx, dy] = ps.sub(pe);
+    let [dx, dy] = pe.sub(ps);
     let linv: T = T::one() / (dx * dx + dy * dy).sqrt();
     [dx * linv, dy * linv]
 }
