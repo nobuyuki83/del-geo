@@ -1,5 +1,5 @@
-//! methods for 4x4 matrix
-//!
+//! the trait and methods for 4x4 matrix with column major storage
+
 /// trait for 4x4 matrix
 pub trait Mat4ColMajor<Real>
 where
@@ -297,7 +297,7 @@ fn test_jacobian_transform() {
             for i_dim in 0..3 {
                 let v_num = (q1[i_dim] - q0[i_dim]) / eps;
                 let v_ana = dqdp[i_dim + 3 * j_dim];
-                dbg!(i_dim, j_dim, v_num, v_ana);
+                // dbg!(i_dim, j_dim, v_num, v_ana);
                 assert!((v_num - v_ana).abs() < 9.0e-5);
             }
         }

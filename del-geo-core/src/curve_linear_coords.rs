@@ -1,13 +1,11 @@
 //! methods for 3x3 matrix
 
-use std::ops::MulAssign;
-
 use crate::vec3::Vec3;
 
 /// covariant to contravariant or contravariant to covariant
 pub fn inverse<T>(gd: &[[T; 3]; 3]) -> [[T; 3]; 3]
 where
-    T: num_traits::Float + MulAssign,
+    T: num_traits::Float + std::ops::MulAssign,
 {
     // contravariant basis vectors
     let mut gu = [[T::zero(); 3]; 3];

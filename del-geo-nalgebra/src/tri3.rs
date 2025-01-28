@@ -604,7 +604,7 @@ mod tests {
             if x0.z.abs() < 0.2 {
                 continue;
             }
-            let b = core::f64::consts::PI * (rand::thread_rng().gen::<f64>() * 0.8 + 0.1); // 90 degree
+            let b = core::f64::consts::PI * (rand::rng().random::<f64>() * 0.8 + 0.1); // 90 degree
             let eps = 1.0e-4_f64;
             let (w0, dw) = wdw_inverse_distance_cubic_integrated_over_wedge(x0, b);
             let x1x = x0 + nalgebra::Vector3::<f64>::new(eps, 0., 0.);

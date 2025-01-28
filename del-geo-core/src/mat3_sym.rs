@@ -2,8 +2,6 @@
 //! the 3x3 matrix is stored in a 6-dim array
 //! `[m[0,0], m[1,1], m[2,2], m[1,2], m[2,0], m[0,1]]`
 
-//use num_traits::FloatConst;
-
 pub fn from_mat3<Real>(m: &[Real; 9]) -> [Real; 6]
 where
     Real: num_traits::Float,
@@ -326,7 +324,7 @@ fn test_eigen_decomposition() {
     let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     // std::uniform_real_distribution < double > dist(-50.0, 50.0);
     for (_itr, i_mode) in itertools::iproduct!(0..10000, 0..2) {
-        let sm = std::array::from_fn(|_| rng.gen_range(-30f64..30f64));
+        let sm = std::array::from_fn(|_| rng.random_range(-30f64..30f64));
         let (u, l) = match i_mode {
             0 => eigen_decomposition(&sm, EigenDecompositionModes::JacobiNumIter(100)).unwrap(),
             1 => eigen_decomposition(&sm, EigenDecompositionModes::Analytic).unwrap(),

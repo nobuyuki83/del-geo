@@ -1,9 +1,5 @@
 //! methods for 2D Axis-aligned Bounding Box (AABB)
 
-use num_traits::AsPrimitive;
-use rand::distributions::Standard;
-use rand::prelude::Distribution;
-
 pub fn from_point<T>(p: &[T; 2], rad: T) -> [T; 4]
 where
     T: num_traits::Float,
@@ -52,9 +48,10 @@ where
 
 pub fn rasterize<T>(aabb: &[T; 4], img_size: &(usize, usize)) -> [usize; 4]
 where
-    T: num_traits::Float + AsPrimitive<usize> + 'static + Copy,
-    usize: AsPrimitive<T>,
+    T: num_traits::Float + num_traits::AsPrimitive<usize> + 'static + Copy,
+    usize: num_traits::AsPrimitive<T>,
 {
+    use num_traits::AsPrimitive;
     let half = T::one() / (T::one() + T::one());
     [
         (aabb[0] - half).ceil().max(T::zero()).as_(),
@@ -112,10 +109,10 @@ pub fn sample<Reng, T>(aabb: &[T; 4], reng: &mut Reng) -> [T; 2]
 where
     Reng: rand::Rng,
     T: num_traits::Float,
-    Standard: Distribution<T>,
+    rand::distr::StandardUniform: rand::distr::Distribution<T>,
 {
-    let r0 = reng.gen::<T>();
-    let r1 = reng.gen::<T>();
+    let r0 = reng.random::<T>();
+    let r1 = reng.random::<T>();
     [
         aabb[0] + r0 * (aabb[2] - aabb[0]),
         aabb[1] + r1 * (aabb[3] - aabb[1]),
@@ -137,7 +134,7 @@ pub fn to_transformation_world2unit_ortho_preserve_asp(aabb_world: &[f32; 4]) ->
 fn test_to_transformation_world2unit_ortho_preserve_asp() {
     let aabb = [-4.1, 0.3, 4.5, 3.3];
     let transf = to_transformation_world2unit_ortho_preserve_asp(&aabb);
-    let mut reng = rand::thread_rng();
+    let mut reng = rand::rng();
     for _ in 0..1000 {
         let p0 = sample(&aabb, &mut reng);
         let q0 = crate::mat3_col_major::transform_homogeneous(&transf, &p0).unwrap();

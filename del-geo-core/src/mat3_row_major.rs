@@ -1,3 +1,5 @@
+//! functions and the trait for 3x3 matrix with row major storage
+
 /// trait for 3x3 matrix in row-major order
 pub trait Mat3RowMajor<Real: num_traits::Float> {
     fn from_identity() -> Self;
@@ -310,7 +312,7 @@ fn test_svd() {
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     for (_iter, i_mode_eigen, is_rot) in itertools::iproduct!(0..100, 0..2, 0..2) {
-        let m: [f64; 9] = std::array::from_fn(|_| rng.gen_range(-1f64..1f64));
+        let m: [f64; 9] = std::array::from_fn(|_| rng.random_range(-1f64..1f64));
         let (u, s, v) = {
             let mode = match i_mode_eigen {
                 0 => crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
@@ -409,7 +411,7 @@ fn test_svd_differential() {
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     let eps = 1.0e-6;
     for _iter in 0..100 {
-        let m0: [f64; 9] = std::array::from_fn(|_| rng.gen::<f64>());
+        let m0: [f64; 9] = std::array::from_fn(|_| rng.random::<f64>());
         let (u0, s0, v0) = svd(
             &m0,
             crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),

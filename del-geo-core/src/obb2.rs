@@ -40,9 +40,18 @@ where
     RAND: rand::Rng,
 {
     use crate::vec2::Vec2;
-    let cntr = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
-    let u = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
-    let v = [2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.];
+    let cntr = [
+        2. * reng.random::<f32>() - 1.,
+        2. * reng.random::<f32>() - 1.,
+    ];
+    let u = [
+        2. * reng.random::<f32>() - 1.,
+        2. * reng.random::<f32>() - 1.,
+    ];
+    let v = [
+        2. * reng.random::<f32>() - 1.,
+        2. * reng.random::<f32>() - 1.,
+    ];
     let v = u.orthogonalize(&v);
     [cntr[0], cntr[1], u[0], u[1], v[0], v[1]]
 }
@@ -151,8 +160,14 @@ fn test_is_intersect_aabb2() {
     for _iter in 0..100 {
         let obb = from_random(&mut reng);
         let aabb = crate::aabb2::from_two_points(
-            &[2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.],
-            &[2. * reng.gen::<f32>() - 1., 2. * reng.gen::<f32>() - 1.],
+            &[
+                2. * reng.random::<f32>() - 1.,
+                2. * reng.random::<f32>() - 1.,
+            ],
+            &[
+                2. * reng.random::<f32>() - 1.,
+                2. * reng.random::<f32>() - 1.,
+            ],
             0.,
         );
         assert!(aabb[0] < aabb[2]);

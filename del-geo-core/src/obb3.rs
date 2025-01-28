@@ -1,11 +1,9 @@
 #![allow(unused_imports)]
 //! 3D Oriented Bounding Box (OBB)
 
-use std::ops::MulAssign;
-
 use crate::vec3::Vec3;
 use crate::{aabb3::AABB3Trait, edge3::Edge3Trait};
-use rand::distributions::{Distribution, Standard};
+//use rand::distributions::{Distribution, Standard};
 /// trait for 3D Oriented Bounding Box (OBB)
 pub trait OBB3Trait<T> {
     fn is_include_point(&self, p: &[T; 3], eps: T) -> bool;
@@ -14,7 +12,7 @@ pub trait OBB3Trait<T> {
 }
 impl<Real> OBB3Trait<Real> for [Real; 12]
 where
-    Real: num_traits::Float + MulAssign,
+    Real: num_traits::Float + std::ops::MulAssign,
 {
     fn is_include_point(&self, p: &[Real; 3], eps: Real) -> bool {
         is_include_point(self, p, eps)
@@ -31,7 +29,7 @@ pub fn from_random<RAND, Real>(reng: &mut RAND) -> [Real; 12]
 where
     RAND: rand::Rng,
     Real: num_traits::Float + std::ops::MulAssign,
-    Standard: Distribution<Real>,
+    rand::distr::StandardUniform: rand::distr::Distribution<Real>,
 {
     let one = Real::one();
     let aabb_m1p1 = [-one, -one, -one, one, one, one];
@@ -100,7 +98,7 @@ where
 /// Projection of an OBB at axis, return (min,max)
 fn range_axis<Real, const N: usize>(ps: &[[Real; 3]; N], axis: &[Real; 3]) -> (Real, Real)
 where
-    Real: num_traits::Float + MulAssign,
+    Real: num_traits::Float + std::ops::MulAssign,
 {
     let min0 = ps
         .iter()
@@ -169,7 +167,7 @@ where
 
 pub fn nearest_to_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
 where
-    Real: num_traits::Float + MulAssign,
+    Real: num_traits::Float + std::ops::MulAssign,
 {
     if obb.is_include_point(p, Real::zero()) {
         return *p;
@@ -209,7 +207,7 @@ fn test_nearest_to_point3() {
 /// Use Separating Axis Theorem (SAT) to check if two OBBs are intersected
 pub fn is_intersect_to_obb3<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> bool
 where
-    Real: num_traits::Float + std::fmt::Debug + MulAssign,
+    Real: num_traits::Float + std::fmt::Debug + std::ops::MulAssign,
 {
     let axes = {
         let (axes_i, _) = obb_i.unit_axes_and_half_edge_lengths();

@@ -1,11 +1,11 @@
 //! methods for 3D Axis-aligned Bounding Box (AABB)
 
-use rand::distributions::{Distribution, Standard};
 /// trait for 3D Axis-aligned Bounding Box (AABB)
 pub trait AABB3Trait<T> {
     fn sample<Reng: rand::Rng>(&self, reng: &mut Reng) -> [T; 3]
     where
-        Standard: Distribution<T>;
+        rand::distr::StandardUniform: rand::distr::Distribution<T>;
+
     fn center(&self) -> [T; 3];
     fn size(&self) -> [T; 3];
     fn scale(&self, s: T) -> Self;
@@ -29,7 +29,8 @@ where
     fn sample<Reng>(&self, reng: &mut Reng) -> [T; 3]
     where
         Reng: rand::Rng,
-        Standard: Distribution<T>,
+        T: num_traits::Float,
+        rand::distr::StandardUniform: rand::distr::Distribution<T>,
     {
         sample(self, reng)
     }
@@ -217,11 +218,11 @@ pub fn sample<Reng, T>(aabb: &[T; 6], reng: &mut Reng) -> [T; 3]
 where
     Reng: rand::Rng,
     T: num_traits::Float,
-    Standard: Distribution<T>,
+    rand::distr::StandardUniform: rand::distr::Distribution<T>,
 {
-    let r0 = reng.gen::<T>();
-    let r1 = reng.gen::<T>();
-    let r2 = reng.gen::<T>();
+    let r0 = reng.random::<T>();
+    let r1 = reng.random::<T>();
+    let r2 = reng.random::<T>();
     [
         aabb[0] + r0 * (aabb[3] - aabb[0]),
         aabb[1] + r1 * (aabb[4] - aabb[1]),

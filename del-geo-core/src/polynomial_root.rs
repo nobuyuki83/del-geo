@@ -36,12 +36,12 @@ where
 #[test]
 fn test_quadratic_root() {
     use rand::Rng;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for _ in 0..1000 {
-        let x0: f64 = 4. * rng.gen::<f64>() - 2.;
-        let x1: f64 = 4. * rng.gen::<f64>() - 2.;
+        let x0: f64 = 4. * rng.random::<f64>() - 2.;
+        let x1: f64 = 4. * rng.random::<f64>() - 2.;
         let (x0, x1) = if x0 > x1 { (x1, x0) } else { (x0, x1) };
-        let c2: f64 = 4. * rng.gen::<f64>() - 2.;
+        let c2: f64 = 4. * rng.random::<f64>() - 2.;
         let c1: f64 = -(x0 + x1) * c2;
         let c0: f64 = x0 * x1 * c2;
         let res = quadratic_root(c0, c1, c2);
@@ -50,7 +50,7 @@ fn test_quadratic_root() {
         assert!((x0 - y0).abs() < 1.0e-8);
         assert!((x1 - y1).abs() < 1.0e-8);
         //
-        let c0 = c2 * (x0 * x0 + rng.gen::<f64>() + f64::EPSILON);
+        let c0 = c2 * (x0 * x0 + rng.random::<f64>() + f64::EPSILON);
         let c1 = -2. * x0 * c2;
         let res = quadratic_root(c0, c1, c2);
         assert!(res.is_none());
@@ -171,13 +171,13 @@ where
 #[test]
 fn test_cubic_root() {
     use rand::Rng;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let eps = 1.0e-8;
     for _ in 0..10000 {
-        let c0: f64 = 4. * rng.gen::<f64>() - 2.;
-        let c1: f64 = 4. * rng.gen::<f64>() - 2.;
-        let c2: f64 = 4. * rng.gen::<f64>() - 2.;
-        let c3: f64 = 4. * rng.gen::<f64>() - 2.;
+        let c0: f64 = 4. * rng.random::<f64>() - 2.;
+        let c1: f64 = 4. * rng.random::<f64>() - 2.;
+        let c2: f64 = 4. * rng.random::<f64>() - 2.;
+        let c3: f64 = 4. * rng.random::<f64>() - 2.;
         let list_time = cubic_roots_in_range_zero_to_t(c0, c1, c2, c3, 1.0, eps);
         for t in list_time {
             let fr: f64 = c0 + c1 * t + c2 * t * t + c3 * t * t * t;

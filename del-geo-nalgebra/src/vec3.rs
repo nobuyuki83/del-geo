@@ -1,5 +1,3 @@
-use num_traits::AsPrimitive;
-
 pub fn from_array<T>(v: &[T; 3]) -> nalgebra::Vector3<T>
 where
     T: nalgebra::RealField + Copy,
@@ -52,6 +50,7 @@ where
     T: nalgebra::RealField + 'static + Copy,
     f64: num_traits::AsPrimitive<T>,
 {
+    use num_traits::AsPrimitive;
     let vec_s = nalgebra::Vector3::<T>::new(T::zero(), T::one(), T::zero());
     let mut vec_x = vec_s.cross(&vec_n);
     let len = vec_x.norm();
@@ -72,11 +71,11 @@ pub fn sample_unit_cube<Reng, T>(rng: &mut Reng) -> nalgebra::Vector3<T>
 where
     Reng: rand::Rng,
     T: nalgebra::RealField + nalgebra::Scalar,
-    rand::distributions::Standard: rand::prelude::Distribution<T>,
+    rand::distr::StandardUniform: rand::distr::Distribution<T>,
 {
     let mut p0 = nalgebra::Vector3::<T>::zeros();
     for v in p0.iter_mut() {
-        *v = rng.gen();
+        *v = rng.random();
     }
     p0
 }
