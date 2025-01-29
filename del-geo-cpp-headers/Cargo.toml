@@ -4,3 +4,4 @@ include = ["src/*.h", "src/lib.rs"]
 edition = "2021"
 version.workspace = true
 license = "MIT"
+description = "CUDA device utility functions"
