@@ -1,5 +1,5 @@
 [package]
 name = "del-geo-cpp-headers"
-include = ["src/*.h"]
+include = ["src/*.h", "src/lib.rs"]
 edition = "2021"
 version.workspace = true
