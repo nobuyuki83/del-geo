@@ -1,5 +1,7 @@
 //! methods for 3d triangle
 
+use num_traits::AsPrimitive;
+
 /// clamp barycentric coordinates inside a triangle
 pub fn clamp<T>(r0: T, r1: T, r2: T) -> (T, T, T)
 where
@@ -51,6 +53,17 @@ where
     let na = normal(v1, v2, v3);
     let half = T::one() / (T::one() + T::one());
     na.squared_norm().sqrt() * half
+}
+
+/// height of triangle vertex `p2` against the edge connecting `p0` and `p1`
+pub fn height<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> T
+where
+    T: num_traits::Float + 'static + Copy + num_traits::Float,
+    f64: AsPrimitive<T>,
+{
+    use crate::vec3::Vec3;
+    let a = area(p2, p0, p1);
+    a * 2.0.as_() / p0.sub(p1).norm()
 }
 
 pub fn unit_normal_area<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> ([T; 3], T)
@@ -336,6 +349,101 @@ where
         bc[0] * p0[1] + bc[1] * p1[1] + bc[2] * p2[1],
         bc[0] * p0[2] + bc[1] * p1[2] + bc[2] * p2[2],
     ]
+}
+
+fn wdw_inverse_distance_cubic_integrated_over_wedge(x: &[f64; 3], b: f64) -> (f64, [f64; 3]) {
+    let l = crate::vec3::norm(x);
+    let c = 1. / (b * 0.5).tan();
+    let a = (l - x[0]) * c - x[1];
+    let t = {
+        let t = (x[2].abs() / a).atan();
+        if t > 0. {
+            t
+        } else {
+            t + core::f64::consts::PI
+        }
+    };
+    let signz = if x[2] < 0. { -1. } else { 1. };
+    let w = t * 2. / x[2].abs();
+    let d = 1.0 / (x[2] * x[2] + a * a);
+    let dwdx = 2. * (1. - x[0] / l) * c * d;
+    let dwdy = 2. * (1. - x[2] * c / l) * d;
+    let dwdz = -t / (x[2] * x[2]) + a * d / x[2].abs() - x[2].abs() * c * d / l;
+    (w, [dwdx, dwdy, dwdz * signz * 2.])
+}
+pub fn wdw_integral_of_inverse_distance_cubic(
+    p0: &[f64; 3],
+    p1: &[f64; 3],
+    p2: &[f64; 3],
+    q: &[f64; 3],
+) -> (f64, [f64; 3]) {
+    use crate::vec3::Vec3;
+    let (vz, _) = unit_normal_area(p0, p1, p2);
+    let z = q.sub(p0).dot(&vz);
+    let u10 = p0.sub(p1).normalize();
+    let u21 = p1.sub(p2).normalize();
+    let u02 = p2.sub(p0).normalize();
+    //
+    let vy0 = vz.cross(&u02);
+    let beta0 = u02.dot(&u10).acos();
+    let q0 = [q.sub(p0).dot(&u02), q.sub(p0).dot(&vy0), z];
+    let (w0, dw0) = wdw_inverse_distance_cubic_integrated_over_wedge(&q0, beta0);
+    let dw0dq =
+        crate::vec3::add_three_vectors(&u02.scale(dw0[0]), &vy0.scale(dw0[1]), &vz.scale(dw0[2]));
+    //
+    let vy1 = vz.cross(&u10);
+    let beta1 = u10.dot(&u21).acos();
+    let q1 = [q.sub(p1).dot(&u10), q.sub(p1).dot(&vy1), z];
+    let (w1, dw1) = wdw_inverse_distance_cubic_integrated_over_wedge(&q1, beta1);
+    let dw1dq =
+        crate::vec3::add_three_vectors(&u10.scale(dw1[0]), &vy1.scale(dw1[1]), &vz.scale(dw1[2]));
+    //
+    let vy2 = vz.cross(&u21);
+    let beta2 = u21.dot(&u02).acos();
+    let q2 = [q.sub(p2).dot(&u21), q.sub(p2).dot(&vy2), z];
+    let (w2, dw2) = wdw_inverse_distance_cubic_integrated_over_wedge(&q2, beta2);
+    let dw2dq =
+        crate::vec3::add_three_vectors(&u21.scale(dw2[0]), &vy2.scale(dw2[1]), &vz.scale(dw2[2]));
+    //
+    let w = core::f64::consts::PI * 2_f64 / z.abs() - w0 - w1 - w2;
+    let signz = if z < 0. { -1. } else { 1. };
+    let dwdq = crate::vec3::add_three_vectors(&dw0dq, &dw1dq, &dw2dq);
+    let dw = vz
+        .scale(-signz * core::f64::consts::PI * 2_f64 / (z * z))
+        .sub(&dwdq);
+    (w, dw)
+}
+
+#[test]
+fn test_w_inverse_distance_cubic_integrated_over_wedge() {
+    use crate::vec3::Vec3;
+    use rand::SeedableRng;
+    let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
+    for _ in 0..1000 {
+        let x = crate::vec3::sample_unit_cube::<_, f64>(&mut reng).sub(&[0.5, 0.5, 0.5]);
+        if x[2].abs() < 0.1 {
+            continue;
+        }
+        let b = core::f64::consts::PI * 0.5; // 90 degree
+        let n_r = 200;
+        let n_t = 100;
+        let rad = 20.;
+        //
+        let mut val_nmr = 0.;
+        for i_r in 0..n_r {
+            for i_t in 0..n_t {
+                let r = (i_r as f64 + 0.5) * rad / n_r as f64;
+                let t = (i_t as f64 + 0.5) * b / n_t as f64;
+                let pos = [r * t.cos(), r * t.sin(), 0.];
+                let area = rad / n_r as f64 * r * b / n_t as f64;
+                val_nmr += area * pos.sub(&x).norm().powi(-3);
+            }
+        }
+        use crate::tri3::wdw_inverse_distance_cubic_integrated_over_wedge;
+        let (v_anl, _) = wdw_inverse_distance_cubic_integrated_over_wedge(&x, b);
+        assert!((v_anl - val_nmr).abs() < v_anl * 0.1);
+        // dbg!(v_anl, val_nmr);
+    }
 }
 
 // -------------------------

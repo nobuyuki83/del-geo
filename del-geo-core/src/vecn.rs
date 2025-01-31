@@ -1,10 +1,11 @@
-pub trait Arr<T, const N: usize> {
+pub trait VecN<T, const N: usize> {
     fn add(self, other: &[T; N]) -> Self;
     fn sub(self, other: &[T; N]) -> Self;
+    fn scale(self, scalar: T) -> Self;
     fn norm(self) -> T;
 }
 
-impl<T, const N: usize> Arr<T, N> for [T; N]
+impl<T, const N: usize> VecN<T, N> for [T; N]
 where
     T: num_traits::Float + Copy + std::iter::Sum,
 {
@@ -16,6 +17,9 @@ where
     }
     fn norm(self) -> T {
         self.iter().map(|&v| v * v).sum::<T>().sqrt()
+    }
+    fn scale(self, scalar: T) -> Self {
+        std::array::from_fn(|i| self[i] * scalar)
     }
 }
 

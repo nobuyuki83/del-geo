@@ -180,7 +180,7 @@ where
     f64: AsPrimitive<T>,
 {
     let d = pe.sub(ps);
-    let a = d.squared_length();
+    let a = d.squared_norm();
     if a.is_zero() {
         return (
             0.5f64.as_(),
@@ -198,7 +198,7 @@ where
 #[test]
 fn test_nearest_origin() {
     let (_r, pm) = nearest_origin(&[-0.1, 1.0], &[1.0, 1.0]);
-    assert!(pm.sub(&[0., 1.]).length() < 1.0e-5);
+    assert!(pm.sub(&[0., 1.]).norm() < 1.0e-5);
 }
 
 /// Find the nearest point on a line segment to point p
@@ -219,7 +219,7 @@ where
 #[test]
 fn test_nearest_point2() {
     let (_r, pm) = nearest_point2(&[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
-    assert!(pm.sub(&[0., 1.]).length() < 1.0e-5);
+    assert!(pm.sub(&[0., 1.]).norm() < 1.0e-5);
 }
 
 pub fn intersection_length_against_aabb2(ps: &[f32; 2], pe: &[f32; 2], aabb2: &[f32; 4]) -> f32 {

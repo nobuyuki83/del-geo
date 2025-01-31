@@ -103,14 +103,14 @@ where
 #[test]
 fn hoge() {
     use crate::mat3_col_major::Mat3ColMajor;
-    use crate::vec3::Vec3;
+    // use crate::vec3::Vec3;
     let quat: [f64; 4] = [1., 2., 3., 1.];
     let quat = quat.normalized();
     let r_mat = quat.to_mat3_col_major();
     let r_mat_transp = r_mat.transpose();
     {
         let identity0 = r_mat.mult_mat_col_major(&r_mat_transp);
-        dbg!(&identity0);
+        // dbg!(&identity0);
         for i in 0..3 {
             for j in 0..3 {
                 if i == j {
@@ -125,12 +125,13 @@ fn hoge() {
             }
         }
     }
+    // for 3D Gaussian splatting
     let s_mat = crate::mat3_col_major::from_diagonal(&[1.0f64, 2.0, 0.3]);
     let rs = r_mat.mult_mat_col_major(&s_mat);
-    let a_vec = [0.2, 2.3, 0.1];
-    let x_vec = rs.transpose().mult_vec(&a_vec);
-    let l = x_vec.squared_norm();
-    dbg!(&x_vec, l);
+    let in_vec = [0.2, 2.3, 0.1];
+    let out_vec = rs.transpose().mult_vec(&in_vec);
+    let _l = out_vec.squared_norm();
+    // dbg!(&out_vec, l);
 }
 
 pub fn mult_quaternion<Real>(p: &[Real; 4], q: &[Real; 4]) -> [Real; 4]

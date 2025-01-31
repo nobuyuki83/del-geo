@@ -44,8 +44,9 @@ where
     }
 }
 
+use crate::vec3::basis_xy_from_basis_z;
 use itertools::Itertools;
-
+use num_traits::AsPrimitive;
 // --------------------------------------------------
 // below from methods
 
@@ -309,6 +310,13 @@ where
     [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]
 }
 
+pub fn scale<Real>(m: &[Real; 9], scale: Real) -> [Real; 9]
+where
+    Real: num_traits::Float,
+{
+    std::array::from_fn(|i| m[i] * scale)
+}
+
 pub fn mult_mat_col_major<Real>(a: &[Real; 9], b: &[Real; 9]) -> [Real; 9]
 where
     Real: num_traits::Float,
@@ -362,4 +370,65 @@ pub fn transform_lcl2world_given_local_z(n: &[f32; 3]) -> [f32; 9] {
     let u = vec3::normalize(&vec3::cross(&t, &n));
     let v = vec3::cross(&n, &u);
     [u[0], u[1], u[2], v[0], v[1], v[2], n[0], n[1], n[2]]
+}
+
+pub fn minimum_rotation_matrix<T>(v0: &[T; 3], v1: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float + 'static + Copy,
+    f64: num_traits::AsPrimitive<T>,
+{
+    use crate::vec3::Vec3;
+    let ep = v0.normalize();
+    let eq = v1.normalize();
+    let n = ep.cross(&eq);
+    let st2 = n.dot(&n);
+    let ct = ep.dot(&eq);
+    let half = 0.5_f64.as_();
+
+    if st2 < 1.0e-8_f64.as_() {
+        // very small angle or n is zero
+        // inifinitesimal rotation
+        if ct > 0.99_f64.as_() {
+            return [
+                T::one() + half * (n[0] * n[0] - st2),
+                -n[2] + half * (n[0] * n[1]),
+                n[1] + half * (n[0] * n[2]),
+                n[2] + half * (n[1] * n[0]),
+                T::one() + half * (n[1] * n[1] - st2),
+                -n[0] + half * (n[1] * n[2]),
+                -n[1] + half * (n[2] * n[0]),
+                n[0] + half * (n[2] * n[1]),
+                T::one() + half * (n[2] * n[2] - st2),
+            ];
+        } else {
+            let (epx, epy) = basis_xy_from_basis_z(&ep);
+            let eqx = epx.sub(&eq.scale(eq.dot(&epx))); // vector orthogonal to eq
+            let eqy = eq.cross(&eqx);
+            return [
+                eqx.dot(&epx),
+                eqy.dot(&epx),
+                eq.dot(&epx),
+                eqx.dot(&epy),
+                eqy.dot(&epy),
+                eq.dot(&epy),
+                eqx.dot(&ep),
+                eqy.dot(&ep),
+                eq.dot(&ep),
+            ];
+        }
+    }
+    let st = st2.sqrt();
+    let n = n.normalize();
+    // Rodoriguez's rotation formula
+    [
+        ct + (T::one() - ct) * n[0] * n[0],
+        -n[2] * st + (T::one() - ct) * n[0] * n[1],
+        n[1] * st + (T::one() - ct) * n[0] * n[2],
+        n[2] * st + (T::one() - ct) * n[1] * n[0],
+        ct + (T::one() - ct) * n[1] * n[1],
+        -n[0] * st + (T::one() - ct) * n[1] * n[2],
+        -n[1] * st + (T::one() - ct) * n[2] * n[0],
+        n[0] * st + (T::one() - ct) * n[2] * n[1],
+        ct + (T::one() - ct) * n[2] * n[2],
+    ]
 }

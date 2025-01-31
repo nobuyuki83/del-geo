@@ -337,6 +337,22 @@ where
     std::array::from_fn(|i| a[i] * b[i])
 }
 
+pub fn add_three_vectors<T>(a: &[T; 3], b: &[T; 3], c: &[T; 3]) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    [a[0] + b[0] + c[0], a[1] + b[1] + c[1], a[2] + b[2] + c[2]]
+}
+
+pub fn sample_unit_cube<Reng, T>(rng: &mut Reng) -> [T; 3]
+where
+    Reng: rand::Rng,
+    T: num_traits::Float,
+    rand::distr::StandardUniform: rand::distr::Distribution<T>,
+{
+    std::array::from_fn(|_i| rng.random())
+}
+
 // ------------------------------------------
 #[derive(Debug, Clone, Copy)]
 pub struct XYZ<'a, Real> {

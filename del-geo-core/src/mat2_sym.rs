@@ -339,9 +339,9 @@ fn test_wdw_projected_spd_mat3() {
         let a_ri_ana = dabcdt[0][3 + i];
         let b_ri_ana = dabcdt[1][3 + i];
         let c_ri_ana = dabcdt[2][3 + i];
-        dbg!(a_ri_diff, a_ri_ana);
-        dbg!(c_ri_diff, c_ri_ana);
-        dbg!(b_ri_diff, b_ri_ana);
+        assert!((a_ri_diff - a_ri_ana).abs() < 1.0e-3 * (a_ri_ana.abs() + 1.0));
+        assert!((c_ri_diff - c_ri_ana).abs() < 1.0e-3 * (c_ri_ana.abs() + 1.0));
+        assert!((b_ri_diff - b_ri_ana).abs() < 1.0e-3 * (b_ri_ana.abs() + 1.0));
     }
 }
 

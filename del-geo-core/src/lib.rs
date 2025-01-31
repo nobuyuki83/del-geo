@@ -27,7 +27,7 @@ pub mod hex;
 pub mod mat2_sym;
 pub mod mat3_row_major;
 pub mod mat3_sym;
-pub mod matn;
+pub mod matn_row_major;
 pub mod obb2;
 pub mod polynomial_root;
 pub mod quaternion;

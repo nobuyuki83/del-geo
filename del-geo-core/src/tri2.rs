@@ -151,3 +151,37 @@ where
         area(p0, p1, p2)
     }
 }
+
+pub fn circumcenter<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> [T; 2]
+where
+    T: num_traits::Float + Copy + std::fmt::Debug,
+{
+    use crate::vec2::Vec2;
+    let a0 = p1.sub(p2).squared_norm();
+    let a1 = p2.sub(p0).squared_norm();
+    let a2 = p0.sub(p1).squared_norm();
+
+    let b0: T = a0 * (a1 + a2 - a0);
+    let b1: T = a1 * (a0 + a2 - a1);
+    let b2: T = a2 * (a0 + a1 - a2);
+    let sum = T::one() / (b0 + b1 + b2);
+
+    let c0 = b0 * sum;
+    let c1 = b1 * sum;
+    let c2 = b2 * sum;
+    [
+        p0[0] * c0 + p1[0] * c1 + p2[0] * c2,
+        p0[1] * c0 + p1[1] * c1 + p2[1] * c2,
+    ]
+}
+
+#[test]
+fn test_circumcenter() {
+    let p0 = [[1.3f64, 2.1], [3.2, 2.1], [1.5, 2.5]];
+    let cc0 = circumcenter(&p0[0], &p0[1], &p0[2]);
+    let d0 = cc0.sub(&p0[0]).squared_norm();
+    let d1 = cc0.sub(&p0[1]).squared_norm();
+    let d2 = cc0.sub(&p0[2]).squared_norm();
+    assert!((d0 - d1).abs() < d0 * 1.0e-10);
+    assert!((d0 - d2).abs() < d0 * 1.0e-10);
+}

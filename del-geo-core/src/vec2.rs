@@ -10,8 +10,8 @@ where
     fn dot(&self, other: &Self) -> Real;
     fn scale(&self, s: Real) -> Self;
     fn orthogonalize(&self, v: &Self) -> Self;
-    fn length(&self) -> Real;
-    fn squared_length(&self) -> Real;
+    fn norm(&self) -> Real;
+    fn squared_norm(&self) -> Real;
 }
 
 impl<Real> Vec2<Real> for [Real; 2]
@@ -36,10 +36,10 @@ where
     fn orthogonalize(&self, v: &Self) -> Self {
         orthogonalize(self, v)
     }
-    fn length(&self) -> Real {
+    fn norm(&self) -> Real {
         length(self)
     }
-    fn squared_length(&self) -> Real {
+    fn squared_norm(&self) -> Real {
         squared_length(self)
     }
 }

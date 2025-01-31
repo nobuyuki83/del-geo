@@ -318,7 +318,7 @@ pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
 where
     Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
 {
-    crate::matn::try_inverse::<Real, 4, 16>(b)
+    crate::matn_row_major::try_inverse::<Real, 4, 16>(b)
 }
 
 /// perspective transformation matrix (column major) compatible with blender
