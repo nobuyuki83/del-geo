@@ -446,6 +446,56 @@ fn test_w_inverse_distance_cubic_integrated_over_wedge() {
     }
 }
 
+pub fn nearest_to_point3<T>(q0: &[T; 3], q1: &[T; 3], q2: &[T; 3], ps: &[T; 3]) -> ([T; 3], T, T)
+where
+    T: num_traits::Float + Copy + 'static,
+    f64: AsPrimitive<T>,
+{
+    use crate::vec3::Vec3;
+    let (n012, _area) = unit_normal_area(q0, q1, q2);
+    let pe = ps.add(&n012);
+    let v012 = crate::tet::volume(ps, q0, q1, q2);
+    if v012.abs() > T::zero() {
+        let v0 = crate::tet::volume(ps, q1, q2, &pe);
+        let v1 = crate::tet::volume(ps, q2, q0, &pe);
+        let v2 = crate::tet::volume(ps, q0, q1, &pe);
+        assert!((v0 + v1 + v2).abs() > T::zero());
+        let inv_v012 = T::one() / (v0 + v1 + v2);
+        let r0 = v0 * inv_v012;
+        let r1 = v1 * inv_v012;
+        let r2 = T::one() - r0 - r1;
+        if r0 >= T::zero() && r1 >= T::zero() && r2 >= T::zero() {
+            let nearp = crate::vec3::add_three_vectors(&q0.scale(r0), &q1.scale(r1), &q2.scale(r2));
+            return (nearp, r0, r1);
+        }
+    }
+    let r12 = crate::edge3::nearest_to_point3(q1, q2, ps);
+    let r20 = crate::edge3::nearest_to_point3(q2, q0, ps);
+    let r01 = crate::edge3::nearest_to_point3(q0, q1, ps);
+    let d12 = r12.0;
+    let d20 = r20.0;
+    let d01 = r01.0;
+    let r12 = q1.add(&q2.sub(q1).scale(r12.1));
+    let r20 = q2.add(&q0.sub(q2).scale(r20.1));
+    let r01 = q0.add(&q1.sub(q0).scale(r01.1));
+    if d12 < d20 {
+        if d12 < d01 {
+            // 12 is the smallest
+            let r0 = T::zero();
+            let r1 = r12.sub(q2).norm() / q1.sub(q2).norm();
+            return (r12, r0, r1);
+        }
+    } else if d20 < d01 {
+        // d20 is the smallest
+        let r0 = r20.sub(q2).norm() / q0.sub(q2).norm();
+        let r1 = T::zero();
+        return (r20, r0, r1);
+    }
+    let r0 = r01.sub(q1).norm() / q0.sub(q1).norm();
+    let r1 = T::one() - r0;
+    (r01, r0, r1)
+}
+
 // -------------------------
 #[derive(Debug, Copy, Clone)]
 pub struct Tri3<'a, Real> {

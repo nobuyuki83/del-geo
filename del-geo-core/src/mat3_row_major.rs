@@ -255,6 +255,9 @@ where
 }
  */
 
+/// Singluar Value Decomposition (SVD)
+/// input = U * S * V^t
+///
 pub fn svd<Real>(
     f: &[Real; 9],
     mode: crate::mat3_sym::EigenDecompositionModes,

@@ -83,7 +83,7 @@ where
     [one, zero, zero, zero, one, zero, v[0], v[1], one]
 }
 
-pub fn from_rotate<Real>(theta: Real) -> [Real; 9]
+pub fn from_rotate_z<Real>(theta: Real) -> [Real; 9]
 where
     Real: num_traits::Float,
 {
@@ -223,6 +223,13 @@ where
 
 pub fn to_mat2x3_col_major_xy(m: &[f32; 9]) -> [f32; 6] {
     [m[0], m[1], m[3], m[4], m[6], m[7]]
+}
+
+pub fn to_columns<T>(a: &[T; 9]) -> ([T; 3], [T; 3], [T; 3])
+where
+    T: num_traits::Float,
+{
+    ([a[0], a[1], a[2]], [a[3], a[4], a[5]], [a[6], a[7], a[8]])
 }
 
 // above: to methods

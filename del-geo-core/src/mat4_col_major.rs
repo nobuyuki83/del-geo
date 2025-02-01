@@ -19,7 +19,7 @@ where
         transform_homogeneous(self, v)
     }
     fn mult_mat(&self, b: &Self) -> Self {
-        mult_mat(self, b)
+        mult_mat_col_major(self, b)
     }
     fn transform_direction(&self, a: &[Real; 3]) -> [Real; 3] {
         transform_direction(self, a)
@@ -113,6 +113,18 @@ where
     [
         c, s, zero, zero, -s, c, zero, zero, zero, zero, one, zero, zero, zero, zero, one,
     ]
+}
+
+/// rotation matrix where x-rotation, y-rotation and z-rotation is applied sequentially
+pub fn from_bryant_angle<Real>(rx: Real, ry: Real, rz: Real) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let x = from_rot_x(rx);
+    let y = from_rot_y(ry);
+    let z = from_rot_z(rz);
+    let yx = mult_mat_col_major(&y, &x);
+    mult_mat_col_major(&z, &yx)
 }
 
 /// transformation converting normalized device coordinate (NDC) `[-1,+1]^3` to pixel coordinate
@@ -378,7 +390,7 @@ where
             -one, zero, zero, zero, zero, -one, zero, zero, zero, zero, -one, zero, zero, zero,
             zero, one,
         ];
-        crate::mat4_col_major::mult_mat(&t0, &cam_zflip)
+        crate::mat4_col_major::mult_mat_col_major(&t0, &cam_zflip)
     }
 }
 
@@ -401,9 +413,9 @@ where
     let rot_x = crate::mat4_col_major::from_rot_x(-cam_rot_x_deg * deg2rad);
     let rot_y = crate::mat4_col_major::from_rot_y(-cam_rot_y_deg * deg2rad);
     let rot_z = crate::mat4_col_major::from_rot_z(-cam_rot_z_deg * deg2rad);
-    let rot_yz = crate::mat4_col_major::mult_mat(&rot_y, &rot_z);
-    let rot_zyx = crate::mat4_col_major::mult_mat(&rot_x, &rot_yz);
-    crate::mat4_col_major::mult_mat(&rot_zyx, &transl)
+    let rot_yz = crate::mat4_col_major::mult_mat_col_major(&rot_y, &rot_z);
+    let rot_zyx = crate::mat4_col_major::mult_mat_col_major(&rot_x, &rot_yz);
+    crate::mat4_col_major::mult_mat_col_major(&rot_zyx, &transl)
 }
 
 pub fn scale<Real>(m: &[Real; 16], s: Real) -> [Real; 16]
@@ -413,15 +425,15 @@ where
     m.map(|x| s * x)
 }
 
-pub fn mult_mat<Real>(a: &[Real; 16], b: &[Real; 16]) -> [Real; 16]
+pub fn mult_mat_col_major<Real>(a: &[Real; 16], b: &[Real; 16]) -> [Real; 16]
 where
-    Real: num_traits::Float + std::ops::AddAssign,
+    Real: num_traits::Float,
 {
     let mut o = [Real::zero(); 16];
     for i in 0..4 {
         for j in 0..4 {
             for k in 0..4 {
-                o[i + j * 4] += a[i + k * 4] * b[k + j * 4];
+                o[i + j * 4] = o[i + j * 4] + a[i + k * 4] * b[k + j * 4];
             }
         }
     }
@@ -434,7 +446,7 @@ fn test_inverse_multmat() {
         1., 3., 4., 8., 3., 5., 5., 2., 5., 7., 8., 9., 8., 4., 5., 0.,
     ];
     let ainv = try_inverse(&a).unwrap();
-    let ainv_a = mult_mat(&ainv, &a);
+    let ainv_a = mult_mat_col_major(&ainv, &a);
     for i in 0..4 {
         for j in 0..4 {
             if i == j {

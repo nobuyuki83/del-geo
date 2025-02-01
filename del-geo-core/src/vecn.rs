@@ -1,25 +1,35 @@
 pub trait VecN<T, const N: usize> {
-    fn add(self, other: &[T; N]) -> Self;
-    fn sub(self, other: &[T; N]) -> Self;
-    fn scale(self, scalar: T) -> Self;
-    fn norm(self) -> T;
+    fn add(&self, other: &[T; N]) -> Self;
+    fn add_in_place(&mut self, other: &[T; N]);
+    fn sub(&self, other: &[T; N]) -> Self;
+    fn scale(&self, scalar: T) -> Self;
+    fn scale_in_place(&mut self, scale: T);
+    fn norm(&self) -> T;
 }
 
 impl<T, const N: usize> VecN<T, N> for [T; N]
 where
     T: num_traits::Float + Copy + std::iter::Sum,
 {
-    fn add(self, other: &[T; N]) -> Self {
+    fn add(&self, other: &[T; N]) -> Self {
         std::array::from_fn(|i| self[i] + other[i])
     }
-    fn sub(self, other: &[T; N]) -> Self {
+    fn add_in_place(&mut self, other: &[T; N]) {
+        for i in 0..N {
+            self[i] = self[i] + other[i]
+        }
+    }
+    fn sub(&self, other: &[T; N]) -> Self {
         std::array::from_fn(|i| self[i] - other[i])
     }
-    fn norm(self) -> T {
+    fn norm(&self) -> T {
         self.iter().map(|&v| v * v).sum::<T>().sqrt()
     }
-    fn scale(self, scalar: T) -> Self {
+    fn scale(&self, scalar: T) -> Self {
         std::array::from_fn(|i| self[i] * scalar)
+    }
+    fn scale_in_place(&mut self, scale: T) {
+        self.iter_mut().for_each(|v| *v = *v * scale);
     }
 }
 
