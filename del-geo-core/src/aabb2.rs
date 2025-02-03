@@ -150,6 +150,28 @@ where
     p0 >= aabb[0] && p0 <= aabb[2] && p1 >= aabb[1] && p1 <= aabb[3]
 }
 
+/// signed distance from axis-aligned bounding box
+/// * `pos_in` - where the signed distance is evaluated
+/// * `x_min` - bounding box's x-coordinate minimum
+/// * `x_max` - bounding box's x-coordinate maximum
+/// * `y_min` - bounding box's y-coordinate minimum
+/// * `y_max` - bounding box's y-coordinate maximum
+/// * signed distance (inside is negative)
+pub fn is_intersect_square<Real>(aabb: &[Real; 4], pos_in: &[Real; 2], rad: Real) -> bool
+where
+    Real: num_traits::Float,
+{
+    let one = Real::one();
+    let half = one / (one + one);
+    let min0 = [aabb[0], aabb[1]];
+    let max0 = [aabb[2], aabb[3]];
+    let x_center = (max0[0] + min0[0]) * half;
+    let y_center = (max0[1] + min0[1]) * half;
+    let x_dist = (pos_in[0] - x_center).abs() - (max0[0] - min0[0]) * half;
+    let y_dist = (pos_in[1] - y_center).abs() - (max0[1] - min0[1]) * half;
+    rad > x_dist.max(y_dist)
+}
+
 pub fn nearest_point2(aabb: &[f32; 4], &[p0, p1]: &[f32; 2]) -> [f32; 2] {
     [p0.clamp(aabb[0], aabb[2]), p1.clamp(aabb[1], aabb[3])]
 }
