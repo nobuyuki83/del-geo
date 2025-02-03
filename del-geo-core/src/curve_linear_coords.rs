@@ -5,7 +5,7 @@ use crate::vec3::Vec3;
 /// covariant to contravariant or contravariant to covariant
 pub fn inverse<T>(gd: &[[T; 3]; 3]) -> [[T; 3]; 3]
 where
-    T: num_traits::Float + std::ops::MulAssign,
+    T: num_traits::Float,
 {
     // contravariant basis vectors
     let mut gu = [[T::zero(); 3]; 3];

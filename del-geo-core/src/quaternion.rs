@@ -15,7 +15,7 @@ where
 }
 impl<Real> Quaternion<Real> for [Real; 4]
 where
-    Real: num_traits::Float + std::ops::MulAssign,
+    Real: num_traits::Float,
 {
     fn to_mat3_col_major(&self) -> [Real; 9] {
         to_mat3_col_major(self)
@@ -179,7 +179,7 @@ where
 /// return rotation around axis with radian
 pub fn around_axis<Real>(a: &[Real; 3], rad: Real) -> [Real; 4]
 where
-    Real: num_traits::Float + std::ops::MulAssign,
+    Real: num_traits::Float,
 {
     let v = a.normalize();
     let half = rad / Real::from(2).unwrap();

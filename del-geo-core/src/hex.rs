@@ -5,7 +5,7 @@ pub fn shapefunc<Real>(
     r2: Real,
 ) -> ([Real; 8], [[Real; 3]; 8], Real)
 where
-    Real: num_traits::Float + std::ops::AddAssign,
+    Real: num_traits::Float,
 {
     let one = Real::one();
     let two = one + one;
@@ -73,20 +73,16 @@ pub fn grad_shapefunc_from_dndr<Real>(
     dndr: &[[Real; 3]; 8],
 ) -> ([[Real; 3]; 8], Real)
 where
-    Real: num_traits::Float + std::ops::AddAssign,
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let mut dxdr = [[zero; 3]; 3];
     for inode in 0..8 {
-        dxdr[0][0] += node2xyz[inode][0] * dndr[inode][0];
-        dxdr[0][1] += node2xyz[inode][0] * dndr[inode][1];
-        dxdr[0][2] += node2xyz[inode][0] * dndr[inode][2];
-        dxdr[1][0] += node2xyz[inode][1] * dndr[inode][0];
-        dxdr[1][1] += node2xyz[inode][1] * dndr[inode][1];
-        dxdr[1][2] += node2xyz[inode][1] * dndr[inode][2];
-        dxdr[2][0] += node2xyz[inode][2] * dndr[inode][0];
-        dxdr[2][1] += node2xyz[inode][2] * dndr[inode][1];
-        dxdr[2][2] += node2xyz[inode][2] * dndr[inode][2];
+        for idim in 0..3 {
+            for jdim in 0..3 {
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[inode][idim] * dndr[inode][jdim];
+            }
+        }
     }
 
     let detjac = dxdr[0][0] * dxdr[1][1] * dxdr[2][2]
@@ -137,7 +133,7 @@ pub fn grad_shapefunc<Real>(
     ir3: usize,
 ) -> ([[Real; 3]; 8], Real)
 where
-    Real: num_traits::Float + std::ops::AddAssign,
+    Real: num_traits::Float,
 {
     let r1 = quadrature[ir1][0];
     let r2 = quadrature[ir2][0];

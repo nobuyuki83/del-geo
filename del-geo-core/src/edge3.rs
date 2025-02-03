@@ -10,7 +10,7 @@ pub trait Edge3Trait<T> {
 
 impl<Real> Edge3Trait<Real> for [Real; 3]
 where
-    Real: num_traits::Float + 'static + std::ops::MulAssign,
+    Real: num_traits::Float + 'static,
     f64: AsPrimitive<Real>,
 {
     fn length(&self, other: &Self) -> Real {

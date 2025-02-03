@@ -12,7 +12,7 @@ pub trait OBB3Trait<T> {
 }
 impl<Real> OBB3Trait<Real> for [Real; 12]
 where
-    Real: num_traits::Float + std::ops::MulAssign,
+    Real: num_traits::Float,
 {
     fn is_include_point(&self, p: &[Real; 3], eps: Real) -> bool {
         is_include_point(self, p, eps)
@@ -28,7 +28,7 @@ where
 pub fn from_random<RAND, Real>(reng: &mut RAND) -> [Real; 12]
 where
     RAND: rand::Rng,
-    Real: num_traits::Float + std::ops::MulAssign,
+    Real: num_traits::Float,
     rand::distr::StandardUniform: rand::distr::Distribution<Real>,
 {
     let one = Real::one();
@@ -98,7 +98,7 @@ where
 /// Projection of an OBB at axis, return (min,max)
 fn range_axis<Real, const N: usize>(ps: &[[Real; 3]; N], axis: &[Real; 3]) -> (Real, Real)
 where
-    Real: num_traits::Float + std::ops::MulAssign,
+    Real: num_traits::Float,
 {
     let min0 = ps
         .iter()
@@ -167,21 +167,19 @@ where
 
 pub fn nearest_to_point3<Real>(obb: &[Real; 12], p: &[Real; 3]) -> [Real; 3]
 where
-    Real: num_traits::Float + std::ops::MulAssign,
+    Real: num_traits::Float,
 {
     if obb.is_include_point(p, Real::zero()) {
         return *p;
     }
     let (axes, hlen) = obb.unit_axes_and_half_edge_lengths();
-    let d = [p[0] - obb[0], p[1] - obb[1], p[2] - obb[2]];
-    let t0 = axes[0].dot(&d).clamp(-hlen[0], hlen[0]);
-    let t1 = axes[1].dot(&d).clamp(-hlen[1], hlen[1]);
-    let t2 = axes[2].dot(&d).clamp(-hlen[2], hlen[2]);
-    [
-        obb[0] + t0 * axes[0][0] + t1 * axes[1][0] + t2 * axes[2][0],
-        obb[1] + t0 * axes[0][1] + t1 * axes[1][1] + t2 * axes[2][1],
-        obb[2] + t0 * axes[0][2] + t1 * axes[1][2] + t2 * axes[2][2],
-    ]
+    let d = p.sub(obb[..3].try_into().unwrap());
+    let [t0, t1, t2] = std::array::from_fn::<_, 3, _>(|i| axes[i].dot(&d).clamp(-hlen[i], hlen[i]));
+    axes[0]
+        .scale(t0)
+        .add(&axes[1].scale(t1))
+        .add(&axes[2].scale(t2))
+        .add(&obb[..3].try_into().unwrap())
 }
 
 #[test]
@@ -207,7 +205,7 @@ fn test_nearest_to_point3() {
 /// Use Separating Axis Theorem (SAT) to check if two OBBs are intersected
 pub fn is_intersect_to_obb3<Real>(obb_i: &[Real; 12], obb_j: &[Real; 12]) -> bool
 where
-    Real: num_traits::Float + std::fmt::Debug + std::ops::MulAssign,
+    Real: num_traits::Float + std::fmt::Debug,
 {
     let axes = {
         let (axes_i, _) = obb_i.unit_axes_and_half_edge_lengths();
