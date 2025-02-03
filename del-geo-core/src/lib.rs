@@ -1,3 +1,4 @@
+#![allow(clippy::needless_range_loop)]
 /*
 vec < mat < aabb < obb <
 line < ray < edge <

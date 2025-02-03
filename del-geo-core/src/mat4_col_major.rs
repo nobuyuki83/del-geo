@@ -13,7 +13,7 @@ where
 
 impl<Real> Mat4ColMajor<Real> for [Real; 16]
 where
-    Real: num_traits::Float + AddAssign + std::ops::MulAssign + std::ops::SubAssign,
+    Real: num_traits::Float,
 {
     fn transform_homogeneous(&self, v: &[Real; 3]) -> Option<[Real; 3]> {
         transform_homogeneous(self, v)
@@ -31,7 +31,6 @@ where
 
 use crate::aabb3::max_edge_size;
 use num_traits::AsPrimitive;
-use std::ops::AddAssign;
 
 pub fn from_identity<Real>() -> [Real; 16]
 where
@@ -328,7 +327,7 @@ where
 
 pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
 where
-    Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
+    Real: num_traits::Float,
 {
     crate::matn_row_major::try_inverse::<Real, 4, 16>(b)
 }
@@ -349,7 +348,7 @@ pub fn camera_perspective_blender<Real>(
     proj_direction: bool,
 ) -> [Real; 16]
 where
-    Real: num_traits::Float + 'static + std::ops::AddAssign,
+    Real: num_traits::Float + 'static,
     f64: AsPrimitive<Real>,
 {
     if proj_direction {
@@ -401,7 +400,7 @@ pub fn camera_external_blender<Real>(
     cam_rot_z_deg: Real,
 ) -> [Real; 16]
 where
-    Real: num_traits::Float + num_traits::FloatConst + 'static + AddAssign,
+    Real: num_traits::Float + num_traits::FloatConst + 'static,
     f64: AsPrimitive<Real>,
 {
     let deg2rad: Real = Real::PI() / 180.0.as_();

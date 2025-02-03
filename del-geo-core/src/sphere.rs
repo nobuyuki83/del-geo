@@ -1,6 +1,6 @@
 pub fn intersection_ray<T>(rad: T, center: &[T; 3], ray_src: &[T; 3], ray_dir: &[T; 3]) -> Option<T>
 where
-    T: num_traits::Float + Copy + std::ops::MulAssign,
+    T: num_traits::Float,
 {
     use crate::vec3::Vec3;
     // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
@@ -39,6 +39,7 @@ pub fn sample_where_another_sphere_is_visible(
     pos_light_center: &[f32; 3],
     unirand: &[f32; 2],
 ) -> ([f32; 3], f32) {
+    use crate::mat3_col_major::Mat3ColMajor;
     use crate::vec3::Vec3;
     let sin_theta_max_squared = rad_light * rad_light / pos_light_center.squared_norm();
     assert!((0f32..=1f32).contains(&sin_theta_max_squared));
@@ -57,7 +58,7 @@ pub fn sample_where_another_sphere_is_visible(
     // sample unit sphere assuming that the other light is in the z-axis direction
     let dir_lcl = [sin_theta * phi.cos(), sin_theta * phi.sin(), cos_theta];
     let mat3 = crate::mat3_col_major::transform_lcl2world_given_local_z(pos_light_center);
-    let dir_world = crate::mat3_col_major::mult_vec(&mat3, &dir_lcl);
+    let dir_world = mat3.mult_vec(&dir_lcl);
     let pdf = 1f32 / (2f32 * std::f32::consts::PI * (1f32 - cos_theta_max));
     (dir_world, pdf)
 }

@@ -2,7 +2,7 @@
 
 pub fn try_inverse<Real, const N: usize, const NN: usize>(b: &[Real; NN]) -> Option<[Real; NN]>
 where
-    Real: num_traits::Float + std::ops::MulAssign + std::ops::SubAssign,
+    Real: num_traits::Float,
 {
     let mut a = *b;
     for i in 0..N {
@@ -13,7 +13,7 @@ where
             let tmp1 = Real::one() / a[i * N + i];
             a[i * N + i] = Real::one();
             for k in 0..N {
-                a[i * N + k] *= tmp1;
+                a[i * N + k] = a[i * N + k] * tmp1;
             }
         }
         for j in 0..N {
@@ -23,7 +23,7 @@ where
             let tmp2 = a[j * N + i];
             a[j * N + i] = Real::zero();
             for k in 0..N {
-                a[j * N + k] -= tmp2 * a[i * N + k];
+                a[j * N + k] = a[j * N + k] - tmp2 * a[i * N + k];
             }
         }
     }
