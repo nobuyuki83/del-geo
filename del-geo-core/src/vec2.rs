@@ -12,6 +12,7 @@ where
     fn orthogonalize(&self, v: &Self) -> Self;
     fn norm(&self) -> Real;
     fn squared_norm(&self) -> Real;
+    fn aabb(&self) -> [Real; 4];
 }
 
 impl<Real> Vec2<Real> for [Real; 2]
@@ -42,6 +43,18 @@ where
     fn squared_norm(&self) -> Real {
         squared_length(self)
     }
+    fn aabb(&self) -> [Real; 4] {
+        aabb(self)
+    }
+}
+
+pub fn basis<T>(i_dim: usize, eps: T) -> [T; 2]
+where
+    T: num_traits::Float,
+{
+    let mut b = [T::zero(); 2];
+    b[i_dim] = eps;
+    b
 }
 
 pub fn length<Real>(p: &[Real; 2]) -> Real
@@ -72,7 +85,14 @@ where
     std::array::from_fn(|i| a[i] + b[i])
 }
 
-pub fn add_three_vectors<T>(a: &[T; 2], b: &[T; 2], c: &[T; 2]) -> [T; 2]
+pub fn rotate90<T>(v: &[T; 2]) -> [T; 2]
+where
+    T: num_traits::Float + Copy,
+{
+    [-v[1], v[0]]
+}
+
+pub fn add_three<T>(a: &[T; 2], b: &[T; 2], c: &[T; 2]) -> [T; 2]
 where
     T: num_traits::Float,
 {
@@ -193,18 +213,49 @@ where
     x.scale(alpha).add(y)
 }
 
+pub fn aabb<T>(p: &[T; 2]) -> [T; 4]
+where
+    T: num_traits::Float,
+{
+    [p[0], p[1], p[0], p[1]]
+}
+
 // -------------------------------
 // below: about the Vec2 class
 #[derive(Debug, Clone, Copy)]
-pub struct XY<'a, Real> {
-    pub p: &'a [Real; 2],
+pub struct XY<Real> {
+    pub p: [Real; 2],
 }
 
-impl<Real> XY<'_, Real>
+impl<Real> XY<Real>
 where
     Real: num_traits::Float,
 {
-    pub fn aabb(&self) -> [Real; 4] {
-        [self.p[0], self.p[1], self.p[0], self.p[1]]
+    pub fn new(p: [Real; 2]) -> Self {
+        Self { p }
+    }
+}
+
+impl<Real> std::ops::Add<XY<Real>> for XY<Real>
+where
+    Real: num_traits::Float,
+{
+    type Output = XY<Real>;
+    fn add(self, rhs: Self) -> XY<Real> {
+        XY {
+            p: std::array::from_fn(|i| self.p[i] + rhs.p[i]),
+        }
+    }
+}
+
+impl<Real> std::ops::Sub<XY<Real>> for XY<Real>
+where
+    Real: num_traits::Float,
+{
+    type Output = XY<Real>;
+    fn sub(self, rhs: Self) -> XY<Real> {
+        XY {
+            p: std::array::from_fn(|i| self.p[i] - rhs.p[i]),
+        }
     }
 }

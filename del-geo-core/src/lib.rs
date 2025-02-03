@@ -22,11 +22,14 @@ pub mod vec2;
 pub mod vec3;
 //
 pub mod bezier_cubic;
+pub mod bezier_quadratic;
 pub mod ccd3;
 pub mod edge;
 pub mod edge2;
 pub mod edge3;
 pub mod hex;
+pub mod line2;
+pub mod mat2_col_major;
 pub mod mat2_sym;
 pub mod mat3_row_major;
 pub mod mat3_sym;

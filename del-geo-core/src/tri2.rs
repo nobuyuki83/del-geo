@@ -1,5 +1,6 @@
 //! methods for 2D triangle
 
+use crate::mat2_col_major::add_four;
 use crate::vec2::Vec2;
 
 pub fn area<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> T
@@ -184,4 +185,152 @@ fn test_circumcenter() {
     let d2 = cc0.sub(&p0[2]).squared_norm();
     assert!((d0 - d1).abs() < d0 * 1.0e-10);
     assert!((d0 - d2).abs() < d0 * 1.0e-10);
+}
+
+pub fn wdw_circumcenter<T>(p0: &[T; 2], p1: &[T; 2], p2: &[T; 2]) -> ([T; 2], [[T; 4]; 3])
+where
+    T: num_traits::Float + Copy + std::fmt::Debug + num_traits::Float,
+{
+    use crate::vec2::Vec2;
+    use crate::vec2::XY;
+    let p0 = XY { p: *p0 };
+    let p1 = XY { p: *p1 };
+    let p2 = XY { p: *p2 };
+    let a0 = (p1 - p2).p.squared_norm();
+    let a1 = (p2 - p0).p.squared_norm();
+    let a2 = (p0 - p1).p.squared_norm();
+    //
+    let b0: T = a0 * (a1 + a2 - a0);
+    let b1: T = a1 * (a2 + a0 - a1);
+    let b2: T = a2 * (a0 + a1 - a2);
+    //
+    let sum = b0 + b1 + b2;
+    let sum_inv = T::one() / sum;
+    //
+    let c0 = b0 * sum_inv;
+    let c1 = b1 * sum_inv;
+    let c2 = b2 * sum_inv;
+    let cc = crate::vec2::add_three(&p0.p.scale(c0), &p1.p.scale(c1), &p2.p.scale(c2));
+    // -----------------
+    let two = T::one() + T::one();
+    let db0 = [
+        (p0 - p2 + p0 - p1).p.scale(two * a0),
+        crate::vec2::add(
+            &((p1 - p0 + p2 - p1).p.scale(two * a0)),
+            &(p1 - p2).p.scale(two * (a1 + a2 - a0)),
+        ),
+        crate::vec2::add(
+            &((p2 - p0 + p1 - p2).p.scale(two * a0)),
+            &(p2 - p1).p.scale(two * (a1 + a2 - a0)),
+        ),
+    ];
+    let db1 = [
+        crate::vec2::add(
+            &(p0 - p1 + p2 - p0).p.scale(two * a1),
+            &(p0 - p2).p.scale(two * (a2 + a0 - a1)),
+        ),
+        (p1 - p0 + p1 - p2).p.scale(two * a1),
+        crate::vec2::add(
+            &(p2 - p1 + p0 - p2).p.scale(two * a1),
+            &(p2 - p0).p.scale(two * (a2 + a0 - a1)),
+        ),
+    ];
+    let db2 = [
+        crate::vec2::add(
+            &(p0 - p2 + p1 - p0).p.scale(two * a2),
+            &(p0 - p1).p.scale(two * (a0 + a1 - a2)),
+        ),
+        crate::vec2::add(
+            &(p1 - p2 + p0 - p1).p.scale(two * a2),
+            &(p1 - p0).p.scale(two * (a0 + a1 - a2)),
+        ),
+        (p2 - p1 + p2 - p0).p.scale(two * a2),
+    ];
+    let tmp = -T::one() / (sum * sum);
+    let dsum_inv = [
+        crate::vec2::add_three(&db0[0], &db1[0], &db2[0]).scale(tmp),
+        crate::vec2::add_three(&db0[1], &db1[1], &db2[1]).scale(tmp),
+        crate::vec2::add_three(&db0[2], &db1[2], &db2[2]).scale(tmp),
+    ];
+    //
+    use crate::mat2_col_major::{from_identity, from_outer_product, Mat2ColMajor};
+    use crate::vec2;
+    let dcc = [
+        add_four(
+            &from_identity().scale(c0),
+            &from_outer_product(
+                &p0.p,
+                &vec2::add(&db0[0].scale(sum_inv), &dsum_inv[0].scale(b0)),
+            ),
+            &from_outer_product(
+                &p1.p,
+                &vec2::add(&db1[0].scale(sum_inv), &dsum_inv[0].scale(b1)),
+            ),
+            &from_outer_product(
+                &p2.p,
+                &vec2::add(&db2[0].scale(sum_inv), &dsum_inv[0].scale(b2)),
+            ),
+        ),
+        add_four(
+            &from_identity().scale(c1),
+            &from_outer_product(
+                &p0.p,
+                &vec2::add(&db0[1].scale(sum_inv), &dsum_inv[1].scale(b0)),
+            ),
+            &from_outer_product(
+                &p1.p,
+                &vec2::add(&db1[1].scale(sum_inv), &dsum_inv[1].scale(b1)),
+            ),
+            &from_outer_product(
+                &p2.p,
+                &vec2::add(&db2[1].scale(sum_inv), &dsum_inv[1].scale(b2)),
+            ),
+        ),
+        add_four(
+            &from_identity().scale(c2),
+            &from_outer_product(
+                &p0.p,
+                &vec2::add(&db0[2].scale(sum_inv), &dsum_inv[2].scale(b0)),
+            ),
+            &from_outer_product(
+                &p1.p,
+                &vec2::add(&db1[2].scale(sum_inv), &dsum_inv[2].scale(b1)),
+            ),
+            &from_outer_product(
+                &p2.p,
+                &vec2::add(&db2[2].scale(sum_inv), &dsum_inv[2].scale(b2)),
+            ),
+        ),
+    ];
+
+    (cc, dcc)
+}
+
+#[test]
+fn test_dw_circumcenter() {
+    let p0 = [[0.1, 0.2], [1.3, 0.2], [0.3, 1.5]];
+    let (cc0, dcc0) = wdw_circumcenter(&p0[0], &p0[1], &p0[2]);
+    let eps = 1.0e-4;
+    for i_node in 0..3 {
+        for i_dim in 0..2 {
+            let p1 = {
+                let mut p1 = p0;
+                p1[i_node][i_dim] += eps;
+                p1
+            };
+            let (cc1, _dcc1) = wdw_circumcenter(&p1[0], &p1[1], &p1[2]);
+            let dcc_num = cc1.sub(&cc0).scale(1. / eps);
+            let mut b = [0f64; 2];
+            b[i_dim] = 1.0;
+            let dcc_ana = crate::mat2_col_major::mult_vec(&dcc0[i_node], &b);
+            let diff = dcc_num.sub(&dcc_ana).norm();
+            /*
+            println!(
+                "{}, {} --> {:?}, {:?}, {:?}",
+                i_node, i_dim, dcc_num, dcc_ana, diff
+            );
+             */
+            assert!(diff < 1.0e-4);
+        }
+    }
 }
