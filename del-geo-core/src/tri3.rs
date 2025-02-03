@@ -496,6 +496,146 @@ where
     (r01, r0, r1)
 }
 
+/// if the triangle share a point, set the point as `p0` and `q0`
+pub fn is_intersection_tri3<T>(
+    p0: &[T; 3],
+    p1: &[T; 3],
+    p2: &[T; 3],
+    q0: &[T; 3],
+    q1: &[T; 3],
+    q2: &[T; 3],
+) -> Option<([T; 3], [T; 3])>
+where
+    T: num_traits::Float + Copy,
+{
+    use crate::vec3::Vec3;
+    let sec = |p0: &[T; 3], p1: &[T; 3], dp0: T, dp1: T| {
+        let r1 = dp0 / (dp0 - dp1);
+        let r0 = T::one() - r1;
+        p0.scale(r0).add(&p1.scale(r1))
+    };
+    let sgn = |v: T| {
+        if v == T::zero() {
+            1
+        } else if v < T::zero() {
+            0
+        } else {
+            2
+        }
+    };
+    let nq = normal(q0, q1, q2);
+    // heights of (p0,p1,p2) against the plane span by (q0,q1,q2)
+    let np = normal(p0, p1, p2);
+    // dbg!(p0,p1,p2,q0,q1,q2);
+    let vz = np.cross(&nq);
+    //
+    let (ps, pe) = {
+        let dp0 = p0.sub(q0).dot(&nq);
+        let dp1 = p1.sub(q0).dot(&nq);
+        let dp2 = p2.sub(q0).dot(&nq);
+        let (sp0, sp1, sp2) = (sgn(dp0), sgn(dp1), sgn(dp2));
+        if sp0 == 0 && sp1 == 0 && sp2 == 0 {
+            return None;
+        } // all negative side
+        if sp0 == 2 && sp1 == 2 && sp2 == 2 {
+            return None;
+        } // all positive side
+        if sp0 + sp1 + sp2 == 1 || sp0 + sp1 + sp2 == 5 {
+            return None;
+        } // sharing point but not intersecting
+        if sp0 == 1 && sp1 == 1 && sp2 == 1 {
+            return None;
+        } // degenerate case inside same plane
+          // intersection of the lines connecting (p0,p1),(p1,p2),(p2,p0) and the plane span by (q0,q1,q2)
+        let mut ap = Vec::<[T; 3]>::with_capacity(2);
+        if (sp0 == 0 && sp1 == 2) || (sp0 == 2 && sp1 == 0) {
+            ap.push(sec(p0, p1, dp0, dp1));
+        }
+        if (sp1 == 0 && sp2 == 2) || (sp1 == 2 && sp2 == 0) {
+            ap.push(sec(p1, p2, dp1, dp2));
+        }
+        if (sp2 == 0 && sp0 == 2) || (sp2 == 2 && sp0 == 0) {
+            ap.push(sec(p2, p0, dp2, dp0));
+        }
+        if sp0 == 1 {
+            ap.push(*p0);
+        }
+        if sp1 == 1 {
+            ap.push(*p1);
+        }
+        if sp2 == 1 {
+            ap.push(*p2);
+        }
+        assert_eq!(ap.len(), 2);
+        (ap[0], ap[1])
+    };
+    let zps = ps.dot(&vz);
+    let zpe = pe.dot(&vz);
+    let (ps, pe, zps, zpe) = if zps > zpe {
+        (pe, ps, zpe, zps)
+    } else {
+        (ps, pe, zps, zpe)
+    };
+    assert!(zps <= zpe);
+    //
+    let (qs, qe) = {
+        // intersection line between triangle p and plane span by (q0,q1,q2)
+        let dq0 = q0.sub(p0).dot(&np); // projection of q0
+        let dq1 = q1.sub(p0).dot(&np); // projection of q1
+        let dq2 = q2.sub(p0).dot(&np); // projection of q2
+        let (sq0, sq1, sq2) = (sgn(dq0), sgn(dq1), sgn(dq2));
+        if sq0 == 0 && sq1 == 0 && sq2 == 0 {
+            return None;
+        }
+        if sq0 == 2 && sq1 == 2 && sq2 == 2 {
+            return None;
+        }
+        if sq0 + sq1 + sq2 == 1 || sq0 + sq1 + sq2 == 5 {
+            return None;
+        } // sharing point
+        if sq0 == 1 && sq1 == 1 && sq2 == 1 {
+            return None;
+        }
+        // intersection of the lines connecting (q0,q1),(q1,q2),(q2,q0) and the plane span by (p0,p1,p2)
+        let mut aq = Vec::<[T; 3]>::with_capacity(2);
+        if (sq0 == 0 && sq1 == 2) || (sq0 == 2 && sq1 == 0) {
+            aq.push(sec(q0, q1, dq0, dq1));
+        }
+        if (sq1 == 0 && sq2 == 2) || (sq1 == 2 && sq2 == 0) {
+            aq.push(sec(q1, q2, dq1, dq2));
+        }
+        if (sq2 == 0 && sq0 == 2) || (sq2 == 2 && sq0 == 0) {
+            aq.push(sec(q2, q0, dq2, dq0));
+        }
+        if sq0 == 1 {
+            aq.push(*q0);
+        }
+        if sq1 == 1 {
+            aq.push(*q1);
+        }
+        if sq2 == 1 {
+            aq.push(*q2);
+        }
+        assert_eq!(aq.len(), 2);
+        (aq[0], aq[1])
+    };
+    let zqs = qs.dot(&vz);
+    let zqe = qe.dot(&vz);
+    let (qs, qe, zqs, zqe) = if zqs > zqe {
+        (qe, qs, zqe, zqs)
+    } else {
+        (qs, qe, zqs, zqe)
+    };
+    assert!(zqs <= zqe);
+    //
+    if zps >= zqe || zqs >= zpe {
+        return None;
+    } // no overlap or overlap at point
+    let s = if zps < zqs { qs } else { ps };
+    let e = if zpe < zqe { pe } else { qe };
+    Some((s, e))
+}
+
 // -------------------------
 #[derive(Debug, Copy, Clone)]
 pub struct Tri3<'a, Real> {

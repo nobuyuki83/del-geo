@@ -20,6 +20,8 @@ pub mod obb3;
 pub mod vec2;
 pub mod vec3;
 //
+pub mod bezier_cubic;
+pub mod ccd3;
 pub mod edge;
 pub mod edge2;
 pub mod edge3;

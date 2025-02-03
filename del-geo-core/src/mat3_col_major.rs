@@ -44,9 +44,6 @@ where
     }
 }
 
-use crate::vec3::basis_xy_from_basis_z;
-use itertools::Itertools;
-use num_traits::AsPrimitive;
 // --------------------------------------------------
 // below from methods
 
@@ -126,6 +123,23 @@ pub fn from_transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
     ]
 }
 
+pub fn from_outer_product<T>(a: &[T; 3], b: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    [
+        a[0] * b[0],
+        a[1] * b[0],
+        a[2] * b[0],
+        a[0] * b[1],
+        a[1] * b[1],
+        a[2] * b[1],
+        a[0] * b[2],
+        a[1] * b[2],
+        a[2] * b[2],
+    ]
+}
+
 // above: from methods
 // ---------------------------------------------
 // below: to methods
@@ -156,6 +170,7 @@ where
     ];
 
     let dias = [smat[0], smat[5], smat[10], smat[15]];
+    use itertools::Itertools;
     let imax = dias
         .iter()
         .position_max_by(|x, y| x.partial_cmp(y).unwrap())
@@ -234,6 +249,13 @@ where
 
 // above: to methods
 // ---------------------------------------------
+
+pub fn add<T>(a: &[T; 9], b: &[T; 9]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    std::array::from_fn(|i| a[i] + b[i])
+}
 
 pub fn try_inverse<T>(b: &[T; 9]) -> Option<[T; 9]>
 where
@@ -381,21 +403,21 @@ pub fn transform_lcl2world_given_local_z(n: &[f32; 3]) -> [f32; 9] {
 
 pub fn minimum_rotation_matrix<T>(v0: &[T; 3], v1: &[T; 3]) -> [T; 9]
 where
-    T: num_traits::Float + 'static + Copy,
-    f64: num_traits::AsPrimitive<T>,
+    T: num_traits::Float,
 {
     use crate::vec3::Vec3;
+    let one = T::one();
+    let half = one / (one + one);
     let ep = v0.normalize();
     let eq = v1.normalize();
     let n = ep.cross(&eq);
     let st2 = n.dot(&n);
     let ct = ep.dot(&eq);
-    let half = 0.5_f64.as_();
 
-    if st2 < 1.0e-8_f64.as_() {
+    if st2 < T::epsilon() {
         // very small angle or n is zero
         // inifinitesimal rotation
-        if ct > 0.99_f64.as_() {
+        if ct > one - T::epsilon() {
             return [
                 T::one() + half * (n[0] * n[0] - st2),
                 -n[2] + half * (n[0] * n[1]),
@@ -408,7 +430,7 @@ where
                 T::one() + half * (n[2] * n[2] - st2),
             ];
         } else {
-            let (epx, epy) = basis_xy_from_basis_z(&ep);
+            let (epx, epy) = crate::vec3::basis_xy_from_basis_z(&ep);
             let eqx = epx.sub(&eq.scale(eq.dot(&epx))); // vector orthogonal to eq
             let eqy = eq.cross(&eqx);
             return [

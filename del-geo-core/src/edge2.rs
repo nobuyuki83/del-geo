@@ -1,22 +1,45 @@
 //! methods for 2D edge (line segment)
 
-use crate::vec2::Vec2;
 use num_traits::AsPrimitive;
+
 pub fn length<T>(ps: &[T; 2], pe: &[T; 2]) -> T
 where
     T: num_traits::Float,
 {
+    use crate::vec2::Vec2;
     let [dx, dy] = ps.sub(pe);
     (dx * dx + dy * dy).sqrt()
+}
+
+pub fn squared_length<T>(ps: &[T; 2], pe: &[T; 2]) -> T
+where
+    T: num_traits::Float,
+{
+    use crate::vec2::Vec2;
+    let [dx, dy] = ps.sub(pe);
+    dx * dx + dy * dy
 }
 
 pub fn unit_edge_vector<T>(ps: &[T; 2], pe: &[T; 2]) -> [T; 2]
 where
     T: num_traits::Float,
 {
+    use crate::vec2::Vec2;
     let [dx, dy] = pe.sub(ps);
     let linv: T = T::one() / (dx * dx + dy * dy).sqrt();
     [dx * linv, dy * linv]
+}
+
+/// `ratio==0` should output `p0`
+pub fn position_from_ratio<T>(p0: &[T; 2], p1: &[T; 2], ratio: T) -> [T; 2]
+where
+    T: num_traits::Float,
+{
+    let one = T::one();
+    [
+        (one - ratio) * p0[0] + ratio * p1[0],
+        (one - ratio) * p0[1] + ratio * p1[1],
+    ]
 }
 
 pub fn culling_intersection<T>(
@@ -88,6 +111,7 @@ fn test_intersection_edge2() {
     let Some((r0, r1)) = intersection_edge2(&s0, &e0, &s1, &e1) else {
         panic!()
     };
+    use crate::vec2::Vec2;
     let p0 = crate::vec2::axpy(r0, &e0.sub(&s0), &s0);
     let p1 = crate::vec2::axpy(r1, &e1.sub(&s1), &s1);
     assert!(length(&p0, &[0.1, 0.0]) < 1.0e-5);
@@ -125,6 +149,7 @@ where
     let (dlds0_2, dlde0_2, dlde1_2) = crate::tri2::dldw_area(s0, e0, e1, dlda2);
     let (dlds1_3, dlde1_3, dlds0_3) = crate::tri2::dldw_area(s1, e1, s0, dlda3);
     let (dlds1_4, dlde1_4, dlde0_4) = crate::tri2::dldw_area(s1, e1, e0, dlda4);
+    use crate::vec2::Vec2;
     (
         dlds0_1.add(&dlds0_2).add(&dlds0_3),
         dlde0_1.add(&dlde0_2).add(&dlde0_4),
@@ -164,6 +189,7 @@ pub fn winding_number<T>(ps: &[T; 2], pe: &[T; 2], po: &[T; 2]) -> T
 where
     T: num_traits::Float + num_traits::FloatConst,
 {
+    use crate::vec2::Vec2;
     let half = T::one() / (T::one() + T::one());
     let p0 = ps.sub(po);
     let p1 = pe.sub(po);
@@ -179,6 +205,7 @@ where
     T: num_traits::Float + 'static,
     f64: AsPrimitive<T>,
 {
+    use crate::vec2::Vec2;
     let d = pe.sub(ps);
     let a = d.squared_norm();
     if a.is_zero() {
@@ -198,6 +225,7 @@ where
 #[test]
 fn test_nearest_origin() {
     let (_r, pm) = nearest_origin(&[-0.1, 1.0], &[1.0, 1.0]);
+    use crate::vec2::Vec2;
     assert!(pm.sub(&[0., 1.]).norm() < 1.0e-5);
 }
 
@@ -212,6 +240,7 @@ where
     T: num_traits::Float + 'static,
     f64: AsPrimitive<T>,
 {
+    use crate::vec2::Vec2;
     let (r, p0) = nearest_origin(&s.sub(p), &e.sub(p));
     (r, [p0[0] + p[0], p0[1] + p[1]])
 }
@@ -219,6 +248,7 @@ where
 #[test]
 fn test_nearest_point2() {
     let (_r, pm) = nearest_point2(&[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
+    use crate::vec2::Vec2;
     assert!(pm.sub(&[0., 1.]).norm() < 1.0e-5);
 }
 

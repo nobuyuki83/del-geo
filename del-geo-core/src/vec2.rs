@@ -72,6 +72,13 @@ where
     std::array::from_fn(|i| a[i] + b[i])
 }
 
+pub fn add_three_vectors<T>(a: &[T; 2], b: &[T; 2], c: &[T; 2]) -> [T; 2]
+where
+    T: num_traits::Float,
+{
+    [a[0] + b[0] + c[0], a[1] + b[1] + c[1]]
+}
+
 pub fn scale<T>(a: &[T; 2], s: T) -> [T; 2]
 where
     T: num_traits::Float,

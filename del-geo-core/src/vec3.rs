@@ -7,6 +7,7 @@ where
 {
     fn normalize(&self) -> Self;
     fn scale(&self, s: Real) -> Self;
+    fn scale_in_place(&mut self, s: Real);
     fn norm(&self) -> Real;
     fn squared_norm(&self) -> Real;
     fn dot(&self, other: &Self) -> Real;
@@ -31,6 +32,9 @@ where
     }
     fn scale(&self, s: Real) -> Self {
         scale(self, s)
+    }
+    fn scale_in_place(&mut self, s: Real) {
+        scale_in_place(self, s)
     }
     fn squared_norm(&self) -> Real {
         squared_norm(self)

@@ -46,7 +46,7 @@ where
     x * x + y * y + z * z
 }
 
-/// `ratio==1` should output `p0`
+/// `ratio==0` should output `p0`
 pub fn position_from_ratio<T>(p0: &[T; 3], p1: &[T; 3], ratio: T) -> [T; 3]
 where
     T: num_traits::Float,
@@ -302,4 +302,43 @@ fn test_nearest_to_edge3() {
         assert!(dist <= pc2.sub(&qc1).norm());
         assert!(dist <= pc2.sub(&qc2).norm());
     }
+}
+
+/// the two edges need to be co-planar
+pub fn intersection_edge3_when_coplanar<T>(
+    p0: &[T; 3],
+    p1: &[T; 3],
+    q0: &[T; 3],
+    q1: &[T; 3],
+) -> Option<(T, T, T, T)>
+where
+    T: num_traits::Float + Copy + 'static,
+    f64: AsPrimitive<T>,
+{
+    use crate::vec3::Vec3;
+    let n = {
+        let n0 = p1.sub(p0).cross(&q0.sub(p0));
+        let n1 = p1.sub(p0).cross(&q1.sub(p0));
+        if n0.squared_norm() < n1.squared_norm() {
+            n1
+        } else {
+            n0
+        }
+    };
+    let p2 = p0.add(&n);
+    let rq1 = crate::tet::volume(p0, p1, &p2, q0);
+    let rq0 = crate::tet::volume(p0, p1, &p2, q1);
+    let rp1 = crate::tet::volume(q0, q1, &p2, p0);
+    let rp0 = crate::tet::volume(q0, q1, &p2, p1);
+    if (rp0 - rp1).abs() <= T::zero() {
+        return None;
+    }
+    if (rq0 - rq1).abs() <= T::zero() {
+        return None;
+    }
+    let t = T::one() / (rp0 - rp1);
+    let (rp0, rp1) = (rp0 * t, -rp1 * t);
+    let t = T::one() / (rq0 - rq1);
+    let (rq0, rq1) = (rq0 * t, -rq1 * t);
+    Some((rp0, rp1, rq0, rq1))
 }
