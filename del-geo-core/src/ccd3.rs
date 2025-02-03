@@ -71,7 +71,12 @@ where
         let f1 = s.f1.scale(ts).add(&e.f1.scale(te));
         let f2 = s.f2.scale(ts).add(&e.f2.scale(te));
         let v = s.v.scale(ts).add(&e.v.scale(te));
+        // println!("{:?}, {:?}, {:?}, {:?}", f0, f1, f2, v);
+        // println!("stt, volume {}", crate::tet::volume(&s.f0, &s.f1, &s.f2, &s.v));
+        // println!("end, volume {}", crate::tet::volume(&e.f0, &e.f1, &e.f2, &e.v));
+        // println!("time {}, volume {}", te, crate::tet::volume(&f0, &f1, &f2, &v));
         let coord = crate::tri3::to_barycentric_coords(&f0, &f1, &f2, &v);
+        // println!("coord {:?}", coord);
         if coord[0] >= T::zero() && coord[1] >= T::zero() && coord[2] >= T::zero() {
             return Some(te);
         }

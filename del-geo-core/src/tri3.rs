@@ -324,6 +324,7 @@ fn test_dw_ray_triangle_intersection() {
 
 // ----------------------------
 
+/*
 pub fn to_barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float,
@@ -333,6 +334,24 @@ where
     let a2 = area(q, p0, p1);
     let sum_inv = T::one() / (a0 + a1 + a2);
     [a0 * sum_inv, a1 * sum_inv, a2 * sum_inv]
+}
+ */
+
+/// q must be coplanar to the triangle (p0,p1,p2)
+/// volumes determine the ratios (not area), since triangle area in 3D is always positive.
+pub fn to_barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
+where
+    T: num_traits::Float + Copy + 'static,
+    f64: AsPrimitive<T>,
+{
+    use crate::vec3::Vec3;
+    let n = p1.sub(p0).cross(&p2.sub(p0));
+    let s = q.add(&n);
+    let r0 = crate::tet::volume(p1, p2, q, &s);
+    let r1 = crate::tet::volume(p2, p0, q, &s);
+    let r2 = crate::tet::volume(p0, p1, q, &s);
+    let tmp = T::one() / (r0 + r1 + r2);
+    [r0 * tmp, r1 * tmp, r2 * tmp]
 }
 
 pub fn position_from_barycentric_coords<T>(
