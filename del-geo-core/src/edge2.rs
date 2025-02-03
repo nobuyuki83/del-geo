@@ -49,8 +49,7 @@ pub fn culling_intersection<T>(
     po_e1: &[T; 2],
 ) -> bool
 where
-    T: num_traits::Float + 'static + Copy,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
     let min0x = po_s0[0].min(po_e0[0]);
     let max0x = po_s0[0].max(po_e0[0]);
@@ -61,7 +60,7 @@ where
     let min1y = po_s1[1].min(po_e1[1]);
     let max1y = po_s1[1].max(po_e1[1]);
     let len =
-        ((max0x - min0x) + (max0y - min0y) + (max1x - min1x) + (max1y - min1y)) * 0.0001_f64.as_();
+        ((max0x - min0x) + (max0y - min0y) + (max1x - min1x) + (max1y - min1y)) * T::epsilon();
     if max1x + len < min0x {
         return false;
     }
@@ -202,23 +201,21 @@ where
 /// Returns (k,v), where k is the coeffcient between `[0,1]`, v is the point
 pub fn nearest_origin<T>(ps: &[T; 2], pe: &[T; 2]) -> (T, [T; 2])
 where
-    T: num_traits::Float + 'static,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
     use crate::vec2::Vec2;
+    let one = T::one();
+    let half = one / (one + one);
     let d = pe.sub(ps);
     let a = d.squared_norm();
     if a.is_zero() {
-        return (
-            0.5f64.as_(),
-            std::array::from_fn(|i| (ps[i] + pe[i]) * 0.5f64.as_()),
-        );
+        return (half, std::array::from_fn(|i| (ps[i] + pe[i]) * half));
     }
     let b = d.dot(ps);
-    let r0 = (-b / a).clamp(0f64.as_(), 1f64.as_());
+    let r0 = (-b / a).clamp(T::zero(), T::one());
     (
         r0,
-        std::array::from_fn(|i| (-r0 + 1f64.as_()) * ps[i] + r0 * pe[i]),
+        std::array::from_fn(|i| (-r0 + T::one()) * ps[i] + r0 * pe[i]),
     )
 }
 
@@ -237,8 +234,7 @@ pub fn nearest_point2<T>(
     p: &[T; 2],
 ) -> (T, [T; 2])
 where
-    T: num_traits::Float + 'static,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
     use crate::vec2::Vec2;
     let (r, p0) = nearest_origin(&s.sub(p), &e.sub(p));

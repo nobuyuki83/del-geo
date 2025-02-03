@@ -341,7 +341,7 @@ where
     std::array::from_fn(|i| a[i] * b[i])
 }
 
-pub fn add_three_vectors<T>(a: &[T; 3], b: &[T; 3], c: &[T; 3]) -> [T; 3]
+pub fn add_three<T>(a: &[T; 3], b: &[T; 3], c: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float,
 {

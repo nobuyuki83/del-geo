@@ -1,7 +1,5 @@
 //! methods for 3d triangle
 
-use num_traits::AsPrimitive;
-
 /// clamp barycentric coordinates inside a triangle
 pub fn clamp<T>(r0: T, r1: T, r2: T) -> (T, T, T)
 where
@@ -35,7 +33,7 @@ where
 /// normal vector of a 3D triangle (coordinates given by stack-allocated arrays)
 pub fn normal<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> [T; 3]
 where
-    T: std::ops::Sub<Output = T> + std::ops::Mul<Output = T> + std::ops::Sub + Copy,
+    T: num_traits::Float,
 {
     [
         (v2[1] - v1[1]) * (v3[2] - v1[2]) - (v2[2] - v1[2]) * (v3[1] - v1[1]),
@@ -58,12 +56,12 @@ where
 /// height of triangle vertex `p2` against the edge connecting `p0` and `p1`
 pub fn height<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> T
 where
-    T: num_traits::Float + 'static + Copy + num_traits::Float,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
+    let two = T::one() + T::one();
     use crate::vec3::Vec3;
     let a = area(p2, p0, p1);
-    a * 2.0.as_() / p0.sub(p1).norm()
+    a * two / p0.sub(p1).norm()
 }
 
 pub fn unit_normal_area<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> ([T; 3], T)
@@ -202,7 +200,7 @@ pub fn intersection_against_line_bwd_wrt_tri<Real>(
     d_v: Real,
 ) -> (Real, Real, Real, [Real; 3], [Real; 3], [Real; 3])
 where
-    Real: num_traits::Float + Copy,
+    Real: num_traits::Float,
 {
     use crate::vec3::Vec3;
     let e1 = p0.sub(p1);
@@ -341,8 +339,7 @@ where
 /// volumes determine the ratios (not area), since triangle area in 3D is always positive.
 pub fn to_barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
 where
-    T: num_traits::Float + Copy + 'static,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
     use crate::vec3::Vec3;
     let n = p1.sub(p0).cross(&p2.sub(p0));
@@ -407,26 +404,23 @@ pub fn wdw_integral_of_inverse_distance_cubic(
     let beta0 = u02.dot(&u10).acos();
     let q0 = [q.sub(p0).dot(&u02), q.sub(p0).dot(&vy0), z];
     let (w0, dw0) = wdw_inverse_distance_cubic_integrated_over_wedge(&q0, beta0);
-    let dw0dq =
-        crate::vec3::add_three_vectors(&u02.scale(dw0[0]), &vy0.scale(dw0[1]), &vz.scale(dw0[2]));
+    let dw0dq = crate::vec3::add_three(&u02.scale(dw0[0]), &vy0.scale(dw0[1]), &vz.scale(dw0[2]));
     //
     let vy1 = vz.cross(&u10);
     let beta1 = u10.dot(&u21).acos();
     let q1 = [q.sub(p1).dot(&u10), q.sub(p1).dot(&vy1), z];
     let (w1, dw1) = wdw_inverse_distance_cubic_integrated_over_wedge(&q1, beta1);
-    let dw1dq =
-        crate::vec3::add_three_vectors(&u10.scale(dw1[0]), &vy1.scale(dw1[1]), &vz.scale(dw1[2]));
+    let dw1dq = crate::vec3::add_three(&u10.scale(dw1[0]), &vy1.scale(dw1[1]), &vz.scale(dw1[2]));
     //
     let vy2 = vz.cross(&u21);
     let beta2 = u21.dot(&u02).acos();
     let q2 = [q.sub(p2).dot(&u21), q.sub(p2).dot(&vy2), z];
     let (w2, dw2) = wdw_inverse_distance_cubic_integrated_over_wedge(&q2, beta2);
-    let dw2dq =
-        crate::vec3::add_three_vectors(&u21.scale(dw2[0]), &vy2.scale(dw2[1]), &vz.scale(dw2[2]));
+    let dw2dq = crate::vec3::add_three(&u21.scale(dw2[0]), &vy2.scale(dw2[1]), &vz.scale(dw2[2]));
     //
     let w = core::f64::consts::PI * 2_f64 / z.abs() - w0 - w1 - w2;
     let signz = if z < 0. { -1. } else { 1. };
-    let dwdq = crate::vec3::add_three_vectors(&dw0dq, &dw1dq, &dw2dq);
+    let dwdq = crate::vec3::add_three(&dw0dq, &dw1dq, &dw2dq);
     let dw = vz
         .scale(-signz * core::f64::consts::PI * 2_f64 / (z * z))
         .sub(&dwdq);
@@ -467,8 +461,7 @@ fn test_w_inverse_distance_cubic_integrated_over_wedge() {
 
 pub fn nearest_to_point3<T>(q0: &[T; 3], q1: &[T; 3], q2: &[T; 3], ps: &[T; 3]) -> ([T; 3], T, T)
 where
-    T: num_traits::Float + Copy + 'static,
-    f64: AsPrimitive<T>,
+    T: num_traits::Float,
 {
     use crate::vec3::Vec3;
     let (n012, _area) = unit_normal_area(q0, q1, q2);
@@ -484,7 +477,7 @@ where
         let r1 = v1 * inv_v012;
         let r2 = T::one() - r0 - r1;
         if r0 >= T::zero() && r1 >= T::zero() && r2 >= T::zero() {
-            let nearp = crate::vec3::add_three_vectors(&q0.scale(r0), &q1.scale(r1), &q2.scale(r2));
+            let nearp = crate::vec3::add_three(&q0.scale(r0), &q1.scale(r1), &q2.scale(r2));
             return (nearp, r0, r1);
         }
     }
@@ -525,7 +518,7 @@ pub fn is_intersection_tri3<T>(
     q2: &[T; 3],
 ) -> Option<([T; 3], [T; 3])>
 where
-    T: num_traits::Float + Copy,
+    T: num_traits::Float,
 {
     use crate::vec3::Vec3;
     let sec = |p0: &[T; 3], p1: &[T; 3], dp0: T, dp1: T| {
