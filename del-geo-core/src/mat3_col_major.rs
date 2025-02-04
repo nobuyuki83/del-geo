@@ -1,4 +1,5 @@
 //! methods for 3x3 matrix where storage is column major order
+
 /// trait for 3x3 matrix where storage is column major order
 pub trait Mat3ColMajor<T: num_traits::Float>
 where
@@ -6,12 +7,17 @@ where
 {
     fn from_diagonal(diagonal: &[T; 3]) -> Self;
     fn from_identity() -> Self;
+    fn add(&self, b: &Self) -> Self;
+    fn sub(&self, b: &Self) -> Self;
+    fn scale(&self, s: T) -> Self;
     fn determinant(&self) -> T;
     fn try_inverse(&self) -> Option<Self>;
     fn transpose(&self) -> Self;
     fn mult_mat_col_major(&self, other: &Self) -> Self;
     fn mult_vec(&self, vec: &[T; 3]) -> [T; 3];
     fn transform_homogeneous(&self, x: &[T; 2]) -> Option<[T; 2]>;
+    fn squared_norm(&self) -> T;
+    fn norm(&self) -> T;
 }
 
 impl<Real> Mat3ColMajor<Real> for [Real; 9]
@@ -23,6 +29,15 @@ where
     }
     fn from_identity() -> Self {
         from_identity()
+    }
+    fn add(&self, b: &Self) -> Self {
+        add(self, b)
+    }
+    fn sub(&self, b: &Self) -> Self {
+        crate::mat3_row_major::sub(self, b)
+    }
+    fn scale(&self, s: Real) -> Self {
+        scale(self, s)
     }
     fn determinant(&self) -> Real {
         determinant(self)
@@ -41,6 +56,12 @@ where
     }
     fn transform_homogeneous(&self, x: &[Real; 2]) -> Option<[Real; 2]> {
         transform_homogeneous(self, x)
+    }
+    fn squared_norm(&self) -> Real {
+        crate::mat3_row_major::squared_norm(self)
+    }
+    fn norm(&self) -> Real {
+        crate::mat3_row_major::norm(self)
     }
 }
 
@@ -80,6 +101,28 @@ where
     [one, zero, zero, zero, one, zero, v[0], v[1], one]
 }
 
+pub fn from_rotate_x<Real>(theta: Real) -> [Real; 9]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let c = theta.cos();
+    let s = theta.sin();
+    [one, zero, zero, zero, c, s, zero, -s, c]
+}
+
+pub fn from_rotate_y<Real>(theta: Real) -> [Real; 9]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let c = theta.cos();
+    let s = theta.sin();
+    [c, zero, -s, zero, one, zero, s, zero, c]
+}
+
 pub fn from_rotate_z<Real>(theta: Real) -> [Real; 9]
 where
     Real: num_traits::Float,
@@ -89,6 +132,18 @@ where
     let c = theta.cos();
     let s = theta.sin();
     [c, s, zero, -s, c, zero, zero, zero, one]
+}
+
+/// rotation matrix where x-rotation, y-rotation and z-rotation is applied sequentially
+pub fn from_bryant_angles<Real>(rx: Real, ry: Real, rz: Real) -> [Real; 9]
+where
+    Real: num_traits::Float,
+{
+    let x = from_rotate_x(rx);
+    let y = from_rotate_y(ry);
+    let z = from_rotate_z(rz);
+    let yx = mult_mat_col_major(&y, &x);
+    mult_mat_col_major(&z, &yx)
 }
 
 /// transformation converting normalized device coordinate (NDC) `[-1,+1]^2` to pixel coordinate
@@ -123,20 +178,20 @@ pub fn from_transform_unit2pix(img_shape: (usize, usize)) -> [f32; 9] {
     ]
 }
 
-pub fn from_outer_product<T>(a: &[T; 3], b: &[T; 3]) -> [T; 9]
+pub fn from_scaled_outer_product<T>(s: T, a: &[T; 3], b: &[T; 3]) -> [T; 9]
 where
     T: num_traits::Float,
 {
     [
-        a[0] * b[0],
-        a[1] * b[0],
-        a[2] * b[0],
-        a[0] * b[1],
-        a[1] * b[1],
-        a[2] * b[1],
-        a[0] * b[2],
-        a[1] * b[2],
-        a[2] * b[2],
+        s * a[0] * b[0],
+        s * a[1] * b[0],
+        s * a[2] * b[0],
+        s * a[0] * b[1],
+        s * a[1] * b[1],
+        s * a[2] * b[1],
+        s * a[0] * b[2],
+        s * a[1] * b[2],
+        s * a[2] * b[2],
     ]
 }
 
@@ -249,6 +304,21 @@ where
 
 // above: to methods
 // ---------------------------------------------
+
+pub fn add_in_place_scaled_outer_product<T>(m: &mut [T; 9], s: T, a: &[T; 3], b: &[T; 3])
+where
+    T: num_traits::Float,
+{
+    m[0] = m[0] + s * a[0] * b[0];
+    m[1] = m[1] + s * a[1] * b[0];
+    m[2] = m[2] + s * a[2] * b[0];
+    m[3] = m[3] + s * a[0] * b[1];
+    m[4] = m[4] + s * a[1] * b[1];
+    m[5] = m[5] + s * a[2] * b[1];
+    m[6] = m[6] + s * a[0] * b[2];
+    m[7] = m[7] + s * a[1] * b[2];
+    m[8] = m[8] + s * a[2] * b[2];
+}
 
 pub fn add<T>(a: &[T; 9], b: &[T; 9]) -> [T; 9]
 where
@@ -459,5 +529,156 @@ where
         -n[1] * st + (T::one() - ct) * n[2] * n[0],
         n[0] * st + (T::one() - ct) * n[2] * n[1],
         ct + (T::one() - ct) * n[2] * n[2],
+    ]
+}
+
+/// Singular Value Decomposition (SVD)
+/// input = U * S * V^t
+///
+/// # Returns
+/// (U, S, V)
+pub fn svd<Real>(
+    f: &[Real; 9],
+    mode: crate::mat3_sym::EigenDecompositionModes,
+) -> Option<([Real; 9], [Real; 3], [Real; 9])>
+where
+    Real: num_traits::Float + num_traits::FloatConst,
+{
+    let (u, s, v) = crate::mat3_row_major::svd(f, mode)?;
+    Some((transpose(&v), s, transpose(&u)))
+}
+
+pub fn enforce_rotation_matrix_for_svd<Real>(
+    u: &[Real; 9],
+    l: &[Real; 3],
+    v: &[Real; 9],
+) -> ([Real; 9], [Real; 3], [Real; 9])
+where
+    Real: num_traits::Float + std::fmt::Debug,
+{
+    if determinant(v) < Real::zero() || determinant(u) < Real::zero() {
+        let mut u = *u;
+        let mut l = *l;
+        let mut v = *v;
+        if determinant(&v) < Real::zero() {
+            v[6] = -v[6]; // v[0,2] = v[0*3+2]
+            v[7] = -v[7]; // v[1,2] = v[1*3+2]
+            v[8] = -v[8];
+            l[2] = -l[2];
+        }
+        if determinant(&u) < Real::zero() {
+            u[6] = -u[6]; // v[0,2] = v[0*3+2]
+            u[7] = -u[7]; // v[1,2] = v[1*3+2]
+            u[8] = -u[8];
+            l[2] = -l[2];
+        }
+        (u, l, v)
+    } else {
+        (*u, *l, *v)
+    }
+}
+
+#[test]
+fn test_svd() {
+    use rand::Rng;
+    use rand::SeedableRng;
+    use Mat3ColMajor;
+    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
+    for (_iter, i_mode_eigen, is_rot) in itertools::iproduct!(0..100, 0..2, 0..2) {
+        let m: [f64; 9] = std::array::from_fn(|_| rng.random_range(-1f64..1f64));
+        let (u, s, v) = {
+            let mode = match i_mode_eigen {
+                0 => crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
+                1 => crate::mat3_sym::EigenDecompositionModes::Analytic,
+                _ => unreachable!(),
+            };
+            svd(&m, mode).unwrap()
+        };
+        let (u, s, v) = if is_rot == 1 {
+            enforce_rotation_matrix_for_svd(&u, &s, &v)
+        } else {
+            (u, s, v)
+        };
+        if is_rot == 1 {
+            let det_v = determinant(&v);
+            assert!((det_v - 1.).abs() < 1.0e-10);
+            let det_u = determinant(&u);
+            assert!((det_u - 1.).abs() < 1.0e-10);
+        }
+        {
+            // test u
+            let diff = transpose(&u)
+                .mult_mat_col_major(&u)
+                .sub(&from_identity())
+                .squared_norm();
+            assert!(diff < 1.0e-20f64, "{}", diff);
+        }
+        {
+            // test V V^t = I
+            let diff = transpose(&v)
+                .mult_mat_col_major(&v)
+                .sub(&from_identity())
+                .squared_norm();
+            assert!(diff < 1.0e-20f64, "{}", diff);
+        }
+        {
+            // test A = USV^t
+            let s = from_diagonal(&s);
+            let m1 = u.mult_mat_col_major(&s).mult_mat_col_major(&transpose(&v));
+            let diff = m1.sub(&m).squared_norm();
+            assert!(diff < 1.0e-20f64, "{} {:?} {:?}", diff, m, m1);
+        }
+    }
+}
+
+/// when SVD of 3x3 matrix a is U*S*V^T, compute U*V^T
+/// determinant of the result is one
+pub fn rotational_component<T>(a: &[T; 9]) -> [T; 9]
+where
+    T: num_traits::Float + num_traits::FloatConst + std::fmt::Debug,
+{
+    use crate::mat3_sym::EigenDecompositionModes;
+    let (u, _s, v) = svd(a, EigenDecompositionModes::JacobiNumIter(20)).unwrap();
+    let v_t = transpose(&v);
+    let u_vt = mult_mat_col_major(&u, &v_t);
+    dbg!(determinant(&u_vt));
+    if determinant(&u_vt) > T::zero() {
+        u_vt
+    } else {
+        let v_t = [
+            -v_t[0], v_t[1], v_t[2], -v_t[3], v_t[4], v_t[5], -v_t[6], v_t[7], v_t[8],
+        ];
+        mult_mat_col_major(&u, &v_t)
+    }
+}
+
+#[test]
+fn test_rotational_component() {
+    use rand::Rng;
+    use rand::SeedableRng;
+    use Mat3ColMajor;
+    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
+    for _iter in 0..100 {
+        let m: [f64; 9] = std::array::from_fn(|_| rng.random_range(-1f64..1f64));
+        // let (u, s, v) = svd(&m, crate::mat3_sym::EigenDecompositionModes::Analytic).unwrap();
+        let r = rotational_component(&m);
+        assert!((r.determinant() - 1.).abs() < 1.0e-8);
+    }
+}
+
+pub fn add_three<T>(a: &[T; 9], b: &[T; 9], c: &[T; 9]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    [
+        a[0] + b[0] + c[0],
+        a[1] + b[1] + c[1],
+        a[2] + b[2] + c[2],
+        a[3] + b[3] + c[3],
+        a[4] + b[4] + c[4],
+        a[5] + b[5] + c[5],
+        a[6] + b[6] + c[6],
+        a[7] + b[7] + c[7],
+        a[8] + b[8] + c[8],
     ]
 }

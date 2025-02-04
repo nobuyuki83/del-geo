@@ -13,7 +13,7 @@ pub trait Mat3RowMajor<Real: num_traits::Float> {
 }
 impl<Real> Mat3RowMajor<Real> for [Real; 9]
 where
-    Real: num_traits::Float + std::iter::Sum,
+    Real: num_traits::Float,
 {
     fn from_identity() -> Self {
         from_identity()
@@ -89,9 +89,19 @@ where
 
 pub fn squared_norm<Real>(u: &[Real; 9]) -> Real
 where
-    Real: num_traits::Float + std::iter::Sum,
+    Real: num_traits::Float,
 {
-    u.iter().map(|&v| v * v).sum()
+    // u.iter().map(|&v| v * v).sum()
+    u.iter().fold(Real::zero(), |acc, &u| acc + u * u)
+}
+
+pub fn norm<Real>(u: &[Real; 9]) -> Real
+where
+    Real: num_traits::Float,
+{
+    // u.iter().map(|&v| v * v).sum()
+    let l = u.iter().fold(Real::zero(), |acc, &u| acc + u * u);
+    l.sqrt()
 }
 
 pub fn transpose<Real>(m: &[Real; 9]) -> [Real; 9]
@@ -255,15 +265,17 @@ where
 }
  */
 
-/// Singluar Value Decomposition (SVD)
+/// Singular Value Decomposition (SVD)
 /// input = U * S * V^t
 ///
+/// # Returns
+/// (U, S, V)
 pub fn svd<Real>(
     f: &[Real; 9],
     mode: crate::mat3_sym::EigenDecompositionModes,
 ) -> Option<([Real; 9], [Real; 3], [Real; 9])>
 where
-    Real: num_traits::Float + std::iter::Sum + num_traits::FloatConst,
+    Real: num_traits::Float + num_traits::FloatConst,
 {
     let zero = Real::zero();
     let ft_f = f.transpose().mult_mat_row_major(f);
@@ -494,5 +506,25 @@ fn test_svd_differential() {
                 );
             }
         }
+    }
+}
+
+/// when SVD of 3x3 matrix a is U*S*V^T, compute U*V^T
+/// determinant of the result is one
+pub fn rotational_component<T>(a: &[T; 9]) -> [T; 9]
+where
+    T: num_traits::Float + std::iter::Sum + num_traits::FloatConst,
+{
+    use crate::mat3_sym::EigenDecompositionModes;
+    let (u, _s, v) = svd(a, EigenDecompositionModes::Analytic).unwrap();
+    let v_t = transpose(&v);
+    let u_vt = mult_mat_row_major(&u, &v_t);
+    if determinant(&u_vt) > T::zero() {
+        u_vt
+    } else {
+        let v_t = [
+            -v_t[0], -v_t[1], -v_t[2], v_t[3], v_t[4], v_t[5], v_t[6], v_t[7], v_t[8],
+        ];
+        mult_mat_row_major(&u, &v_t)
     }
 }

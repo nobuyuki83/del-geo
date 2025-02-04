@@ -115,7 +115,7 @@ where
 }
 
 /// rotation matrix where x-rotation, y-rotation and z-rotation is applied sequentially
-pub fn from_bryant_angle<Real>(rx: Real, ry: Real, rz: Real) -> [Real; 16]
+pub fn from_bryant_angles<Real>(rx: Real, ry: Real, rz: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
 {
@@ -237,7 +237,10 @@ pub fn from_mat3_col_major_adding_w(m: &[f32; 9]) -> [f32; 16] {
 // above: from method (making 4x4 matrix)
 // ----------------------------------------
 
-pub fn to_mat3_col_major_xyz(m: &[f32; 16]) -> [f32; 9] {
+pub fn to_mat3_col_major_xyz<T>(m: &[T; 16]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
     [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]]
 }
 
