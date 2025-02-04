@@ -35,6 +35,7 @@ pub mod mat3_row_major;
 pub mod mat3_sym;
 pub mod matn_row_major;
 pub mod obb2;
+pub mod plane;
 pub mod polynomial_root;
 pub mod quaternion;
 pub mod sphere;
