@@ -1,4 +1,4 @@
-//! functions for quadratic Bezier curve
+//! methods for quadratic Bezier curve
 
 pub fn eval<Real, const N: usize>(
     p0: &[Real; N],

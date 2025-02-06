@@ -1,3 +1,5 @@
+//! methods for cubic Bezier curve
+
 use num_traits::AsPrimitive;
 
 pub struct ControlPoints<'a, Real, const N: usize> {

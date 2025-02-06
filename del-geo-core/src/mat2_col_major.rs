@@ -1,3 +1,5 @@
+//! methods for 2x2 matrix (column major storage)
+
 pub trait Mat2ColMajor<T: num_traits::Float>
 where
     Self: Sized,

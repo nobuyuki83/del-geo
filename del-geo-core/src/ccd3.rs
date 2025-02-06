@@ -1,4 +1,4 @@
-//! 3D Continuous Collision Detection
+//! methods for 3D Continuous Collision Detection (CCD)
 
 use num_traits::AsPrimitive;
 
