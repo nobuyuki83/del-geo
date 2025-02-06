@@ -23,6 +23,7 @@ pub mod vec3;
 //
 pub mod bezier_cubic;
 pub mod bezier_quadratic;
+pub mod ccd2;
 pub mod ccd3;
 pub mod edge;
 pub mod edge2;

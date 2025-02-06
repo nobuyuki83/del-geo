@@ -358,3 +358,14 @@ where
     }
     res
 }
+
+pub fn ratio_from_position<T>(ps: &[T; 2], pe: &[T; 2], q: &[T; 2]) -> T
+where
+    T: num_traits::Float + Copy,
+{
+    use crate::vec2::Vec2;
+    let v = pe.sub(ps);
+    let t = v.dot(q);
+    let s = v.dot(&v);
+    t / s.sqrt()
+}

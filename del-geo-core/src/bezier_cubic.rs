@@ -15,7 +15,7 @@ pub fn eval<Real, const N: usize>(
     t0: Real,
 ) -> [Real; N]
 where
-    Real: num_traits::Float + Copy + std::iter::Sum,
+    Real: num_traits::Float,
 {
     let one = Real::one();
     let three = one + one + one;
@@ -39,7 +39,7 @@ pub fn sample_uniform_param<Real, const N: usize>(
     is_include_endpoint_end: bool,
 ) -> Vec<[Real; N]>
 where
-    Real: Copy + 'static + num_traits::Float + std::iter::Sum,
+    Real: Copy + 'static + num_traits::Float,
     usize: AsPrimitive<Real>,
 {
     let mut ret: Vec<[Real; N]> = vec![];
@@ -59,7 +59,7 @@ where
 
 pub fn arclength_from_vtx2vecn<T, const N: usize>(vtxs: &[[T; N]]) -> T
 where
-    T: num_traits::Float + Copy + std::iter::Sum,
+    T: num_traits::Float,
 {
     use crate::vecn::VecN;
     if vtxs.len() < 2 {
@@ -79,13 +79,7 @@ pub fn sample_uniform_length<Real, const N: usize>(
     ndiv_sample: usize,
 ) -> Vec<[Real; N]>
 where
-    Real: Copy
-        + 'static
-        + num_traits::Float
-        + AsPrimitive<usize>
-        + std::iter::Sum
-        + std::fmt::Debug
-        + std::fmt::Display,
+    Real: 'static + num_traits::Float + AsPrimitive<usize> + std::fmt::Debug + std::fmt::Display,
     usize: AsPrimitive<Real>,
     f64: AsPrimitive<Real>,
 {

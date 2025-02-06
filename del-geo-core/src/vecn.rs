@@ -9,7 +9,7 @@ pub trait VecN<T, const N: usize> {
 
 impl<T, const N: usize> VecN<T, N> for [T; N]
 where
-    T: num_traits::Float + Copy + std::iter::Sum,
+    T: num_traits::Float,
 {
     fn add(&self, other: &[T; N]) -> Self {
         std::array::from_fn(|i| self[i] + other[i])
@@ -23,7 +23,10 @@ where
         std::array::from_fn(|i| self[i] - other[i])
     }
     fn norm(&self) -> T {
-        self.iter().map(|&v| v * v).sum::<T>().sqrt()
+        // self.iter().map(|&v| v * v).sum::<T>().sqrt() // remove because it requires std:iter::Sum
+        self.iter()
+            .fold(T::zero(), |acc, &elem| acc + elem * elem)
+            .sqrt()
     }
     fn scale(&self, scalar: T) -> Self {
         std::array::from_fn(|i| self[i] * scalar)
