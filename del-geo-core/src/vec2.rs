@@ -245,10 +245,10 @@ where
     [p[0], p[1], p[0], p[1]]
 }
 
-
 /// the z coordiante of the cross product of two vectors in the xy-plane
 pub fn cross<T>(a: &[T; 2], b: &[T; 2]) -> T
-where T: num_traits::Float
+where
+    T: num_traits::Float,
 {
     a[0] * b[1] - b[0] * a[1]
 }
