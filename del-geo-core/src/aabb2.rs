@@ -1,4 +1,8 @@
 //! methods for 2D Axis-aligned Bounding Box (AABB)
+//! the data structure `[Real;4] = [min_x, min_y, max_x, max_y]`
+
+// ----------------------------------------
+// below from ethods
 
 pub fn from_point<T>(p: &[T; 2], rad: T) -> [T; 4]
 where

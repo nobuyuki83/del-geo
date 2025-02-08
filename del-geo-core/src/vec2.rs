@@ -1,4 +1,5 @@
 //! methods for 2D vector
+
 /// trait for 2D vector
 pub trait Vec2<Real>
 where
@@ -6,6 +7,7 @@ where
 {
     fn sub(&self, other: &Self) -> Self;
     fn add(&self, other: &Self) -> Self;
+    fn add_in_place(&mut self, other: &Self);
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<[Real; 2]>;
     fn dot(&self, other: &Self) -> Real;
     fn scale(&self, s: Real) -> Self;
@@ -13,6 +15,8 @@ where
     fn norm(&self) -> Real;
     fn squared_norm(&self) -> Real;
     fn aabb(&self) -> [Real; 4];
+    fn normalize(&self) -> Self;
+    fn cross(&self, other: &Self) -> Real;
 }
 
 impl<Real> Vec2<Real> for [Real; 2]
@@ -24,6 +28,9 @@ where
     }
     fn add(&self, other: &Self) -> Self {
         add(self, other)
+    }
+    fn add_in_place(&mut self, other: &Self) {
+        add_in_place(self, other);
     }
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<Self> {
         crate::mat3_col_major::transform_homogeneous(v, self)
@@ -45,6 +52,13 @@ where
     }
     fn aabb(&self) -> [Real; 4] {
         aabb(self)
+    }
+    fn normalize(&self) -> Self {
+        normalize(self)
+    }
+    /// the z coordiante of the cross product of two vectors in the xy-plane
+    fn cross(&self, other: &Self) -> Real {
+        cross(self, other)
     }
 }
 
@@ -83,6 +97,13 @@ where
     T: std::ops::Add<Output = T> + Copy,
 {
     std::array::from_fn(|i| a[i] + b[i])
+}
+
+pub fn add_in_place<T>(a: &mut [T; 2], b: &[T; 2])
+where
+    T: std::ops::Add<Output = T> + Copy,
+{
+    a.iter_mut().zip(b.iter()).for_each(|(a, &b)| *a = *a + b);
 }
 
 pub fn rotate90<T>(v: &[T; 2]) -> [T; 2]
@@ -171,6 +192,7 @@ fn test_wdw_angle_between_two_vecs() {
     }
 }
 
+/// convert homogeneous coordinate to the Cartesian coordiante
 pub fn from_homogeneous<Real>(v: &[Real; 3]) -> Option<[Real; 2]>
 where
     Real: num_traits::Float,
@@ -181,6 +203,9 @@ where
     Some([v[0] / v[2], v[0] / v[2]])
 }
 
+/// rotate around the origin
+/// # Argument
+/// - theta: radian
 pub fn rotate<Real>(p: &[Real; 2], theta: Real) -> [Real; 2]
 where
     Real: num_traits::Float,
@@ -218,6 +243,14 @@ where
     T: num_traits::Float,
 {
     [p[0], p[1], p[0], p[1]]
+}
+
+
+/// the z coordiante of the cross product of two vectors in the xy-plane
+pub fn cross<T>(a: &[T; 2], b: &[T; 2]) -> T
+where T: num_traits::Float
+{
+    a[0] * b[1] - b[0] * a[1]
 }
 
 // -------------------------------
