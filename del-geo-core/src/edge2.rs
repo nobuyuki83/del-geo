@@ -332,17 +332,27 @@ where
     let zero = Real::zero();
     let dx = p1[0] - p0[0];
     let dy = p1[1] - p0[1];
-    let step = if dx.abs() > dy.abs() {
-        dx.abs()
-    } else {
-        dy.abs()
-    };
+    let step = dx.abs().max(dy.abs());
     let slope_y = dy / step;
     let slope_x = dx / step;
     let mut x = p0[0];
     let mut y = p0[1];
     let mut res = vec![];
-    while (x - p0[0]).abs() <= (p1[0] - p0[0]).abs() && (y - p0[1]).abs() <= (p1[1] - p0[1]).abs() {
+    let eps = Real::epsilon();
+    {
+        let ix: usize = x.as_();
+        let iy: usize = y.as_();
+        res.push(iy * img_width + ix);
+        //        return res;
+    }
+    //while (x - p0[0]).abs() <= (p1[0] - p0[0]).abs() && (y - p0[1]).abs() <= (p1[1] - p0[1]).abs() {
+    loop {
+        if x < p0[0].min(p1[0]) - eps || x > p0[0].max(p1[0]) + eps {
+            break;
+        }
+        if y < p0[1].min(p1[1]) - eps || y > p0[1].max(p1[1]) + eps {
+            break;
+        }
         if x >= zero && x < width_f && y >= zero && y < height_f {
             let ix: usize = x.as_();
             let iy: usize = y.as_();
@@ -352,6 +362,7 @@ where
         y = y + slope_y;
     }
     {
+        // while this is outside the range, it was necessary to make the polyline connected
         let ix: usize = x.as_();
         let iy: usize = y.as_();
         res.push(iy * img_width + ix);
