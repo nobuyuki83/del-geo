@@ -1,3 +1,7 @@
+//! methods for hexahedron.
+//! the coordinates of the points are stored in the array of array as`[[Real;3];8]`.
+//! where `[xyz, Xyz, XYz, xYz, xyZ, XyZ, XYZ, xYZ]`.
+
 pub fn shapefunc<Real>(
     node2xyz: &[[Real; 3]; 8],
     r0: Real,

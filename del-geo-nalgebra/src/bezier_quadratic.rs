@@ -13,7 +13,7 @@ where
     let two = one + one;
     let t1 = one - t0;
     use del_geo_core::vecn::VecN;
-    del_geo_core::vecn::add_three_vectors(
+    del_geo_core::vecn::add_three(
         &p0.scale(t1 * t1),
         &p1.scale(two * t0 * t1),
         &p2.scale(t0 * t0),

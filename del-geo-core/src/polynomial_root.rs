@@ -1,24 +1,24 @@
-//! methods related to Continuous Collision Detection (CCD)
-
-use num_traits::AsPrimitive;
+//! methods for finding roots of polynomial
 
 /// find root of quadratic function
 /// f(x) = c0 + c1*x + c2*x^2
 pub fn quadratic_root<T>(c0: T, c1: T, c2: T) -> Option<[T; 2]>
 where
-    T: num_traits::Float + 'static + Copy + std::fmt::Debug,
-    i64: AsPrimitive<T>,
+    T: num_traits::Float + std::fmt::Debug,
 {
-    assert_ne!(c2, T::zero());
-    let det = c1 * c1 - 4.as_() * c2 * c0;
-    if det < T::zero() {
+    let zero = T::zero();
+    let one = T::one();
+    let two = one + one;
+    let four = two + two;
+    assert_ne!(c2, zero);
+    let det = c1 * c1 - four * c2 * c0;
+    if det < zero {
         return None;
     }
-    let two = 2.as_();
-    let sgnb: T = if c1 < T::zero() { -T::one() } else { T::one() };
+    let sgnb: T = if c1 < zero { -one } else { one };
     let tmp = -(c1 + sgnb * det.sqrt());
     let x2 = tmp / (two * c2);
-    let x1 = if tmp != T::zero() {
+    let x1 = if tmp != zero {
         (two * c0) / tmp
     } else {
         // c1 ==0, det == 0
@@ -60,8 +60,7 @@ fn test_quadratic_root() {
 /// f(x) = c0 + c1*x + c2*x^2 + c3*x^3
 pub fn cubic_roots_in_range_zero_to_t<T>(c0: T, c1: T, c2: T, c3: T, t: T, epsilon: T) -> Vec<T>
 where
-    T: num_traits::Float + 'static + Copy + std::fmt::Debug + std::fmt::Display,
-    i64: AsPrimitive<T>,
+    T: num_traits::Float + std::fmt::Debug + std::fmt::Display,
 {
     assert!(t > T::zero());
     let mut result = vec![];
@@ -102,8 +101,9 @@ where
         };
     }
     //
-    let two = 2.as_();
-    let three = 3.as_();
+    let one = T::one();
+    let two = one + one;
+    let three = two + one;
     //
     let newton = |xs: T, xe: T, fs: T, fe: T| {
         if (fs < T::zero() && fe < T::zero()) || (fs > T::zero() && fe > T::zero()) {

@@ -1,3 +1,5 @@
+//! methods for N dimensional vector
+
 pub trait VecN<T, const N: usize> {
     fn add(&self, other: &[T; N]) -> Self;
     fn add_in_place(&mut self, other: &[T; N]);
@@ -46,14 +48,14 @@ fn test_add() {
     // assert_eq!([1, 2, 3, 4].add(&[2, 3, 4, 5]), [3, 5, 7, 9]);
 }
 
-pub fn add_three_vectors<T, const N: usize>(a: &[T; N], b: &[T; N], c: &[T; N]) -> [T; N]
+pub fn add_three<T, const N: usize>(a: &[T; N], b: &[T; N], c: &[T; N]) -> [T; N]
 where
     T: num_traits::Float,
 {
     std::array::from_fn(|i| a[i] + b[i] + c[i])
 }
 
-pub fn add_four_vectors<T, const N: usize>(a: &[T; N], b: &[T; N], c: &[T; N], d: &[T; N]) -> [T; N]
+pub fn add_four<T, const N: usize>(a: &[T; N], b: &[T; N], c: &[T; N], d: &[T; N]) -> [T; N]
 where
     T: num_traits::Float,
 {

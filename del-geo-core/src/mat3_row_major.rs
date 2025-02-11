@@ -41,6 +41,7 @@ where
     }
 }
 
+/// returns an identity matrix
 pub fn from_identity<T>() -> [T; 9]
 where
     T: num_traits::Float,
@@ -50,6 +51,7 @@ where
     [one, zero, zero, zero, one, zero, zero, zero, one]
 }
 
+/// from diagonal element, return a diagonal matrix
 pub fn from_diagonal<T>(d: &[T; 3]) -> [T; 9]
 where
     T: num_traits::Float,
@@ -67,6 +69,10 @@ where
     ]
 }
 
+// above: from method
+// --------------------------
+// below: to method
+
 pub fn to_columns<T>(a: &[T; 9]) -> ([T; 3], [T; 3], [T; 3])
 where
     T: num_traits::Float,
@@ -74,8 +80,8 @@ where
     ([a[0], a[3], a[6]], [a[1], a[4], a[7]], [a[2], a[5], a[8]])
 }
 
-// above: from method
-// --------------------------
+// above: to method
+// ----------------------------
 
 pub fn determinant<Real>(u: &[Real; 9]) -> Real
 where
@@ -146,124 +152,6 @@ where
 {
     std::array::from_fn(|i| a[i] * s)
 }
-
-/*
-fn sort_eigen<Real>(g: &mut [Real; 3], v: &mut [Real; 9])
-where
-    Real: num_traits::Float,
-{
-    if g[1] > g[0] {
-        g.swap(0, 1);
-        v.swap(0, 1);
-        v.swap(3, 4);
-        v.swap(6, 7);
-    }
-    if g[2] > g[1] {
-        g.swap(1, 2);
-        v.swap(1, 2);
-        v.swap(4, 5);
-        v.swap(7, 8);
-    }
-    if g[1] > g[0] {
-        g.swap(0, 1);
-        v.swap(0, 1);
-        v.swap(3, 4);
-        v.swap(6, 7);
-    }
-}
- */
-
-/*
-/// m = UGV^T
-pub fn svd_jacobi<Real>(m: &[Real; 9], nitr: usize) -> ([Real; 9], [Real; 9], [Real; 9])
-where
-    Real: num_traits::Float + std::iter::Sum + std::fmt::Debug,
-{
-    let one = Real::one();
-    let zero = Real::zero();
-    // M^TM = VGGV^T
-    let mtm = [
-        m[0] * m[0] + m[3] * m[3] + m[6] * m[6], // M^tM[0,0]
-        m[1] * m[1] + m[4] * m[4] + m[7] * m[7], // M^tM[1,1]
-        m[2] * m[2] + m[5] * m[5] + m[8] * m[8], // M^tM[2,2]
-        m[1] * m[2] + m[4] * m[5] + m[7] * m[8], // M^tM[1,2]
-        m[2] * m[0] + m[5] * m[3] + m[8] * m[6], // M^tM[2,0]
-        m[0] * m[1] + m[3] * m[4] + m[6] * m[7], // M^tM[0,1]
-    ];
-    let Some((mut v, mut lv)) = crate::mat3_sym::eigen_decomposition_jacobi(&mtm, nitr) else {
-        todo!()
-    };
-    assert!(lv[0] < lv[1] && lv[1] < lv[2]);
-    sort_eigen(&mut lv, &mut v);
-    dbg!(lv);
-    // assert!(lv[0]<lv[1] && lv[1]<lv[2]);
-    let mut g = lv.map(|x| x.max(zero).sqrt());
-
-    let mut u0 = [
-        m[0] * v[0] + m[1] * v[3] + m[2] * v[6],
-        m[3] * v[0] + m[4] * v[3] + m[5] * v[6],
-        m[6] * v[0] + m[7] * v[3] + m[8] * v[6],
-    ];
-    let mut u1 = [
-        m[0] * v[1] + m[1] * v[4] + m[2] * v[7],
-        m[3] * v[1] + m[4] * v[4] + m[5] * v[7],
-        m[6] * v[1] + m[7] * v[4] + m[8] * v[7],
-    ];
-    let mut u2 = [
-        m[0] * v[2] + m[1] * v[5] + m[2] * v[8],
-        m[3] * v[2] + m[4] * v[5] + m[5] * v[8],
-        m[6] * v[2] + m[7] * v[5] + m[8] * v[8],
-    ];
-
-    let mut u = [zero; 9];
-    if v.determinant() < zero {
-        // making right hand coordinate
-        v[2] = -v[2]; // v[0,2] = v[0*3+2]
-        v[5] = -v[5]; // v[1,2] = v[1*3+2]
-        v[2 * 3 + 2] = -v[2 * 3 + 2];
-        g[2] = -g[2];
-        u[2] = -u[2]; // u[0,2] = u[0*3+2]
-        u[5] = -u[5]; // u[1,2] = u[1*3+2]
-        u[8] = -u[8]; // u[2,2] = u[2*3+2]
-    }
-
-    use crate::vec3::Vec3;
-    let sql0 = u0.squared_norm();
-    if sql0 > Real::epsilon() {
-        u0.normalize_in_place();
-        let sql1 = u1.squared_norm();
-        if sql1 < Real::epsilon() {
-            u1 = u0.map(|x| one - x.abs());
-        } else {
-            u1.normalize_in_place();
-        }
-        let d01 = u0[0] * u1[0] + u0[1] * u1[1] + u0[2] * u1[2];
-        u1 = std::array::from_fn(|i| u1[i] - d01 * u0[i]);
-        u1.normalize_in_place();
-        let s2 = u0.cross(&u1);
-        let d22 = u2[0] * s2[0] + u2[1] * s2[1] + u2[2] * s2[2];
-        u2 = s2;
-        if d22 < zero {
-            g[2] = -g[2];
-        }
-    } else {
-        u0 = [one, zero, zero];
-        u1 = [zero, one, zero];
-        u2 = [zero, zero, one];
-    }
-    u[0] = u0[0];
-    u[1] = u1[0];
-    u[2] = u2[0];
-    u[3] = u0[1];
-    u[4] = u1[1];
-    u[5] = u2[1];
-    u[6] = u0[2];
-    u[7] = u1[2];
-    u[8] = u2[2];
-    let s = [g[0], zero, zero, zero, g[1], zero, zero, zero, g[2]];
-    (u, s, v)
-}
- */
 
 /// Singular Value Decomposition (SVD)
 /// input = U * S * V^t

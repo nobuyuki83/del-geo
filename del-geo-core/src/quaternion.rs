@@ -1,6 +1,6 @@
-// quaternion defined as [i,j,k,w] where w is the real part
+//! methods for quaternion.
+//! A quaternion is stored as `[i,j,k,w]` where w is the real part
 
-use crate::vec3::Vec3;
 /// trait for quaternion
 pub trait Quaternion<Real>
 where
@@ -103,7 +103,7 @@ where
 #[test]
 fn hoge() {
     use crate::mat3_col_major::Mat3ColMajor;
-    // use crate::vec3::Vec3;
+    use crate::vec3::Vec3;
     let quat: [f64; 4] = [1., 2., 3., 1.];
     let quat = quat.normalized();
     let r_mat = quat.to_mat3_col_major();
@@ -181,6 +181,7 @@ pub fn around_axis<Real>(a: &[Real; 3], rad: Real) -> [Real; 4]
 where
     Real: num_traits::Float,
 {
+    use crate::vec3::Vec3;
     let v = a.normalize();
     let half = rad / Real::from(2).unwrap();
     let sin = half.sin();

@@ -4,7 +4,7 @@ description = "2D/3D geometry utility codes"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-documentation.workspace = true
+documentation = "https://docs.rs/del_geo_core"
 license.workspace = true
 repository.workspace = true
 

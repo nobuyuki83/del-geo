@@ -1,3 +1,5 @@
+//! View rotation by trackball UI
+
 use crate::quaternion::Quaternion;
 #[derive(Debug, Clone, Copy)]
 pub struct Trackball {

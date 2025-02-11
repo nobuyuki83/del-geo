@@ -1,4 +1,4 @@
-//! methods for NxN matrix (column major)
+//! methods for NxN matrix in row major storage
 
 pub fn try_inverse<Real, const N: usize, const NN: usize>(b: &[Real; NN]) -> Option<[Real; NN]>
 where

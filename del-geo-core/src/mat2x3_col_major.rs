@@ -1,3 +1,5 @@
+//! methods for 2x3 matrix used for affine transformation especially for Gaussian splatting
+
 pub fn mult_vec3<Real>(a: &[Real; 6], b: &[Real; 3]) -> [Real; 2]
 where
     Real: num_traits::Float,

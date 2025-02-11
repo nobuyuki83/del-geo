@@ -13,7 +13,7 @@ where
     let two = one + one;
     let t1 = one - t0;
     use crate::vecn::VecN;
-    crate::vecn::add_three_vectors(
+    crate::vecn::add_three(
         &p0.scale(t1 * t1),
         &p1.scale(two * t0 * t1),
         &p2.scale(t0 * t0),

@@ -1,3 +1,5 @@
+//! methods for float range `(Real, Real)`
+
 /// Find the distance of two ranges, return None if they are overlapped
 ///
 pub fn distance_to_range<Real>(a: (Real, Real), b: (Real, Real)) -> Option<Real>

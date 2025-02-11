@@ -1,3 +1,6 @@
+//! Methods for sphere.
+//! The sphere is represented as `(radius: Real, center: &[Real;3])`
+
 pub fn intersection_ray<T>(rad: T, center: &[T; 3], ray_src: &[T; 3], ray_dir: &[T; 3]) -> Option<T>
 where
     T: num_traits::Float,

@@ -23,7 +23,7 @@ where
     let three = one + one + one;
     let t1 = one - t0;
     use crate::vecn::VecN;
-    crate::vecn::add_four_vectors(
+    crate::vecn::add_four(
         &p0.scale(t1 * t1 * t1),
         &p1.scale(three * t0 * t1 * t1),
         &p2.scale(three * t0 * t0 * t1),

@@ -155,6 +155,8 @@ where
     [c0 * v0 + c1 * v1, c1 * v0 + c2 * v1]
 }
 
+/// 2-dimensional AABB for the 2D ellipsoid
+/// (x,y)^T S (x,y) = 1
 pub fn aabb2<Real>(&[a, b, c]: &[Real; 3]) -> [Real; 4]
 where
     Real: num_traits::Float,

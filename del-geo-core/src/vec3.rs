@@ -77,6 +77,8 @@ where
     }
 }
 
+/// orthogonalize v against u, remove u component from v
+/// v - u.scale( dot(u, v) / dot(u, u) )
 pub fn orthogonalize<Real>(u: &[Real; 3], v: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
@@ -85,6 +87,7 @@ where
     v.sub(&u.scale(t))
 }
 
+/// From axis-angle vector returns a rotation matrix
 pub fn to_mat3_from_axisangle_vec<T>(vec: &[T; 3]) -> [T; 9]
 where
     T: num_traits::Float,
@@ -166,6 +169,7 @@ fn test_basis_xy_from_basis_z() {
     assert!((stp - 1.0).abs() < 1.0e-5);
 }
 
+/// axis-aligned basis
 pub fn basis<Real>(i_dim: usize, eps: Real) -> [Real; 3]
 where
     Real: num_traits::Float,
