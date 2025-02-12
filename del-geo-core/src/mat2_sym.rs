@@ -1,5 +1,7 @@
 //! symmetric matrix `[[a,b],[b,c]]` parameterized as `[a,b,c]`
 
+use crate::vec2::Vec2;
+
 /// symmetric matrix `[[a,b],[b,c]]` parameterized as `[a,b,c]`
 pub trait Mat2Sym<Real>
 where
@@ -8,14 +10,14 @@ where
     fn mult_mat_sym(&self, other: &Self) -> [Real; 4];
     fn inverse(&self) -> Option<Self>;
     fn safe_inverse(&self) -> Self;
-    fn principal_directions(&self) -> ([Real; 2], [[Real; 2]; 2]);
-    fn matvec(&self, v: &[Real; 2]) -> [Real; 2];
+    fn eigen_decomposition(&self) -> ([Real; 4], [Real; 2]);
+    fn mult_vec(&self, v: &[Real; 2]) -> [Real; 2];
     fn aabb2(&self) -> [Real; 4];
 }
 
 impl<Real> Mat2Sym<Real> for [Real; 3]
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + std::fmt::Debug,
 {
     fn mult_mat_sym(&self, other: &Self) -> [Real; 4] {
         mult_mat_sym(self, other)
@@ -26,15 +28,35 @@ where
     fn safe_inverse(&self) -> Self {
         safe_inverse(self)
     }
-    fn principal_directions(&self) -> ([Real; 2], [[Real; 2]; 2]) {
-        principal_directions(self)
+    fn eigen_decomposition(&self) -> ([Real; 4], [Real; 2]) {
+        eigen_decomposition(self)
     }
-    fn matvec(&self, v: &[Real; 2]) -> [Real; 2] {
-        matvec(self, v)
+    fn mult_vec(&self, v: &[Real; 2]) -> [Real; 2] {
+        mult_vec(self, v)
     }
     fn aabb2(&self) -> [Real; 4] {
         aabb2(self)
     }
+}
+
+// ----------------------------
+// below: to methods
+
+pub fn to_mat_col_major<Real>(sm: &[Real; 3]) -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
+    [sm[0], sm[1], sm[1], sm[2]]
+}
+
+// above: to methods
+// --------------------------
+
+pub fn from_columns<Real>(x: &[Real; 2], y: &[Real; 2]) -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
+    [x[0], x[1], y[0], y[1]]
 }
 
 pub fn mult_mat_sym<Real>(a: &[Real; 3], b: &[Real; 3]) -> [Real; 4]
@@ -94,7 +116,7 @@ pub fn safe_inverse_preserve_positive_definiteness<Real>(
     eps: Real,
 ) -> [Real; 3]
 where
-    Real: num_traits::Float + std::fmt::Display,
+    Real: num_traits::Float + std::fmt::Display + std::fmt::Debug,
 {
     assert!(a + c > Real::zero(), "{} {} {}", a + c, a, c);
     let eig_min = (a + c) * eps;
@@ -102,14 +124,15 @@ where
         // one of the eigen value is nearly zero
         //let one = Real::one();
         let one = Real::one();
-        let (e, v) = [a, b, c].principal_directions();
+        let (v, e) = [a, b, c].eigen_decomposition();
+        let (v0, v1) = crate::mat2_col_major::to_columns(&v);
         // println!("　　　sig: {:?} {} {}",e, a*c-b*b, a+c);
         let e0inv = one / (e[0] + eps);
         let e1inv = one / (e[1] + eps);
         [
-            e0inv * v[0][0] * v[0][0] + e1inv * v[1][0] * v[1][0],
-            e0inv * v[0][1] * v[0][0] + e1inv * v[1][1] * v[1][0],
-            e0inv * v[0][1] * v[0][1] + e1inv * v[1][1] * v[1][1],
+            e0inv * v0[0] * v0[0] + e1inv * v1[0] * v1[0],
+            e0inv * v0[1] * v0[0] + e1inv * v1[1] * v1[0],
+            e0inv * v0[1] * v0[1] + e1inv * v1[1] * v1[1],
         ]
         // let (e,v) = del_geo_core::mat2_sym::prinsipal_directions(&xyz);
         // println!("　　　siginv: {:?}",e);
@@ -119,15 +142,17 @@ where
     }
 }
 
-/// ax^2 + 2bxy + cy^2 = 1
-pub fn principal_directions<Real>(&[a, b, c]: &[Real; 3]) -> ([Real; 2], [[Real; 2]; 2])
+/// this function returns U and \Sigma
+/// A = U * \Sigma * U^t
+/// the axis of ellipsoid: ax^2 + 2bxy + cy^2 = 1
+pub fn eigen_decomposition<Real>(&[a, b, c]: &[Real; 3]) -> ([Real; 4], [Real; 2])
 where
-    Real: num_traits::Float,
+    Real: num_traits::Float + std::fmt::Debug,
 {
     let zero = Real::zero();
     let one = Real::one();
     if b.is_zero() {
-        return ([a, c], [[one, zero], [zero, one]]);
+        return ([one, zero, zero, one], [a, c]);
     }
     let two = one + one;
     let four = two + two;
@@ -137,18 +162,49 @@ where
     let lam1 = half * (a + c + tmp);
     let det0 = a - c + tmp;
     let det1 = a - c - tmp;
-    if det0.abs() > det1.abs() {
-        let evec0 = [-two * b, det0];
-        let evec1 = [det0, two * b];
-        ([lam0, lam1], [evec0, evec1])
+    let u0 = if det0.abs() > det1.abs() {
+        [-two * b, det0]
     } else {
-        let evec0 = [det1, two * b];
-        let evec1 = [-two * b, det1];
-        ([lam0, lam1], [evec0, evec1])
+        [det1, two * b]
+    };
+    let u0 = u0.normalize();
+    let u1 = crate::vec2::rotate90(&u0);
+    let u = from_columns(&u0, &u1);
+    (u, [lam0, lam1])
+}
+
+#[test]
+fn test_eigen_decomposition() {
+    use rand::Rng;
+    use rand::SeedableRng;
+    let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
+    // std::uniform_real_distribution < double > dist(-50.0, 50.0);
+    for _itr in 0..1000 {
+        let sm = std::array::from_fn(|_| rng.random_range(-30f64..30f64));
+        let (u, l) = eigen_decomposition(&sm);
+        use crate::mat2_col_major::Mat2ColMajor;
+        let ut = u.transpose();
+        {
+            let utu = u.mult_mat_col_major(&ut);
+            let err = crate::mat2_col_major::from_identity()
+                .sub(&utu)
+                .squared_norm();
+            assert!(err < 1.0e-20);
+        }
+        {
+            // check determinant of `u` is one
+            let det = u.determinant();
+            assert!((det - 1.).abs() < 1.0e-10, "{}", (det - 1.0).abs());
+        }
+        let l = crate::mat2_col_major::from_diagonal(&l);
+        let ulut = u.mult_mat_col_major(&l).mult_mat_col_major(&ut);
+        let sm = to_mat_col_major(&sm);
+        let err = sm.sub(&ulut).squared_norm();
+        assert!(err < 1.0e-10);
     }
 }
 
-pub fn matvec<Real>(&[c0, c1, c2]: &[Real; 3], &[v0, v1]: &[Real; 2]) -> [Real; 2]
+pub fn mult_vec<Real>(&[c0, c1, c2]: &[Real; 3], &[v0, v1]: &[Real; 2]) -> [Real; 2]
 where
     Real: num_traits::Float,
 {
@@ -167,6 +223,15 @@ where
     [-minx, -miny, minx, miny]
 }
 
+pub fn determinant<Real>(&[a, b, c]: &[Real; 3]) -> Real
+where
+    Real: num_traits::Float,
+{
+    let one = Real::one();
+    let two = one + one;
+    a * c - two * b
+}
+
 #[test]
 fn test_prinsipal_directions() {
     let mats = [
@@ -178,7 +243,8 @@ fn test_prinsipal_directions() {
         [4.0, 1.99, 1.0],
     ];
     for mat in mats {
-        let ([lam0, lam1], [evec0, evec1]) = principal_directions::<f32>(&mat);
+        let (u_mat, [lam0, lam1]) = eigen_decomposition::<f32>(&mat);
+        let (evec0, evec1) = crate::mat2_col_major::to_columns(&u_mat);
         let evec0 = nalgebra::Vector2::<f32>::from_row_slice(&evec0);
         let evec1 = nalgebra::Vector2::<f32>::from_row_slice(&evec1);
         assert!(evec0.norm() > 1.0e-5);
@@ -187,7 +253,7 @@ fn test_prinsipal_directions() {
         let evec1 = evec1.normalize();
         assert!(evec0.dot(&evec1).abs() < 1.0e-5, "{}", evec0.dot(&evec1));
         {
-            let tmp0 = nalgebra::Vector2::<f32>::from_row_slice(&matvec(
+            let tmp0 = nalgebra::Vector2::<f32>::from_row_slice(&mult_vec(
                 &mat,
                 evec0.as_slice()[..2].try_into().unwrap(),
             ));
@@ -195,7 +261,7 @@ fn test_prinsipal_directions() {
             assert!(diff < 1.0e-6, "{}", diff);
         }
         {
-            let tmp0 = nalgebra::Vector2::<f32>::from_row_slice(&matvec(
+            let tmp0 = nalgebra::Vector2::<f32>::from_row_slice(&mult_vec(
                 &mat,
                 evec1.as_slice()[..2].try_into().unwrap(),
             ));
@@ -464,4 +530,14 @@ where
     Real: num_traits::Float,
 {
     m[0] * b[0] * c[0] + m[1] * (b[0] * c[1] + b[1] * c[0]) + m[2] * b[1] * c[1]
+}
+
+/// The input can be both column major or row major.
+pub fn from_mat2_by_symmetrization<Real>(m: &[Real; 4]) -> [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    let one = Real::one();
+    let half = one / (one + one);
+    [m[0], (m[1] + m[2]) * half, m[3]]
 }

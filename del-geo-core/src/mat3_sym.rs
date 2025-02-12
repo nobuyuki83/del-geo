@@ -1,8 +1,10 @@
 //! Symmetric 3x3 matrix class
 //! the 3x3 matrix is stored in a 6-dim array
 //! `[m[0,0], m[1,1], m[2,2], m[1,2], m[2,0], m[0,1]]`
+//! (first diagonal, then off-diagonal)
 
-pub fn from_mat3<Real>(m: &[Real; 9]) -> [Real; 6]
+/// the input can be both column major or row major
+pub fn from_mat3_by_symmetrization<Real>(m: &[Real; 9]) -> [Real; 6]
 where
     Real: num_traits::Float,
 {
@@ -39,7 +41,7 @@ where
         + two * (sm[3] * sm[3] + sm[4] * sm[4] + sm[5] * sm[5])
 }
 
-fn trace<Real>(sm: &[Real; 6]) -> Real
+pub fn trace<Real>(sm: &[Real; 6]) -> Real
 where
     Real: num_traits::Float,
 {

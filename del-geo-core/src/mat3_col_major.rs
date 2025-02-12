@@ -76,7 +76,7 @@ where
     [s[0], zero, zero, zero, s[1], zero, zero, zero, s[2]]
 }
 
-pub fn from_column_vectors<Real>(x: &[Real; 3], y: &[Real; 3], z: &[Real; 3]) -> [Real; 9]
+pub fn from_columns<Real>(x: &[Real; 3], y: &[Real; 3], z: &[Real; 3]) -> [Real; 9]
 where
     Real: Copy,
 {
@@ -199,6 +199,8 @@ where
 // ---------------------------------------------
 // below: to methods
 
+/// Return a quaternion with `[i,j,k,w]` storage
+/// the input must be a rotation matrix
 pub fn to_quaternion<Real>(p: &[Real; 9]) -> [Real; 4]
 where
     Real: num_traits::Float + std::fmt::Debug,
@@ -291,6 +293,7 @@ where
     [c0 * (m[5] - m[7]), c0 * (m[6] - m[2]), c0 * (m[1] - m[3])]
 }
 
+/// Return a 2x3 matrix with column major storage by throwing away the last row
 pub fn to_mat2x3_col_major_xy(m: &[f32; 9]) -> [f32; 6] {
     [m[0], m[1], m[3], m[4], m[6], m[7]]
 }
@@ -446,6 +449,7 @@ where
     r
 }
 
+/// Determinant of a 3x3 matrix
 pub fn determinant<Real>(b: &[Real; 9]) -> Real
 where
     Real: num_traits::Float,
@@ -471,6 +475,8 @@ pub fn transform_lcl2world_given_local_z(n: &[f32; 3]) -> [f32; 9] {
     [u[0], u[1], u[2], v[0], v[1], v[2], n[0], n[1], n[2]]
 }
 
+/// Return 3x3 rotation matrix as a column major storage.
+/// That rotation matrix rotate `v0: &[T;3]` to `v1: &[T;3]`.
 pub fn minimum_rotation_matrix<T>(v0: &[T; 3], v1: &[T; 3]) -> [T; 9]
 where
     T: num_traits::Float,
@@ -666,6 +672,7 @@ fn test_rotational_component() {
     }
 }
 
+/// Add three vectors
 pub fn add_three<T>(a: &[T; 9], b: &[T; 9], c: &[T; 9]) -> [T; 9]
 where
     T: num_traits::Float,

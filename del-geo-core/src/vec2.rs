@@ -11,11 +11,13 @@ where
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<[Real; 2]>;
     fn dot(&self, other: &Self) -> Real;
     fn scale(&self, s: Real) -> Self;
+    fn scale_in_place(&mut self, s: Real);
     fn orthogonalize(&self, v: &Self) -> Self;
     fn norm(&self) -> Real;
     fn squared_norm(&self) -> Real;
     fn aabb(&self) -> [Real; 4];
     fn normalize(&self) -> Self;
+    fn normalize_in_place(&mut self);
     fn cross(&self, other: &Self) -> Real;
 }
 
@@ -41,6 +43,9 @@ where
     fn scale(&self, s: Real) -> Self {
         scale(self, s)
     }
+    fn scale_in_place(&mut self, s: Real) {
+        scale_in_place(self, s);
+    }
     fn orthogonalize(&self, v: &Self) -> Self {
         orthogonalize(self, v)
     }
@@ -55,6 +60,9 @@ where
     }
     fn normalize(&self) -> Self {
         normalize(self)
+    }
+    fn normalize_in_place(&mut self) {
+        normalize_in_place(self);
     }
     /// the z coordiante of the cross product of two vectors in the xy-plane
     fn cross(&self, other: &Self) -> Real {
@@ -125,6 +133,13 @@ where
     T: num_traits::Float,
 {
     std::array::from_fn(|i| a[i] * s)
+}
+
+pub fn scale_in_place<T>(a: &mut [T; 2], s: T)
+where
+    T: num_traits::Float,
+{
+    a.iter_mut().for_each(|v| *v = *v * s);
 }
 
 pub fn dot<T>(a: &[T; 2], b: &[T; 2]) -> T
@@ -221,6 +236,14 @@ where
 {
     let invl = Real::one() / (p[0] * p[0] + p[1] * p[1]).sqrt();
     p.scale(invl)
+}
+
+pub fn normalize_in_place<Real>(p: &mut [Real; 2])
+where
+    Real: num_traits::Float,
+{
+    let invl = Real::one() / (p[0] * p[0] + p[1] * p[1]).sqrt();
+    p.scale_in_place(invl);
 }
 
 pub fn orthogonalize<T>(u: &[T; 2], v: &[T; 2]) -> [T; 2]

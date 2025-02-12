@@ -167,7 +167,7 @@ where
 {
     let zero = Real::zero();
     let ft_f = f.transpose().mult_mat_row_major(f);
-    let ft_f = crate::mat3_sym::from_mat3(&ft_f);
+    let ft_f = crate::mat3_sym::from_mat3_by_symmetrization(&ft_f);
     let (v, mut lambda) = crate::mat3_sym::eigen_decomposition(&ft_f, mode)?;
     lambda.iter_mut().for_each(|x| *x = (*x).max(zero).sqrt());
     let ul = f.mult_mat_row_major(&v);
@@ -179,6 +179,7 @@ where
     Some((u, lambda, v))
 }
 
+/// make the determinant of the `U` and `V` to `1`, if they are `-1`
 pub fn enforce_rotation_matrix_for_svd<Real>(
     u: &[Real; 9],
     l: &[Real; 3],
