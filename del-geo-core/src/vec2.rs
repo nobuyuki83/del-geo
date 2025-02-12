@@ -19,6 +19,9 @@ where
     fn normalize(&self) -> Self;
     fn normalize_in_place(&mut self);
     fn cross(&self, other: &Self) -> Real;
+    fn angle_between_two_vecs(&self, other: &Self) -> Real;
+    fn area_quadrilateral(&self, other: &Self) -> Real;
+    fn wdw_angle_between_two_vecs(&self, other: &Self) -> (Real, [Self; 2]);
 }
 
 impl<Real> Vec2<Real> for [Real; 2]
@@ -68,6 +71,15 @@ where
     fn cross(&self, other: &Self) -> Real {
         cross(self, other)
     }
+    fn angle_between_two_vecs(&self, other: &Self) -> Real {
+        angle_between_two_vecs(self, other)
+    }
+    fn area_quadrilateral(&self, other: &Self) -> Real {
+        area_quadrilateral(self, other)
+    }
+    fn wdw_angle_between_two_vecs(&self, other: &Self) -> (Real, [Self; 2]) {
+        wdw_angle_between_two_vecs(self, other)
+    }
 }
 
 pub fn basis<T>(i_dim: usize, eps: T) -> [T; 2]
@@ -95,28 +107,28 @@ where
 
 pub fn sub<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
 where
-    T: std::ops::Sub<Output = T> + Copy,
+    T: num_traits::Float,
 {
     std::array::from_fn(|i| a[i] - b[i])
 }
 
 pub fn add<T>(a: &[T; 2], b: &[T; 2]) -> [T; 2]
 where
-    T: std::ops::Add<Output = T> + Copy,
+    T: num_traits::Float,
 {
     std::array::from_fn(|i| a[i] + b[i])
 }
 
 pub fn add_in_place<T>(a: &mut [T; 2], b: &[T; 2])
 where
-    T: std::ops::Add<Output = T> + Copy,
+    T: num_traits::Float,
 {
-    a.iter_mut().zip(b.iter()).for_each(|(a, &b)| *a = *a + b);
+    *a = a.add(b)
 }
 
 pub fn rotate90<T>(v: &[T; 2]) -> [T; 2]
 where
-    T: num_traits::Float + Copy,
+    T: num_traits::Float,
 {
     [-v[1], v[0]]
 }
@@ -139,7 +151,7 @@ pub fn scale_in_place<T>(a: &mut [T; 2], s: T)
 where
     T: num_traits::Float,
 {
-    a.iter_mut().for_each(|v| *v = *v * s);
+    *a = a.scale(s)
 }
 
 pub fn dot<T>(a: &[T; 2], b: &[T; 2]) -> T
@@ -161,7 +173,7 @@ where
     T: num_traits::Float,
 {
     let dot = a.dot(b);
-    let area = area_quadrilateral(a, b);
+    let area = a.area_quadrilateral(b);
     area.atan2(dot)
 }
 
@@ -169,7 +181,7 @@ where
 fn test_angle_between_two_vecs() {
     let a = [3f64.sqrt(), 1.0];
     let b = [-1.0, 1.0];
-    let theta0 = angle_between_two_vecs(&a, &b);
+    let theta0 = a.angle_between_two_vecs(&b);
     let theta1 = 7f64 / 12f64 * std::f64::consts::PI;
     assert!((theta0 - theta1).abs() < 1.0e-10);
 }
@@ -178,8 +190,8 @@ pub fn wdw_angle_between_two_vecs<T>(u: &[T; 2], v: &[T; 2]) -> (T, [[T; 2]; 2])
 where
     T: num_traits::Float,
 {
-    let a = dot(u, v);
-    let b = area_quadrilateral(u, v);
+    let a = u.dot(v);
+    let b = u.area_quadrilateral(v);
     let w = b.atan2(a);
     let tmp0 = T::one() / (a * a + b * b);
     let dw_da = -b * tmp0;
@@ -200,7 +212,7 @@ fn test_wdw_angle_between_two_vecs() {
             a1[ino][idim] += eps;
             a1
         };
-        let (t1, _dt1) = wdw_angle_between_two_vecs(&a1[0], &a1[1]);
+        let (t1, _dt1) = a1[0].wdw_angle_between_two_vecs(&a1[1]);
         let v0 = (t1 - t0) / eps;
         let v1 = dt0[ino][idim];
         assert!((v0 - v1).abs() < 1.0e-5);
