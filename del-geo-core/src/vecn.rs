@@ -17,9 +17,7 @@ where
         std::array::from_fn(|i| self[i] + other[i])
     }
     fn add_in_place(&mut self, other: &[T; N]) {
-        for i in 0..N {
-            self[i] = self[i] + other[i]
-        }
+        *self = self.add(other);
     }
     fn sub(&self, other: &[T; N]) -> Self {
         std::array::from_fn(|i| self[i] - other[i])
@@ -34,7 +32,7 @@ where
         std::array::from_fn(|i| self[i] * scalar)
     }
     fn scale_in_place(&mut self, scale: T) {
-        self.iter_mut().for_each(|v| *v = *v * scale);
+        *self = self.scale(scale);
     }
 }
 
