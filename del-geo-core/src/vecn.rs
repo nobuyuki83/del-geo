@@ -59,3 +59,13 @@ where
 {
     std::array::from_fn(|i| a[i] + b[i] + c[i] + d[i])
 }
+
+pub fn distance<T, const N: usize>(a: &[T; N], b: &[T; N]) -> T
+where
+    T: num_traits::Float,
+{
+    a.iter()
+        .zip(b.iter())
+        .fold(T::zero(), |sum, (&u, &v)| sum + (u - v) * (u - v))
+        .sqrt()
+}

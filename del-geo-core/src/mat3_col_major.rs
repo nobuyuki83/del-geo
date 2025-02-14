@@ -34,7 +34,7 @@ where
         add(self, b)
     }
     fn sub(&self, b: &Self) -> Self {
-        crate::mat3_row_major::sub(self, b)
+        sub(self, b)
     }
     fn scale(&self, s: Real) -> Self {
         scale(self, s)
@@ -328,6 +328,13 @@ where
     T: num_traits::Float,
 {
     std::array::from_fn(|i| a[i] + b[i])
+}
+
+pub fn sub<T>(a: &[T; 9], b: &[T; 9]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    std::array::from_fn(|i| a[i] - b[i])
 }
 
 pub fn try_inverse<T>(b: &[T; 9]) -> Option<[T; 9]>

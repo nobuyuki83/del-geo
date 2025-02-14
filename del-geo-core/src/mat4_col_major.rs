@@ -488,3 +488,11 @@ pub fn ray_from_transform_world2ndc(
         crate::vec3::sub(&ray_end_world, &ray_stt_world),
     )
 }
+
+pub fn mult_three_mats_col_major<Real>(a: &[Real; 16], b: &[Real; 16], c: &[Real; 16]) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let d = mult_mat_col_major(b, c);
+    mult_mat_col_major(a, &d)
+}
