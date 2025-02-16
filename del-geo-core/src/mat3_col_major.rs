@@ -751,9 +751,9 @@ pub fn svd_differential(
 
 #[test]
 fn test_svd_differential() {
+    use crate::vec3::Vec3;
     use rand::Rng;
     use rand::SeedableRng;
-    use crate::vec3::Vec3;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     let eps = 1.0e-6;
     for _iter in 0..100 {
@@ -776,14 +776,13 @@ fn test_svd_differential() {
             )
             .unwrap();
             {
-                let du_num = transpose(&u1)
-                    .mult_mat_col_major(&u0)
-                    .scale(1. / eps);
+                let du_num = transpose(&u1).mult_mat_col_major(&u0).scale(1. / eps);
                 let du_num = to_vec3_from_skew_mat(&du_num);
                 let du_ana = [
                     diff_u[0][i + 3 * j],
                     diff_u[1][i + 3 * j],
-                    diff_u[2][i + 3 * j] ];
+                    diff_u[2][i + 3 * j],
+                ];
                 // println!("du: {} {} {:?} {:?}", i, j, du_ana, du_num);
                 assert!(
                     du_num.sub(&du_ana).norm() < 1.0e-4 * (1.0 + du_ana.norm()),
@@ -803,7 +802,8 @@ fn test_svd_differential() {
                 let ds_ana = [
                     diff_s[0][i + 3 * j],
                     diff_s[1][i + 3 * j],
-                    diff_s[2][i + 3 * j] ];
+                    diff_s[2][i + 3 * j],
+                ];
                 // println!("ds: {} {} {:?} {:?}", i, j, ds_num, ds_ana);
                 assert!(
                     ds_num.sub(&ds_ana).norm() < 1.0e-5 * (1.0 + ds_ana.norm()),
@@ -815,14 +815,12 @@ fn test_svd_differential() {
                 );
             }
             {
-                let dv_num = transpose(&v1)
-                    .mult_mat_col_major(&v0)
-                    .scale(1. / eps);
+                let dv_num = transpose(&v1).mult_mat_col_major(&v0).scale(1. / eps);
                 let dv_num = to_vec3_from_skew_mat(&dv_num);
                 let dv_ana = [
                     diff_v[0][i + 3 * j],
                     diff_v[1][i + 3 * j],
-                    diff_v[2][i + 3 * j]
+                    diff_v[2][i + 3 * j],
                 ];
                 // println!("d0: {} {} {:?} {:?}", i, j, dv_ana, dv_num);
                 assert!(
