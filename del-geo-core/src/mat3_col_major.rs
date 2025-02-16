@@ -195,9 +195,55 @@ where
     ]
 }
 
+pub fn from_vec3_to_skew_mat<T>(v: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    [
+        T::zero(),
+        v[2],
+        -v[1],
+        -v[2],
+        T::zero(),
+        v[0],
+        v[1],
+        -v[0],
+        T::zero(),
+    ]
+}
+
 // above: from methods
 // ---------------------------------------------
 // below: to methods
+
+pub fn to_vec3_from_skew_mat<T>(m: &[T; 9]) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    let one = T::one();
+    let half = one / (one + one);
+    [
+        (m[5] - m[7]) * half,
+        (m[6] - m[2]) * half,
+        (m[1] - m[3]) * half,
+    ]
+}
+
+#[test]
+fn test_skew() {
+    use crate::mat3_col_major::Mat3ColMajor;
+    use crate::vec3::Vec3;
+    let v0 = [1.1f64, 3.1, 2.5];
+    let m0 = from_vec3_to_skew_mat(&v0);
+    {
+        let v1 = [2.1, 0.1, 4.5];
+        let c0 = v0.cross(&v1);
+        let c1 = m0.mult_vec(&v1);
+        assert!(c0.sub(&c1).norm() < 1.0e-10);
+    }
+    let v0a = to_vec3_from_skew_mat(&m0);
+    assert!(v0.sub(&v0a).norm() < 1.0e-10);
+}
 
 /// Return a quaternion with `[i,j,k,w]` storage
 /// the input must be a rotation matrix
@@ -545,6 +591,9 @@ where
     ]
 }
 
+// -----------------------------------
+// Below: SVD related
+
 /// Singular Value Decomposition (SVD)
 /// input = U * S * V^t
 ///
@@ -678,6 +727,116 @@ fn test_rotational_component() {
         assert!((r.determinant() - 1.).abs() < 1.0e-8);
     }
 }
+
+/// Jacobian of singular value decomposition
+///
+/// # Reference
+/// Papadopoulo, Théodore & Lourakis, Manolis. (2000). "
+/// Estimating the Jacobian of the Singular Value Decomposition"
+/// Theory and Applications. 554-570.
+///
+/// # Returns `(diff_u, diff_s, diff:v)`
+/// - `diff_u[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
+/// - `diff_v[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
+#[allow(clippy::type_complexity)]
+pub fn svd_differential(
+    u: [f64; 9],
+    s: [f64; 3],
+    v: [f64; 9],
+) -> ([[f64; 9]; 3], [[f64; 9]; 3], [[f64; 9]; 3]) {
+    use Mat3ColMajor;
+    let (du, ds, dv) = crate::mat3_row_major::svd_differential(v.transpose(), s, u.transpose());
+    (dv, ds, du)
+}
+
+#[test]
+fn test_svd_differential() {
+    use rand::Rng;
+    use rand::SeedableRng;
+    use crate::vec3::Vec3;
+    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
+    let eps = 1.0e-6;
+    for _iter in 0..100 {
+        let m0: [f64; 9] = std::array::from_fn(|_| rng.random::<f64>());
+        let (u0, s0, v0) = svd(
+            &m0,
+            crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
+        )
+        .unwrap();
+        let (diff_u, diff_s, diff_v) = svd_differential(u0, s0, v0);
+        for (i, j) in itertools::iproduct!(0..3, 0..3) {
+            let m1 = {
+                let mut m1 = m0;
+                m1[i + 3 * j] += eps;
+                m1
+            };
+            let (u1, s1, v1) = svd(
+                &m1,
+                crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
+            )
+            .unwrap();
+            {
+                let du_num = transpose(&u1)
+                    .mult_mat_col_major(&u0)
+                    .scale(1. / eps);
+                let du_num = to_vec3_from_skew_mat(&du_num);
+                let du_ana = [
+                    diff_u[0][i + 3 * j],
+                    diff_u[1][i + 3 * j],
+                    diff_u[2][i + 3 * j] ];
+                // println!("du: {} {} {:?} {:?}", i, j, du_ana, du_num);
+                assert!(
+                    du_num.sub(&du_ana).norm() < 1.0e-4 * (1.0 + du_ana.norm()),
+                    "du: {} {} {:?} {:?}",
+                    i,
+                    j,
+                    du_ana,
+                    du_num
+                );
+            }
+            {
+                let ds_num = [
+                    (s1[0] - s0[0]) / eps,
+                    (s1[1] - s0[1]) / eps,
+                    (s1[2] - s0[2]) / eps,
+                ];
+                let ds_ana = [
+                    diff_s[0][i + 3 * j],
+                    diff_s[1][i + 3 * j],
+                    diff_s[2][i + 3 * j] ];
+                // println!("ds: {} {} {:?} {:?}", i, j, ds_num, ds_ana);
+                assert!(
+                    ds_num.sub(&ds_ana).norm() < 1.0e-5 * (1.0 + ds_ana.norm()),
+                    "{} {} {:?} {:?}",
+                    i,
+                    j,
+                    ds_ana,
+                    ds_num
+                );
+            }
+            {
+                let dv_num = transpose(&v1)
+                    .mult_mat_col_major(&v0)
+                    .scale(1. / eps);
+                let dv_num = to_vec3_from_skew_mat(&dv_num);
+                let dv_ana = [
+                    diff_v[0][i + 3 * j],
+                    diff_v[1][i + 3 * j],
+                    diff_v[2][i + 3 * j]
+                ];
+                // println!("d0: {} {} {:?} {:?}", i, j, dv_ana, dv_num);
+                assert!(
+                    dv_num.sub(&dv_ana).norm() < 1.0e-3 * (1.0 + dv_ana.norm()),
+                    "{:?}",
+                    dv_ana
+                );
+            }
+        }
+    }
+}
+
+// Above: SVD related
+// -------------------------------------------------
 
 /// Add three vectors
 pub fn add_three<T>(a: &[T; 9], b: &[T; 9], c: &[T; 9]) -> [T; 9]

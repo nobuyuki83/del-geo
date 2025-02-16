@@ -6,10 +6,11 @@ pub trait Mat3RowMajor<Real: num_traits::Float> {
     fn determinant(&self) -> Real;
     fn squared_norm(&self) -> Real;
     fn transpose(&self) -> Self;
-    fn mult_mat_row_major(&self, b: &Self) -> Self;
     fn add(&self, b: &Self) -> Self;
     fn sub(&self, b: &Self) -> Self;
     fn scale(&self, s: Real) -> Self;
+    fn mult_mat_row_major(&self, b: &Self) -> Self;
+    fn mult_vec(&self, b: &[Real; 3]) -> [Real; 3];
 }
 impl<Real> Mat3RowMajor<Real> for [Real; 9]
 where
@@ -27,9 +28,6 @@ where
     fn transpose(&self) -> Self {
         transpose(self)
     }
-    fn mult_mat_row_major(&self, b: &Self) -> Self {
-        mult_mat_row_major(self, b)
-    }
     fn add(&self, b: &Self) -> Self {
         add(self, b)
     }
@@ -38,6 +36,12 @@ where
     }
     fn scale(&self, s: Real) -> Self {
         scale(self, s)
+    }
+    fn mult_mat_row_major(&self, b: &Self) -> Self {
+        mult_mat_row_major(self, b)
+    }
+    fn mult_vec(&self, b: &[Real; 3]) -> [Real; 3] {
+        mult_vec(self, b)
     }
 }
 
@@ -69,9 +73,55 @@ where
     ]
 }
 
+pub fn from_vec3_to_skew_mat<T>(v: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    [
+        T::zero(),
+        -v[2],
+        v[1],
+        v[2],
+        T::zero(),
+        -v[0],
+        -v[1],
+        v[0],
+        T::zero(),
+    ]
+}
+
 // above: from method
 // --------------------------
 // below: to method
+
+pub fn to_vec3_from_skew_mat<T>(m: &[T; 9]) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    let one = T::one();
+    let half = one / (one + one);
+    [
+        (m[7] - m[5]) * half,
+        (m[2] - m[6]) * half,
+        (m[3] - m[1]) * half,
+    ]
+}
+
+#[test]
+fn test_skew() {
+    use crate::vec3::Vec3;
+    use Mat3RowMajor;
+    let v0 = [1.1f64, 3.1, 2.5];
+    let m0 = from_vec3_to_skew_mat(&v0);
+    {
+        let v1 = [2.1, 0.1, 4.5];
+        let c0 = v0.cross(&v1);
+        let c1 = m0.mult_vec(&v1);
+        assert!(c0.sub(&c1).norm() < 1.0e-10);
+    }
+    let v0a = to_vec3_from_skew_mat(&m0);
+    dbg!(v0.sub(&v0a).norm() < 1.0e-10);
+}
 
 pub fn to_columns<T>(a: &[T; 9]) -> ([T; 3], [T; 3], [T; 3])
 where
@@ -152,6 +202,20 @@ where
 {
     std::array::from_fn(|i| a[i] * s)
 }
+
+pub fn mult_vec<Real>(m: &[Real; 9], v: &[Real; 3]) -> [Real; 3]
+where
+    Real: num_traits::Float,
+{
+    [
+        m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+        m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+        m[6] * v[0] + m[7] * v[1] + m[8] * v[2],
+    ]
+}
+
+// -------------------------------------------
+// below: SVD related functions
 
 /// Singular Value Decomposition (SVD)
 /// input = U * S * V^t
@@ -267,10 +331,20 @@ fn test_svd() {
 
 /// Jacobian of singular value decomposition
 ///
+/// # Reference
 /// Papadopoulo, Théodore & Lourakis, Manolis. (2000). "
 /// Estimating the Jacobian of the Singular Value Decomposition"
 /// Theory and Applications. 554-570.
-pub fn svd_differential(u: [f64; 9], s: [f64; 9], v: [f64; 9]) -> [[[f64; 3]; 3]; 9] {
+///
+/// # Returns `(diff_u, diff_s, diff:v)`
+/// - `diff_u[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
+/// - `diff_v[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
+#[allow(clippy::type_complexity)]
+pub fn svd_differential(
+    u: [f64; 9],
+    s: [f64; 3],
+    v: [f64; 9],
+) -> ([[f64; 9]; 3], [[f64; 9]; 3], [[f64; 9]; 3]) {
     let inv_mat2 = |mut a0: f64, a1: f64| -> (f64, f64) {
         if (a0 - a1).abs() < 1.0e-6 {
             a0 += 1.0e-6;
@@ -279,37 +353,43 @@ pub fn svd_differential(u: [f64; 9], s: [f64; 9], v: [f64; 9]) -> [[[f64; 3]; 3]
         (a0 * det_inv, -a1 * det_inv)
     };
 
-    let ai0 = inv_mat2(s[4], s[8]);
-    let ai1 = inv_mat2(s[8], s[0]);
-    let ai2 = inv_mat2(s[0], s[4]);
+    let ai0 = inv_mat2(s[1], s[2]);
+    let ai1 = inv_mat2(s[2], s[0]);
+    let ai2 = inv_mat2(s[0], s[1]);
 
-    let mut diff = [[[0.0; 3]; 3]; 9];
+    let mut diff_u = [[0.0; 9]; 3];
+    let mut diff_s = [[0.0; 9]; 3];
+    let mut diff_v = [[0.0; 9]; 3];
     for (i, j) in itertools::iproduct!(0..3, 0..3) {
-        // dSdu
-        diff[3][i][j] = u[3 * i] * v[3 * j];
-        diff[4][i][j] = u[3 * i + 1] * v[3 * j + 1];
-        diff[5][i][j] = u[3 * i + 2] * v[3 * j + 2];
+        {
+            // dSdu
+            diff_s[0][i * 3 + j] = u[3 * i] * v[3 * j];
+            diff_s[1][i * 3 + j] = u[3 * i + 1] * v[3 * j + 1];
+            diff_s[2][i * 3 + j] = u[3 * i + 2] * v[3 * j + 2];
+        }
         {
             let b0 = [-u[3 * i + 2] * v[3 * j + 1], u[3 * i + 1] * v[3 * j + 2]];
-            diff[0][i][j] = b0[0] * ai0.0 + b0[1] * ai0.1;
-            diff[6][i][j] = -b0[0] * ai0.1 - b0[1] * ai0.0;
+            diff_u[0][i * 3 + j] = b0[0] * ai0.0 + b0[1] * ai0.1;
+            diff_v[0][i * 3 + j] = -b0[0] * ai0.1 - b0[1] * ai0.0;
         }
         {
             let b1 = [-u[3 * i] * v[3 * j + 2], u[3 * i + 2] * v[3 * j]];
-            diff[1][i][j] = b1[0] * ai1.0 + b1[1] * ai1.1;
-            diff[7][i][j] = -b1[0] * ai1.1 - b1[1] * ai1.0;
+            diff_u[1][i * 3 + j] = b1[0] * ai1.0 + b1[1] * ai1.1;
+            diff_v[1][i * 3 + j] = -b1[0] * ai1.1 - b1[1] * ai1.0;
         }
         {
             let b2 = [-u[3 * i + 1] * v[3 * j], u[3 * i] * v[3 * j + 1]];
-            diff[2][i][j] = b2[0] * ai2.0 + b2[1] * ai2.1;
-            diff[8][i][j] = -b2[0] * ai2.1 - b2[1] * ai2.0;
+            diff_u[2][i * 3 + j] = b2[0] * ai2.0 + b2[1] * ai2.1;
+            diff_v[2][i * 3 + j] = -b2[0] * ai2.1 - b2[1] * ai2.0;
         }
     }
-    diff
+    (diff_u, diff_s, diff_v)
 }
 
 #[test]
 fn test_svd_differential() {
+    use Mat3RowMajor;
+    use crate::vec3::Vec3;
     use rand::Rng;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
@@ -321,8 +401,7 @@ fn test_svd_differential() {
             crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
         )
         .unwrap();
-        let s0 = crate::mat3_row_major::from_diagonal(&s0);
-        let diff = svd_differential(u0, s0, v0);
+        let (diff_u, diff_s, diff_v) = svd_differential(u0, s0, v0);
         for (i, j) in itertools::iproduct!(0..3, 0..3) {
             let m1 = {
                 let mut m1 = m0;
@@ -334,64 +413,46 @@ fn test_svd_differential() {
                 crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
             )
             .unwrap();
-            let s1 = from_diagonal(&s1);
             {
-                let du = Mat3RowMajor::transpose(&u0)
-                    .mult_mat_row_major(&u1.sub(&u0))
+                let du_num = transpose(&u1)
+                    .mult_mat_row_major(&u0)
                     .scale(1. / eps);
-                let v0 = diff[0][i][j];
-                let v1 = diff[1][i][j];
-                let v2 = diff[2][i][j];
+                let du_num = to_vec3_from_skew_mat(&du_num);
+                let du_ana = [
+                    diff_u[0][i * 3 + j],
+                    diff_u[1][i * 3 + j],
+                    diff_u[2][i * 3 + j]];
                 assert!(
-                    (du[1 * 3 + 2] - v0).abs() < 1.0e-4 * (1.0 + v0.abs()),
-                    "{}",
-                    v0
-                );
-                assert!(
-                    (du[2 * 3 + 0] - v1).abs() < 1.0e-4 * (1.0 + v1.abs()),
-                    "{}",
-                    v1
-                );
-                assert!(
-                    (du[0 * 3 + 1] - v2).abs() < 1.0e-4 * (1.0 + v2.abs()),
-                    "{}",
-                    v2
+                    du_num.sub(&du_ana).norm() < 1.0e-4 * (1.0 + du_ana.norm()),
+                    "{:?} {:?}",
+                    du_ana, du_num
                 );
             }
             {
-                let ds = [
-                    (s1[0 * 3 + 0] - s0[0 * 3 + 0]) / eps,
-                    (s1[1 * 3 + 1] - s0[1 * 3 + 1]) / eps,
-                    (s1[2 * 3 + 2] - s0[2 * 3 + 2]) / eps,
+                let ds_num = [
+                    (s1[0] - s0[0]) / eps,
+                    (s1[1] - s0[1]) / eps,
+                    (s1[2] - s0[2]) / eps,
                 ];
-                let v0 = diff[3][i][j];
-                let v1 = diff[4][i][j];
-                let v2 = diff[5][i][j];
-                assert!((ds[0] - v0).abs() < 1.0e-5 * (1.0 + v0.abs()), "{}", v0);
-                assert!((ds[1] - v1).abs() < 1.0e-5 * (1.0 + v1.abs()), "{}", v1);
-                assert!((ds[2] - v2).abs() < 1.0e-5 * (1.0 + v2.abs()), "{}", v2);
+                let ds_ana = [
+                    diff_s[0][i * 3 + j],
+                    diff_s[1][i * 3 + j],
+                    diff_s[2][i * 3 + j] ];
+                assert!(ds_num.sub(&ds_ana).norm() < 1.0e-5 * (1.0 + ds_ana.norm()), "{:?} {:?}", ds_ana, ds_num);
             }
             {
-                let dv = Mat3RowMajor::transpose(&v0)
-                    .mult_mat_row_major(&v1.sub(&v0))
+                let dv_num = transpose(&v1)
+                    .mult_mat_row_major(&v0)
                     .scale(1. / eps);
-                let v0 = diff[6][i][j];
-                let v1 = diff[7][i][j];
-                let v2 = diff[8][i][j];
+                let dv_num = to_vec3_from_skew_mat(&dv_num);
+                let dv_ana = [
+                    diff_v[0][i * 3 + j],
+                    diff_v[1][i * 3 + j],
+                    diff_v[2][i * 3 + j] ];
                 assert!(
-                    (dv[1 * 3 + 2] - v0).abs() < 1.0e-4 * (1.0 + v0.abs()),
-                    "{}",
-                    v0
-                );
-                assert!(
-                    (dv[2 * 3 + 0] - v1).abs() < 1.0e-4 * (1.0 + v1.abs()),
-                    "{}",
-                    v1
-                );
-                assert!(
-                    (dv[0 * 3 + 1] - v2).abs() < 1.0e-4 * (1.0 + v2.abs()),
-                    "{}",
-                    v2
+                    dv_num.sub(&dv_ana).norm() < 1.0e-4 * (1.0 + dv_ana.norm()),
+                    "{:?} {:?}",
+                    dv_ana, dv_num
                 );
             }
         }
