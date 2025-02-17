@@ -341,10 +341,10 @@ fn test_svd() {
 /// - `diff_v[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
 #[allow(clippy::type_complexity)]
 pub fn svd_differential(
-    u: [f64; 9],
-    s: [f64; 3],
-    v: [f64; 9],
-) -> ([[f64; 9]; 3], [[f64; 9]; 3], [[f64; 9]; 3]) {
+    u: &[f64; 9],
+    s: &[f64; 3],
+    v: &[f64; 9],
+) -> ([[f64; 3]; 9], [[f64; 3]; 9], [[f64; 3]; 9]) {
     let inv_mat2 = |mut a0: f64, a1: f64| -> (f64, f64) {
         if (a0 - a1).abs() < 1.0e-6 {
             a0 += 1.0e-6;
@@ -357,30 +357,30 @@ pub fn svd_differential(
     let ai1 = inv_mat2(s[2], s[0]);
     let ai2 = inv_mat2(s[0], s[1]);
 
-    let mut diff_u = [[0.0; 9]; 3];
-    let mut diff_s = [[0.0; 9]; 3];
-    let mut diff_v = [[0.0; 9]; 3];
+    let mut diff_u = [[0.0; 3]; 9];
+    let mut diff_s = [[0.0; 3]; 9];
+    let mut diff_v = [[0.0; 3]; 9];
     for (i, j) in itertools::iproduct!(0..3, 0..3) {
         {
             // dSdu
-            diff_s[0][i * 3 + j] = u[3 * i] * v[3 * j];
-            diff_s[1][i * 3 + j] = u[3 * i + 1] * v[3 * j + 1];
-            diff_s[2][i * 3 + j] = u[3 * i + 2] * v[3 * j + 2];
+            diff_s[i * 3 + j][0] = u[3 * i] * v[3 * j];
+            diff_s[i * 3 + j][1] = u[3 * i + 1] * v[3 * j + 1];
+            diff_s[i * 3 + j][2] = u[3 * i + 2] * v[3 * j + 2];
         }
         {
             let b0 = [-u[3 * i + 2] * v[3 * j + 1], u[3 * i + 1] * v[3 * j + 2]];
-            diff_u[0][i * 3 + j] = b0[0] * ai0.0 + b0[1] * ai0.1;
-            diff_v[0][i * 3 + j] = -b0[0] * ai0.1 - b0[1] * ai0.0;
+            diff_u[i * 3 + j][0] = b0[0] * ai0.0 + b0[1] * ai0.1;
+            diff_v[i * 3 + j][0] = -b0[0] * ai0.1 - b0[1] * ai0.0;
         }
         {
             let b1 = [-u[3 * i] * v[3 * j + 2], u[3 * i + 2] * v[3 * j]];
-            diff_u[1][i * 3 + j] = b1[0] * ai1.0 + b1[1] * ai1.1;
-            diff_v[1][i * 3 + j] = -b1[0] * ai1.1 - b1[1] * ai1.0;
+            diff_u[i * 3 + j][1] = b1[0] * ai1.0 + b1[1] * ai1.1;
+            diff_v[i * 3 + j][1] = -b1[0] * ai1.1 - b1[1] * ai1.0;
         }
         {
             let b2 = [-u[3 * i + 1] * v[3 * j], u[3 * i] * v[3 * j + 1]];
-            diff_u[2][i * 3 + j] = b2[0] * ai2.0 + b2[1] * ai2.1;
-            diff_v[2][i * 3 + j] = -b2[0] * ai2.1 - b2[1] * ai2.0;
+            diff_u[i * 3 + j][2] = b2[0] * ai2.0 + b2[1] * ai2.1;
+            diff_v[i * 3 + j][2] = -b2[0] * ai2.1 - b2[1] * ai2.0;
         }
     }
     (diff_u, diff_s, diff_v)
@@ -401,7 +401,7 @@ fn test_svd_differential() {
             crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
         )
         .unwrap();
-        let (diff_u, diff_s, diff_v) = svd_differential(u0, s0, v0);
+        let (diff_u, diff_s, diff_v) = svd_differential(&u0, &s0, &v0);
         for (i, j) in itertools::iproduct!(0..3, 0..3) {
             let m1 = {
                 let mut m1 = m0;
@@ -416,11 +416,7 @@ fn test_svd_differential() {
             {
                 let du_num = transpose(&u1).mult_mat_row_major(&u0).scale(1. / eps);
                 let du_num = to_vec3_from_skew_mat(&du_num);
-                let du_ana = [
-                    diff_u[0][i * 3 + j],
-                    diff_u[1][i * 3 + j],
-                    diff_u[2][i * 3 + j],
-                ];
+                let du_ana = &diff_u[i * 3 + j];
                 assert!(
                     du_num.sub(&du_ana).norm() < 1.0e-4 * (1.0 + du_ana.norm()),
                     "{:?} {:?}",
@@ -429,16 +425,8 @@ fn test_svd_differential() {
                 );
             }
             {
-                let ds_num = [
-                    (s1[0] - s0[0]) / eps,
-                    (s1[1] - s0[1]) / eps,
-                    (s1[2] - s0[2]) / eps,
-                ];
-                let ds_ana = [
-                    diff_s[0][i * 3 + j],
-                    diff_s[1][i * 3 + j],
-                    diff_s[2][i * 3 + j],
-                ];
+                let ds_num = s1.sub(&s0).scale(1. / eps);
+                let ds_ana = &diff_s[i * 3 + j];
                 assert!(
                     ds_num.sub(&ds_ana).norm() < 1.0e-5 * (1.0 + ds_ana.norm()),
                     "{:?} {:?}",
@@ -449,11 +437,7 @@ fn test_svd_differential() {
             {
                 let dv_num = transpose(&v1).mult_mat_row_major(&v0).scale(1. / eps);
                 let dv_num = to_vec3_from_skew_mat(&dv_num);
-                let dv_ana = [
-                    diff_v[0][i * 3 + j],
-                    diff_v[1][i * 3 + j],
-                    diff_v[2][i * 3 + j],
-                ];
+                let dv_ana = &diff_v[i * 3 + j];
                 assert!(
                     dv_num.sub(&dv_ana).norm() < 1.0e-4 * (1.0 + dv_ana.norm()),
                     "{:?} {:?}",

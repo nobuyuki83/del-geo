@@ -740,12 +740,12 @@ fn test_rotational_component() {
 /// - `diff_v[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
 #[allow(clippy::type_complexity)]
 pub fn svd_differential(
-    u: [f64; 9],
-    s: [f64; 3],
-    v: [f64; 9],
-) -> ([[f64; 9]; 3], [[f64; 9]; 3], [[f64; 9]; 3]) {
+    u: &[f64; 9],
+    s: &[f64; 3],
+    v: &[f64; 9],
+) -> ([[f64; 3]; 9], [[f64; 3]; 9], [[f64; 3]; 9]) {
     use Mat3ColMajor;
-    let (du, ds, dv) = crate::mat3_row_major::svd_differential(v.transpose(), s, u.transpose());
+    let (du, ds, dv) = crate::mat3_row_major::svd_differential(&v.transpose(), s, &u.transpose());
     (dv, ds, du)
 }
 
@@ -763,7 +763,7 @@ fn test_svd_differential() {
             crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
         )
         .unwrap();
-        let (diff_u, diff_s, diff_v) = svd_differential(u0, s0, v0);
+        let (diff_u, diff_s, diff_v) = svd_differential(&u0, &s0, &v0);
         for (i, j) in itertools::iproduct!(0..3, 0..3) {
             let m1 = {
                 let mut m1 = m0;
@@ -778,11 +778,7 @@ fn test_svd_differential() {
             {
                 let du_num = transpose(&u1).mult_mat_col_major(&u0).scale(1. / eps);
                 let du_num = to_vec3_from_skew_mat(&du_num);
-                let du_ana = [
-                    diff_u[0][i + 3 * j],
-                    diff_u[1][i + 3 * j],
-                    diff_u[2][i + 3 * j],
-                ];
+                let du_ana = &diff_u[i + 3 * j];
                 // println!("du: {} {} {:?} {:?}", i, j, du_ana, du_num);
                 assert!(
                     du_num.sub(&du_ana).norm() < 1.0e-4 * (1.0 + du_ana.norm()),
@@ -794,16 +790,8 @@ fn test_svd_differential() {
                 );
             }
             {
-                let ds_num = [
-                    (s1[0] - s0[0]) / eps,
-                    (s1[1] - s0[1]) / eps,
-                    (s1[2] - s0[2]) / eps,
-                ];
-                let ds_ana = [
-                    diff_s[0][i + 3 * j],
-                    diff_s[1][i + 3 * j],
-                    diff_s[2][i + 3 * j],
-                ];
+                let ds_num = s1.sub(&s0).scale(1. / eps);
+                let ds_ana = &diff_s[i + 3 * j];
                 // println!("ds: {} {} {:?} {:?}", i, j, ds_num, ds_ana);
                 assert!(
                     ds_num.sub(&ds_ana).norm() < 1.0e-5 * (1.0 + ds_ana.norm()),
@@ -817,16 +805,75 @@ fn test_svd_differential() {
             {
                 let dv_num = transpose(&v1).mult_mat_col_major(&v0).scale(1. / eps);
                 let dv_num = to_vec3_from_skew_mat(&dv_num);
-                let dv_ana = [
-                    diff_v[0][i + 3 * j],
-                    diff_v[1][i + 3 * j],
-                    diff_v[2][i + 3 * j],
-                ];
+                let dv_ana = &diff_v[i + 3 * j];
                 // println!("d0: {} {} {:?} {:?}", i, j, dv_ana, dv_num);
                 assert!(
                     dv_num.sub(&dv_ana).norm() < 1.0e-3 * (1.0 + dv_ana.norm()),
                     "{:?}",
                     dv_ana
+                );
+            }
+        }
+    }
+}
+
+pub fn gradient_and_hessian_of_svd_scale(
+    u: &[f64; 9],
+    s: &[f64; 3],
+    v: &[f64; 9],
+) -> ([[f64; 3]; 9], [[f64; 3]; 81]) {
+    use Mat3ColMajor;
+    let (du, ds, dv) = svd_differential(u, s, v);
+    let mut dds = [[0f64; 3]; 81];
+    for (k, l) in itertools::iproduct!(0..3, 0..3) {
+        let du = from_vec3_to_skew_mat(&du[k + 3 * l]);
+        let du = u.mult_mat_col_major(&du);
+        let dv = from_vec3_to_skew_mat(&dv[k + 3 * l]);
+        let dv = v.mult_mat_col_major(&dv);
+        for (i, j) in itertools::iproduct!(0..3, 0..3) {
+            dds[(i + 3 * j) * 9 + (k + 3 * l)][0] = -du[i] * v[j] - u[i] * dv[j];
+            dds[(i + 3 * j) * 9 + (k + 3 * l)][1] = -du[i + 3] * v[j + 3] - u[i + 3] * dv[j + 3];
+            dds[(i + 3 * j) * 9 + (k + 3 * l)][2] = -du[i + 6] * v[j + 6] - u[i + 6] * dv[j + 6];
+        }
+    }
+    (ds, dds)
+}
+
+#[test]
+fn test_gradient_and_hessian_of_svd_scale() {
+    use crate::vec3::Vec3;
+    use rand::Rng;
+    use rand::SeedableRng;
+    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
+    let eps = 1.0e-4;
+    for _iter in 0..100 {
+        let m0: [f64; 9] = std::array::from_fn(|_| rng.random::<f64>());
+        let (u0, s0, v0) = svd(
+            &m0,
+            crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
+        )
+        .unwrap();
+        let (ds0, dds) = gradient_and_hessian_of_svd_scale(&u0, &s0, &v0);
+        for (k, l) in itertools::iproduct!(0..3, 0..3) {
+            let m1 = {
+                let mut m1 = m0;
+                m1[k + 3 * l] += eps;
+                m1
+            };
+            let (u1, s1, v1) = svd(
+                &m1,
+                crate::mat3_sym::EigenDecompositionModes::JacobiNumIter(100),
+            )
+            .unwrap();
+            let (ds1, _dds) = gradient_and_hessian_of_svd_scale(&u1, &s1, &v1);
+            for (i, j) in itertools::iproduct!(0..3, 0..3) {
+                let dds_ana = &dds[(i + 3 * j) * 9 + (k + 3 * l)];
+                let dds_num = ds1[i + 3 * j].sub(&ds0[i + 3 * j]).scale(1. / eps);
+                //println!("{} {} {} {} --> {:?} {:?}", i, j, k, l, dds_num, dds_ana);
+                assert!(
+                    dds_ana.sub(&dds_num).norm() < 6.0e-3 * (1.0 + dds_ana.norm()),
+                    "{}",
+                    dds_ana.sub(&dds_num).norm()
                 );
             }
         }
