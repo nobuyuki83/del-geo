@@ -158,79 +158,115 @@ pub fn from_transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 16] {
     ]
 }
 
-pub fn from_aabb3_fit_into_ndc_preserving_xyasp(aabb: &[f32; 6], asp: f32) -> [f32; 16] {
+pub fn from_aabb3_fit_into_ndc_preserving_xyasp<Real>(aabb: &[Real; 6], asp: Real) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let two = one + one;
     let cntr = crate::aabb3::center(aabb);
     let (scale_xy, scale_z) = {
         let size = crate::aabb3::size(aabb);
         let lenx = size[0] / asp;
         let leny = size[1];
         if lenx > leny {
-            (lenx / 2f32, size[2] / 2f32)
+            (lenx / two, size[2] / two)
         } else {
-            (leny / 2f32, size[2] / 2f32)
+            (leny / two, size[2] / two)
         }
     };
     [
         scale_xy * asp,
-        0.,
-        0.,
-        0.,
-        0.,
+        zero,
+        zero,
+        zero,
+        zero,
         scale_xy,
-        0.,
-        0.,
-        0.,
-        0.,
+        zero,
+        zero,
+        zero,
+        zero,
         scale_z,
-        0.,
+        zero,
         cntr[0],
         cntr[1],
         cntr[2],
-        1.,
+        one,
     ]
 }
 
 /// transform aabb to unit square (0,1)^3 while preserving aspect ratio
 /// return 4x4 homogeneous transformation matrix in **column major** order
-pub fn from_aabb3_fit_into_unit_preserve_asp(aabb_world: &[f32; 6]) -> [f32; 16] {
+pub fn from_aabb3_fit_into_unit_preserve_asp<Real>(aabb_world: &[Real; 6]) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let two = one + one;
+    let half = one / two;
     let cntr = [
-        (aabb_world[0] + aabb_world[3]) * 0.5,
-        (aabb_world[1] + aabb_world[4]) * 0.5,
-        (aabb_world[2] + aabb_world[5]) * 0.5,
+        (aabb_world[0] + aabb_world[3]) / two,
+        (aabb_world[1] + aabb_world[4]) / two,
+        (aabb_world[2] + aabb_world[5]) / two,
     ];
     let size = max_edge_size(aabb_world);
-    let a = 1f32 / size;
-    let b = -a * cntr[0] + 0.5;
-    let c = -a * cntr[1] + 0.5;
-    let d = -a * cntr[2] + 0.5;
-    [a, 0., 0., 0., 0., a, 0., 0., 0., 0., a, 0., b, c, d, 1.]
+    let a = one / size;
+    let b = -a * cntr[0] + half;
+    let c = -a * cntr[1] + half;
+    let d = -a * cntr[2] + half;
+    [
+        a, zero, zero, zero, zero, a, zero, zero, zero, zero, a, zero, b, c, d, one,
+    ]
 }
 
 /// transform aabb to unit square (0,1)^3
 /// return 4x4 homogeneous transformation matrix in **column major** order
-pub fn from_aabb3_fit_into_unit(aabb_world: &[f32; 6]) -> [f32; 16] {
+pub fn from_aabb3_fit_into_unit<Real>(aabb_world: &[Real; 6]) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let two = one + one;
+    let half = one / two;
     let cntr = crate::aabb3::center(aabb_world);
     let size = crate::aabb3::size(aabb_world);
-    let ax = 1f32 / size[0];
-    let ay = 1f32 / size[1];
-    let az = 1f32 / size[2];
-    let b = -ax * cntr[0] + 0.5;
-    let c = -ay * cntr[1] + 0.5;
-    let d = -az * cntr[2] + 0.5;
-    [ax, 0., 0., 0., 0., ay, 0., 0., 0., 0., az, 0., b, c, d, 1.]
+    let ax = one / size[0];
+    let ay = one / size[1];
+    let az = one / size[2];
+    let b = -ax * cntr[0] + half;
+    let c = -ay * cntr[1] + half;
+    let d = -az * cntr[2] + half;
+    [
+        ax, zero, zero, zero, zero, ay, zero, zero, zero, zero, az, zero, b, c, d, one,
+    ]
 }
 
 /// this function is typically used to make 3D homogeneous tranformation matrix
 /// from 2D homogeneous transformation mtrix
-pub fn from_mat3_col_major_adding_z(m: &[f32; 9]) -> [f32; 16] {
+pub fn from_mat3_col_major_adding_z<Real>(m: &[Real; 9]) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
     [
-        m[0], m[1], 0., m[2], m[3], m[4], 0., m[5], 0., 0., 1., 0., m[6], m[7], 0., m[8],
+        m[0], m[1], zero, m[2], m[3], m[4], zero, m[5], zero, zero, one, zero, m[6], m[7], zero,
+        m[8],
     ]
 }
 
-pub fn from_mat3_col_major_adding_w(m: &[f32; 9]) -> [f32; 16] {
+pub fn from_mat3_col_major_adding_w<Real>(m: &[Real; 9]) -> [Real; 16]
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
     [
-        m[0], m[1], m[2], 0., m[3], m[4], m[5], 0., m[6], m[7], m[8], 0., 0., 0., 0., 1.,
+        m[0], m[1], m[2], zero, m[3], m[4], m[5], zero, m[6], m[7], m[8], zero, zero, zero, zero,
+        one,
     ]
 }
 
