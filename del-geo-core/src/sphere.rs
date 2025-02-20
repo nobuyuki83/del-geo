@@ -25,44 +25,58 @@ where
     }
 }
 
-pub fn area(r: f32) -> f32 {
-    r * r * 4f32 * std::f32::consts::PI
+pub fn area<T>(r: T) -> T
+where
+    T: num_traits::Float + num_traits::FloatConst,
+{
+    r * r * T::from(4).unwrap() * T::PI()
 }
 
 /// <https://corysimon.github.io/articles/uniformdistn-on-sphere/>
-pub fn sample(rnd: &[f32; 2]) -> [f32; 3] {
-    let phi = (1. - 2. * rnd[0]).acos();
-    let theta = 2. * std::f32::consts::PI * rnd[1];
+pub fn sample<T>(rnd: &[T; 2]) -> [T; 3]
+where
+    T: num_traits::Float + num_traits::FloatConst,
+{
+    let one = T::one();
+    let two = one + one;
+    let phi = (one - two * rnd[0]).acos();
+    let theta = two * T::PI() * rnd[1];
     [theta.cos() * phi.sin(), theta.sin() * phi.sin(), phi.cos()]
 }
 
 /// uniformly region on sample unit sphere (center is the origin) where the other sphere is visible
-pub fn sample_where_another_sphere_is_visible(
-    rad_light: f32,
-    pos_light_center: &[f32; 3],
-    unirand: &[f32; 2],
-) -> ([f32; 3], f32) {
+pub fn sample_where_another_sphere_is_visible<T>(
+    rad_light: T,
+    pos_light_center: &[T; 3],
+    unirand: &[T; 2],
+) -> ([T; 3], T)
+where
+    T: num_traits::Float + num_traits::FloatConst + std::fmt::Display,
+{
     use crate::mat3_col_major::Mat3ColMajor;
     use crate::vec3::Vec3;
+    let one = T::one();
+    let zero = T::zero();
+    let two = one + one;
     let sin_theta_max_squared = rad_light * rad_light / pos_light_center.squared_norm();
-    assert!((0f32..=1f32).contains(&sin_theta_max_squared));
-    let cos_theta_max = (1f32 - sin_theta_max_squared).max(0.0).sqrt();
-    let cos_theta = 1f32 - unirand[0] * (1f32 - cos_theta_max);
-    assert!(cos_theta >= 0.0);
+    assert!((zero..=one).contains(&sin_theta_max_squared));
+    let cos_theta_max = (one - sin_theta_max_squared).max(zero).sqrt();
+    let cos_theta = one - unirand[0] * (one - cos_theta_max);
+    assert!(cos_theta >= zero);
     assert!(
         cos_theta >= cos_theta_max,
         "{} {}",
         cos_theta,
         cos_theta_max
     );
-    assert!(cos_theta <= 1f32);
-    let sin_theta = (1f32 - cos_theta * cos_theta).max(0f32).sqrt();
-    let phi = 2f32 * std::f32::consts::PI * unirand[1];
+    assert!(cos_theta <= one);
+    let sin_theta = (one - cos_theta * cos_theta).max(zero).sqrt();
+    let phi = two * T::PI() * unirand[1];
     // sample unit sphere assuming that the other light is in the z-axis direction
     let dir_lcl = [sin_theta * phi.cos(), sin_theta * phi.sin(), cos_theta];
     let mat3 = crate::mat3_col_major::transform_lcl2world_given_local_z(pos_light_center);
     let dir_world = mat3.mult_vec(&dir_lcl);
-    let pdf = 1f32 / (2f32 * std::f32::consts::PI * (1f32 - cos_theta_max));
+    let pdf = one / (two * T::PI() * (one - cos_theta_max));
     (dir_world, pdf)
 }
 pub fn pdf_light_sample(light_center: &[f32; 3], light_rad: f32) -> f32 {

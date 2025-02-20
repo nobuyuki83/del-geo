@@ -515,16 +515,22 @@ where
 
 /// # Argument
 /// * `n` - world 3D vector that corresponds local z (no need to be unit vector)
-pub fn transform_lcl2world_given_local_z(n: &[f32; 3]) -> [f32; 9] {
-    use crate::vec3;
-    let n = vec3::normalize(n);
-    let t = if n[0].abs() > 0.1 {
-        [0., 1., 0.]
+pub fn transform_lcl2world_given_local_z<T>(n: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    use crate::vec3::Vec3;
+    let n = n.normalize();
+    let zero = T::zero();
+    let one = T::one();
+
+    let t = if n[0].abs() > T::from(0.1).unwrap() {
+        [zero, one, zero]
     } else {
-        [1., 0., 0.]
+        [one, zero, zero]
     };
-    let u = vec3::normalize(&vec3::cross(&t, &n));
-    let v = vec3::cross(&n, &u);
+    let u = t.cross(&n).normalize();
+    let v = n.cross(&u);
     [u[0], u[1], u[2], v[0], v[1], v[2], n[0], n[1], n[2]]
 }
 
