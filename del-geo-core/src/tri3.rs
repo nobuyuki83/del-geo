@@ -322,21 +322,8 @@ fn test_dw_ray_triangle_intersection() {
 
 // ----------------------------
 
-/*
-pub fn to_barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
-where
-    T: num_traits::Float,
-{
-    let a0 = area(q, p1, p2);
-    let a1 = area(q, p2, p0);
-    let a2 = area(q, p0, p1);
-    let sum_inv = T::one() / (a0 + a1 + a2);
-    [a0 * sum_inv, a1 * sum_inv, a2 * sum_inv]
-}
- */
-
-/// q must be coplanar to the triangle (p0,p1,p2)
-/// volumes determine the ratios (not area), since triangle area in 3D is always positive.
+/// this function is sometime used for nearest point to tri3.
+/// The point is not always colinear to the triangle
 pub fn to_barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
 where
     T: num_traits::Float,
@@ -461,24 +448,14 @@ fn test_w_inverse_distance_cubic_integrated_over_wedge() {
 
 pub fn nearest_to_point3<T>(q0: &[T; 3], q1: &[T; 3], q2: &[T; 3], ps: &[T; 3]) -> ([T; 3], T, T)
 where
-    T: num_traits::Float,
+    T: num_traits::Float + std::fmt::Debug,
 {
     use crate::vec3::Vec3;
-    let (n012, _area) = unit_normal_area(q0, q1, q2);
-    let pe = ps.add(&n012);
-    let v012 = crate::tet::volume(ps, q0, q1, q2);
-    if v012.abs() > T::zero() {
-        let v0 = crate::tet::volume(ps, q1, q2, &pe);
-        let v1 = crate::tet::volume(ps, q2, q0, &pe);
-        let v2 = crate::tet::volume(ps, q0, q1, &pe);
-        assert!((v0 + v1 + v2).abs() > T::zero());
-        let inv_v012 = T::one() / (v0 + v1 + v2);
-        let r0 = v0 * inv_v012;
-        let r1 = v1 * inv_v012;
-        let r2 = T::one() - r0 - r1;
-        if r0 >= T::zero() && r1 >= T::zero() && r2 >= T::zero() {
-            let nearp = crate::vec3::add_three(&q0.scale(r0), &q1.scale(r1), &q2.scale(r2));
-            return (nearp, r0, r1);
+    {
+        let bc = to_barycentric_coords(q0, q1, q2, ps);
+        if bc[0] >= T::zero() && bc[1] >= T::zero() && bc[2] >= T::zero() {
+            let near_pos = position_from_barycentric_coords(q0, q1, q2, &bc);
+            return (near_pos, bc[0], bc[1]);
         }
     }
     let r12 = crate::edge3::nearest_to_point3(q1, q2, ps);
@@ -677,32 +654,36 @@ where
         intersection_against_line(self.p0, self.p1, self.p2, line_org, line_dir)
     }
 
+    /// area
     pub fn area(&self) -> Real {
         area(self.p0, self.p1, self.p2)
     }
 
+    /// the center of gravity
     pub fn cog(&self) -> [Real; 3] {
-        use crate::vec3::Vec3;
         let one = Real::one();
-        let one3rd = one / (one * one * one);
+        let one3rd = one / (one + one + one);
         [
-            (self.p0[0] + self.p1[0] + self.p2[0]),
-            (self.p0[1] + self.p1[1] + self.p2[1]),
-            (self.p0[2] + self.p1[2] + self.p2[2]),
+            (self.p0[0] + self.p1[0] + self.p2[0]) * one3rd,
+            (self.p0[1] + self.p1[1] + self.p2[1]) * one3rd,
+            (self.p0[2] + self.p1[2] + self.p2[2]) * one3rd,
         ]
-        .scale(one3rd)
     }
 
+    /// norml vector. This normal not normalized. The length of the vector is equal to double of area
     pub fn normal(&self) -> [Real; 3] {
         normal(self.p0, self.p1, self.p2)
     }
 
+    /// unit normal
     pub fn unit_normal(&self) -> [Real; 3] {
         let n = normal(self.p0, self.p1, self.p2);
         use crate::vec3::Vec3;
         n.normalize()
     }
 
+    /// Position from the barycentric coordinates.
+    /// `r0` is the weight of `p01`, `r1` is the weight of `p1`
     pub fn position_from_barycentric_coordinates(&self, r0: Real, r1: Real) -> [Real; 3] {
         let r2 = Real::one() - r0 - r1;
         [
