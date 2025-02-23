@@ -339,13 +339,6 @@ where
     let mut y = p0[1];
     let mut res = vec![];
     let eps = Real::epsilon();
-    {
-        let ix: usize = x.as_();
-        let iy: usize = y.as_();
-        res.push(iy * img_width + ix);
-        //        return res;
-    }
-    //while (x - p0[0]).abs() <= (p1[0] - p0[0]).abs() && (y - p0[1]).abs() <= (p1[1] - p0[1]).abs() {
     loop {
         if x < p0[0].min(p1[0]) - eps || x > p0[0].max(p1[0]) + eps {
             break;

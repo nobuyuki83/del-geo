@@ -745,11 +745,14 @@ fn test_rotational_component() {
 /// - `diff_u[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
 /// - `diff_v[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
 #[allow(clippy::type_complexity)]
-pub fn svd_differential(
-    u: &[f64; 9],
-    s: &[f64; 3],
-    v: &[f64; 9],
-) -> ([[f64; 3]; 9], [[f64; 3]; 9], [[f64; 3]; 9]) {
+pub fn svd_differential<Real>(
+    u: &[Real; 9],
+    s: &[Real; 3],
+    v: &[Real; 9],
+) -> ([[Real; 3]; 9], [[Real; 3]; 9], [[Real; 3]; 9])
+where
+    Real: num_traits::Float,
+{
     use Mat3ColMajor;
     let (du, ds, dv) = crate::mat3_row_major::svd_differential(&v.transpose(), s, &u.transpose());
     (dv, ds, du)
@@ -823,14 +826,17 @@ fn test_svd_differential() {
     }
 }
 
-pub fn gradient_and_hessian_of_svd_scale(
-    u: &[f64; 9],
-    s: &[f64; 3],
-    v: &[f64; 9],
-) -> ([[f64; 3]; 9], [[f64; 3]; 81]) {
+pub fn gradient_and_hessian_of_svd_scale<Real>(
+    u: &[Real; 9],
+    s: &[Real; 3],
+    v: &[Real; 9],
+) -> ([[Real; 3]; 9], [[Real; 3]; 81])
+where
+    Real: num_traits::Float,
+{
     use Mat3ColMajor;
     let (du, ds, dv) = svd_differential(u, s, v);
-    let mut dds = [[0f64; 3]; 81];
+    let mut dds = [[Real::zero(); 3]; 81];
     for (k, l) in itertools::iproduct!(0..3, 0..3) {
         let du = from_vec3_to_skew_mat(&du[k + 3 * l]);
         let du = u.mult_mat_col_major(&du);

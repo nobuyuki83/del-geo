@@ -17,6 +17,7 @@ impl Headers {
             9 => Some(("vec3.h", include_str!("vec3.h"))),
             10 => Some(("edge2.h", include_str!("edge2.h"))),
             11 => Some(("tri2.h", include_str!("tri2.h"))),
+            12 => Some(("vec2.h", include_str!("vec2.h"))),
             _ => None,
         }
     }

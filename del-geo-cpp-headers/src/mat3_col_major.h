@@ -52,4 +52,12 @@ auto try_inverse(const float* b) -> cuda::std::optional< cuda::std::array<float,
     };
 }
 
+/// Return a 2x3 matrix with column major storage by throwing away the last row
+__device__
+auto to_mat2x3_col_major_xy(
+  const float* m) -> cuda::std::array<float,6>
+{
+    return {m[0], m[1], m[3], m[4], m[6], m[7]};
+}
+
 }

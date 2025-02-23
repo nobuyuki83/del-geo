@@ -47,5 +47,17 @@ auto mult_mat3_col_major(
     };
 }
 
+__device__
+auto vec3_from_mult_transpose_vec2(
+  const float* a,
+  const float* v) -> cuda::std::array<float,3>
+{
+     return {
+        a[0] * v[0] + a[1] * v[1],
+        a[2] * v[0] + a[3] * v[1],
+        a[4] * v[0] + a[5] * v[1]
+    };
+}
+
 
 }

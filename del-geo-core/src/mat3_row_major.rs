@@ -340,16 +340,19 @@ fn test_svd() {
 /// - `diff_u[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
 /// - `diff_v[k][i*3+j]` : differentiation of u is a skew matrix, represented by a 3D vector
 #[allow(clippy::type_complexity)]
-pub fn svd_differential(
-    u: &[f64; 9],
-    s: &[f64; 3],
-    v: &[f64; 9],
-) -> ([[f64; 3]; 9], [[f64; 3]; 9], [[f64; 3]; 9]) {
-    let inv_mat2 = |mut a0: f64, a1: f64| -> (f64, f64) {
-        if (a0 - a1).abs() < 1.0e-6 {
-            a0 += 1.0e-6;
+pub fn svd_differential<Real>(
+    u: &[Real; 9],
+    s: &[Real; 3],
+    v: &[Real; 9],
+) -> ([[Real; 3]; 9], [[Real; 3]; 9], [[Real; 3]; 9])
+where
+    Real: num_traits::Float,
+{
+    let inv_mat2 = |mut a0: Real, a1: Real| -> (Real, Real) {
+        if (a0 - a1).abs() < Real::epsilon() {
+            a0 = a0 + Real::epsilon();
         }
-        let det_inv = 1.0 / (a0 * a0 - a1 * a1);
+        let det_inv = Real::one() / (a0 * a0 - a1 * a1);
         (a0 * det_inv, -a1 * det_inv)
     };
 
@@ -357,9 +360,9 @@ pub fn svd_differential(
     let ai1 = inv_mat2(s[2], s[0]);
     let ai2 = inv_mat2(s[0], s[1]);
 
-    let mut diff_u = [[0.0; 3]; 9];
-    let mut diff_s = [[0.0; 3]; 9];
-    let mut diff_v = [[0.0; 3]; 9];
+    let mut diff_u = [[Real::zero(); 3]; 9];
+    let mut diff_s = [[Real::zero(); 3]; 9];
+    let mut diff_v = [[Real::zero(); 3]; 9];
     for (i, j) in itertools::iproduct!(0..3, 0..3) {
         {
             // dSdu
