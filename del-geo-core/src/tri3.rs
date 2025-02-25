@@ -313,13 +313,15 @@ where
 // -------------------------------------
 // below: intersection
 
+/// # Returns
+/// position and the barycentric coordinate
 pub fn intersection_plane_of_tri3_against_line<T>(
     q0: &[T; 3],
     q1: &[T; 3],
     q2: &[T; 3],
     src: &[T; 3],
     dir: &[T; 3],
-) -> ([T; 3], T, T, T)
+) -> ([T; 3], [T; 3])
 where
     T: num_traits::Float,
 {
@@ -333,7 +335,7 @@ where
     r1 = r1 * v012_inv;
     r2 = r2 * v012_inv;
     let p0 = crate::vec3::add_three(&q0.scale(r0), &q1.scale(r1), &q2.scale(r2));
-    (p0, r0, r1, r2)
+    (p0, [r0, r1, r2])
 }
 
 /// Möller–Trumbore ray-triangle intersection algorithm
@@ -599,7 +601,7 @@ where
     let nq = normal(q0, q1, q2);
     let (ps, pe) = intersection_against_plane3(p0, p1, p2, q0, &nq)?;
     let (qs, qe) = intersection_against_plane3(q0, q1, q2, p0, &np)?;
-    // the line direction intersecction of the plane (p0,p1,p2) and the plane (q0,q1,q2)
+    // the line direction intersection of the plane (p0,p1,p2) and the plane (q0,q1,q2)
     let vz = np.cross(&nq);
     //
     let zps = ps.dot(&vz);
@@ -630,20 +632,31 @@ where
 }
 
 #[allow(unused_variables)]
+/// p2q0 is shared between two tris
 pub fn intersection_against_tri3_sharing_vtx<T>(
     p0: &[T; 3],
     p1: &[T; 3],
     p2q0: &[T; 3],
     q1: &[T; 3],
     q2: &[T; 3],
-) where
+) -> Option<([T; 3], [T; 3])>
+where
     T: num_traits::Float,
 {
-    //use crate::vec3::Vec3;
-    //let np = normal(p0, p1, p2q0);
-    //let nq = normal(p2q0, q1, q2);
-    // crate::plane::intersection_line3_triplane3()
-    todo!();
+    use crate::vec3::Vec3;
+    {
+        let (v_p, bc_p) = intersection_plane_of_tri3_against_line(p0, p1, p2q0, q1, &q2.sub(q1));
+        if bc_p[0] > T::zero() && bc_p[1] > T::zero() && bc_p[2] > T::zero() {
+            return Some((*p2q0, v_p));
+        }
+    }
+    {
+        let (v_q, bc_q) = intersection_plane_of_tri3_against_line(p2q0, q1, q2, p0, &p1.sub(p0));
+        if bc_q[0] > T::zero() && bc_q[1] > T::zero() && bc_q[2] > T::zero() {
+            return Some((*p2q0, v_q));
+        }
+    }
+    None
 }
 
 // above: intersection
