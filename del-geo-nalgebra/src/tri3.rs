@@ -183,17 +183,21 @@ fn test_triangle_point_nearest() {
         let ps = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
         let (qs, r0, r1) = nearest_to_point3(&q0, &q1, &q2, &ps);
         let dist0 = (qs - ps).norm();
-        use del_geo_core::tri3::clamp;
-        let (r0a, r1a, r2a) = clamp(r0 + eps, r1 + eps, 1. - r0 - eps - r1 - eps);
+        use del_geo_core::tri3::clamp_barycentric_coords;
+        let (r0a, r1a, r2a) =
+            clamp_barycentric_coords(r0 + eps, r1 + eps, 1. - r0 - eps - r1 - eps);
         let qa = q0.scale(r0a) + q1.scale(r1a) + q2.scale(r2a);
         assert!((qa - ps).norm() >= dist0);
-        let (r0b, r1b, r2b) = clamp(r0 + eps, r1 - eps, 1. - r0 - eps - r1 + eps);
+        let (r0b, r1b, r2b) =
+            clamp_barycentric_coords(r0 + eps, r1 - eps, 1. - r0 - eps - r1 + eps);
         let qb = q0.scale(r0b) + q1.scale(r1b) + q2.scale(r2b);
         assert!((qb - ps).norm() >= dist0);
-        let (r0c, r1c, r2c) = clamp(r0 - eps, r1 + eps, 1. - r0 + eps - r1 - eps);
+        let (r0c, r1c, r2c) =
+            clamp_barycentric_coords(r0 - eps, r1 + eps, 1. - r0 + eps - r1 - eps);
         let qc = q0.scale(r0c) + q1.scale(r1c) + q2.scale(r2c);
         assert!((qc - ps).norm() >= dist0);
-        let (r0d, r1d, r2d) = clamp(r0 - eps, r1 - eps, 1. - r0 + eps - r1 + eps);
+        let (r0d, r1d, r2d) =
+            clamp_barycentric_coords(r0 - eps, r1 - eps, 1. - r0 + eps - r1 + eps);
         let qd = q0.scale(r0d) + q1.scale(r1d) + q2.scale(r2d);
         assert!((qd - ps).norm() >= dist0);
     }

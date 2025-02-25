@@ -1,33 +1,5 @@
 //! methods for 3d triangle
 
-/// clamp barycentric coordinates inside a triangle
-pub fn clamp<T>(r0: T, r1: T, r2: T) -> (T, T, T)
-where
-    T: num_traits::Float,
-{
-    // vertex projection
-    if r0 <= T::zero() && r1 <= T::zero() {
-        return (T::zero(), T::zero(), T::one());
-    }
-    if r1 <= T::zero() && r2 <= T::zero() {
-        return (T::one(), T::zero(), T::zero());
-    }
-    if r2 <= T::zero() && r0 <= T::zero() {
-        return (T::zero(), T::one(), T::zero());
-    }
-    // edge projection
-    if r0 <= T::zero() {
-        return (T::zero(), r1 / (r1 + r2), r2 / (r1 + r2));
-    }
-    if r1 <= T::zero() {
-        return (r0 / (r0 + r2), T::zero(), r2 / (r0 + r2));
-    }
-    if r2 <= T::zero() {
-        return (r0 / (r0 + r1), r1 / (r0 + r1), T::zero());
-    }
-    (r0, r1, r2)
-}
-
 // ----------------------
 
 /// normal vector of a 3D triangle (coordinates given by stack-allocated arrays)
@@ -139,6 +111,229 @@ where
     let vo = -T::one() * l;
     let vd = (T::one() + T::one()) * l;
     [[[vd], [vo], [vo]], [[vo], [vd], [vo]], [[vo], [vo], [vd]]]
+}
+
+// ----------------------------
+// below: barycentric coordinate
+
+/// this function is sometime used for nearest point to tri3.
+/// The point is not always colinear to the triangle
+pub fn to_barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    use crate::vec3::Vec3;
+    let n = p1.sub(p0).cross(&p2.sub(p0));
+    let s = q.add(&n);
+    let r0 = crate::tet::volume(p1, p2, q, &s);
+    let r1 = crate::tet::volume(p2, p0, q, &s);
+    let r2 = crate::tet::volume(p0, p1, q, &s);
+    let tmp = T::one() / (r0 + r1 + r2);
+    [r0 * tmp, r1 * tmp, r2 * tmp]
+}
+
+pub fn position_from_barycentric_coords<T>(
+    p0: &[T; 3],
+    p1: &[T; 3],
+    p2: &[T; 3],
+    bc: &[T; 3],
+) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    [
+        bc[0] * p0[0] + bc[1] * p1[0] + bc[2] * p2[0],
+        bc[0] * p0[1] + bc[1] * p1[1] + bc[2] * p2[1],
+        bc[0] * p0[2] + bc[1] * p1[2] + bc[2] * p2[2],
+    ]
+}
+
+/// clamp barycentric coordinates inside a triangle
+pub fn clamp_barycentric_coords<T>(r0: T, r1: T, r2: T) -> (T, T, T)
+where
+    T: num_traits::Float,
+{
+    // vertex projection
+    if r0 <= T::zero() && r1 <= T::zero() {
+        return (T::zero(), T::zero(), T::one());
+    }
+    if r1 <= T::zero() && r2 <= T::zero() {
+        return (T::one(), T::zero(), T::zero());
+    }
+    if r2 <= T::zero() && r0 <= T::zero() {
+        return (T::zero(), T::one(), T::zero());
+    }
+    // edge projection
+    if r0 <= T::zero() {
+        return (T::zero(), r1 / (r1 + r2), r2 / (r1 + r2));
+    }
+    if r1 <= T::zero() {
+        return (r0 / (r0 + r2), T::zero(), r2 / (r0 + r2));
+    }
+    if r2 <= T::zero() {
+        return (r0 / (r0 + r1), r1 / (r0 + r1), T::zero());
+    }
+    (r0, r1, r2)
+}
+
+// -----------------------------------
+// below: distance, nearest
+
+fn wdw_inverse_distance_cubic_integrated_over_wedge(x: &[f64; 3], b: f64) -> (f64, [f64; 3]) {
+    let l = crate::vec3::norm(x);
+    let c = 1. / (b * 0.5).tan();
+    let a = (l - x[0]) * c - x[1];
+    let t = {
+        let t = (x[2].abs() / a).atan();
+        if t > 0. {
+            t
+        } else {
+            t + core::f64::consts::PI
+        }
+    };
+    let signz = if x[2] < 0. { -1. } else { 1. };
+    let w = t * 2. / x[2].abs();
+    let d = 1.0 / (x[2] * x[2] + a * a);
+    let dwdx = 2. * (1. - x[0] / l) * c * d;
+    let dwdy = 2. * (1. - x[2] * c / l) * d;
+    let dwdz = -t / (x[2] * x[2]) + a * d / x[2].abs() - x[2].abs() * c * d / l;
+    (w, [dwdx, dwdy, dwdz * signz * 2.])
+}
+pub fn wdw_integral_of_inverse_distance_cubic(
+    p0: &[f64; 3],
+    p1: &[f64; 3],
+    p2: &[f64; 3],
+    q: &[f64; 3],
+) -> (f64, [f64; 3]) {
+    use crate::vec3::Vec3;
+    let (vz, _) = unit_normal_area(p0, p1, p2);
+    let z = q.sub(p0).dot(&vz);
+    let u10 = p0.sub(p1).normalize();
+    let u21 = p1.sub(p2).normalize();
+    let u02 = p2.sub(p0).normalize();
+    //
+    let vy0 = vz.cross(&u02);
+    let beta0 = u02.dot(&u10).acos();
+    let q0 = [q.sub(p0).dot(&u02), q.sub(p0).dot(&vy0), z];
+    let (w0, dw0) = wdw_inverse_distance_cubic_integrated_over_wedge(&q0, beta0);
+    let dw0dq = crate::vec3::add_three(&u02.scale(dw0[0]), &vy0.scale(dw0[1]), &vz.scale(dw0[2]));
+    //
+    let vy1 = vz.cross(&u10);
+    let beta1 = u10.dot(&u21).acos();
+    let q1 = [q.sub(p1).dot(&u10), q.sub(p1).dot(&vy1), z];
+    let (w1, dw1) = wdw_inverse_distance_cubic_integrated_over_wedge(&q1, beta1);
+    let dw1dq = crate::vec3::add_three(&u10.scale(dw1[0]), &vy1.scale(dw1[1]), &vz.scale(dw1[2]));
+    //
+    let vy2 = vz.cross(&u21);
+    let beta2 = u21.dot(&u02).acos();
+    let q2 = [q.sub(p2).dot(&u21), q.sub(p2).dot(&vy2), z];
+    let (w2, dw2) = wdw_inverse_distance_cubic_integrated_over_wedge(&q2, beta2);
+    let dw2dq = crate::vec3::add_three(&u21.scale(dw2[0]), &vy2.scale(dw2[1]), &vz.scale(dw2[2]));
+    //
+    let w = core::f64::consts::PI * 2_f64 / z.abs() - w0 - w1 - w2;
+    let signz = if z < 0. { -1. } else { 1. };
+    let dwdq = crate::vec3::add_three(&dw0dq, &dw1dq, &dw2dq);
+    let dw = vz
+        .scale(-signz * core::f64::consts::PI * 2_f64 / (z * z))
+        .sub(&dwdq);
+    (w, dw)
+}
+
+#[test]
+fn test_w_inverse_distance_cubic_integrated_over_wedge() {
+    use crate::vec3::Vec3;
+    use rand::SeedableRng;
+    let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
+    for _ in 0..1000 {
+        let x = crate::vec3::sample_unit_cube::<_, f64>(&mut reng).sub(&[0.5, 0.5, 0.5]);
+        if x[2].abs() < 0.1 {
+            continue;
+        }
+        let b = core::f64::consts::PI * 0.5; // 90 degree
+        let n_r = 200;
+        let n_t = 100;
+        let rad = 20.;
+        //
+        let mut val_nmr = 0.;
+        for i_r in 0..n_r {
+            for i_t in 0..n_t {
+                let r = (i_r as f64 + 0.5) * rad / n_r as f64;
+                let t = (i_t as f64 + 0.5) * b / n_t as f64;
+                let pos = [r * t.cos(), r * t.sin(), 0.];
+                let area = rad / n_r as f64 * r * b / n_t as f64;
+                val_nmr += area * pos.sub(&x).norm().powi(-3);
+            }
+        }
+        use crate::tri3::wdw_inverse_distance_cubic_integrated_over_wedge;
+        let (v_anl, _) = wdw_inverse_distance_cubic_integrated_over_wedge(&x, b);
+        assert!((v_anl - val_nmr).abs() < v_anl * 0.1);
+        // dbg!(v_anl, val_nmr);
+    }
+}
+
+pub fn nearest_to_point3<T>(q0: &[T; 3], q1: &[T; 3], q2: &[T; 3], ps: &[T; 3]) -> ([T; 3], T, T)
+where
+    T: num_traits::Float + std::fmt::Debug,
+{
+    use crate::vec3::Vec3;
+    {
+        let bc = to_barycentric_coords(q0, q1, q2, ps);
+        if bc[0] >= T::zero() && bc[1] >= T::zero() && bc[2] >= T::zero() {
+            let near_pos = position_from_barycentric_coords(q0, q1, q2, &bc);
+            return (near_pos, bc[0], bc[1]);
+        }
+    }
+    let r12 = crate::edge3::nearest_to_point3(q1, q2, ps);
+    let r20 = crate::edge3::nearest_to_point3(q2, q0, ps);
+    let r01 = crate::edge3::nearest_to_point3(q0, q1, ps);
+    let d12 = r12.0;
+    let d20 = r20.0;
+    let d01 = r01.0;
+    let r12 = q1.add(&q2.sub(q1).scale(r12.1));
+    let r20 = q2.add(&q0.sub(q2).scale(r20.1));
+    let r01 = q0.add(&q1.sub(q0).scale(r01.1));
+    if d12 < d20 {
+        if d12 < d01 {
+            // 12 is the smallest
+            let r0 = T::zero();
+            let r1 = r12.sub(q2).norm() / q1.sub(q2).norm();
+            return (r12, r0, r1);
+        }
+    } else if d20 < d01 {
+        // d20 is the smallest
+        let r0 = r20.sub(q2).norm() / q0.sub(q2).norm();
+        let r1 = T::zero();
+        return (r20, r0, r1);
+    }
+    let r0 = r01.sub(q1).norm() / q0.sub(q1).norm();
+    let r1 = T::one() - r0;
+    (r01, r0, r1)
+}
+
+// -------------------------------------
+// below: intersection
+
+pub fn intersection_plane_of_tri3_against_line<T>(
+    q0: &[T; 3],
+    q1: &[T; 3],
+    q2: &[T; 3],
+    src: &[T; 3],
+    dir: &[T; 3],
+) -> ([T; 3], T, T, T)
+where
+    T: num_traits::Float,
+{
+    use crate::vec3::Vec3;
+    let mut r0 = crate::tet::volume(src, &src.add(dir), q1, q2);
+    let mut r1 = crate::tet::volume(src, &src.add(dir), q2, q0);
+    let mut r2 = crate::tet::volume(src, &src.add(dir), q0, q1);
+    let v012 = r0 + r1 + r2;
+    let v012_inv = T::one() / v012;
+    r0 = r0 * v012_inv;
+    r1 = r1 * v012_inv;
+    r2 = r2 * v012_inv;
+    let p0 = crate::vec3::add_three(&q0.scale(r0), &q1.scale(r1), &q2.scale(r2));
+    (p0, r0, r1, r2)
 }
 
 /// Möller–Trumbore ray-triangle intersection algorithm
@@ -320,184 +515,18 @@ fn test_dw_ray_triangle_intersection() {
     }
 }
 
-// ----------------------------
-
-/// this function is sometime used for nearest point to tri3.
-/// The point is not always colinear to the triangle
-pub fn to_barycentric_coords<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3], q: &[T; 3]) -> [T; 3]
-where
-    T: num_traits::Float,
-{
-    use crate::vec3::Vec3;
-    let n = p1.sub(p0).cross(&p2.sub(p0));
-    let s = q.add(&n);
-    let r0 = crate::tet::volume(p1, p2, q, &s);
-    let r1 = crate::tet::volume(p2, p0, q, &s);
-    let r2 = crate::tet::volume(p0, p1, q, &s);
-    let tmp = T::one() / (r0 + r1 + r2);
-    [r0 * tmp, r1 * tmp, r2 * tmp]
-}
-
-pub fn position_from_barycentric_coords<T>(
-    p0: &[T; 3],
-    p1: &[T; 3],
-    p2: &[T; 3],
-    bc: &[T; 3],
-) -> [T; 3]
-where
-    T: num_traits::Float,
-{
-    [
-        bc[0] * p0[0] + bc[1] * p1[0] + bc[2] * p2[0],
-        bc[0] * p0[1] + bc[1] * p1[1] + bc[2] * p2[1],
-        bc[0] * p0[2] + bc[1] * p1[2] + bc[2] * p2[2],
-    ]
-}
-
-fn wdw_inverse_distance_cubic_integrated_over_wedge(x: &[f64; 3], b: f64) -> (f64, [f64; 3]) {
-    let l = crate::vec3::norm(x);
-    let c = 1. / (b * 0.5).tan();
-    let a = (l - x[0]) * c - x[1];
-    let t = {
-        let t = (x[2].abs() / a).atan();
-        if t > 0. {
-            t
-        } else {
-            t + core::f64::consts::PI
-        }
-    };
-    let signz = if x[2] < 0. { -1. } else { 1. };
-    let w = t * 2. / x[2].abs();
-    let d = 1.0 / (x[2] * x[2] + a * a);
-    let dwdx = 2. * (1. - x[0] / l) * c * d;
-    let dwdy = 2. * (1. - x[2] * c / l) * d;
-    let dwdz = -t / (x[2] * x[2]) + a * d / x[2].abs() - x[2].abs() * c * d / l;
-    (w, [dwdx, dwdy, dwdz * signz * 2.])
-}
-pub fn wdw_integral_of_inverse_distance_cubic(
-    p0: &[f64; 3],
-    p1: &[f64; 3],
-    p2: &[f64; 3],
-    q: &[f64; 3],
-) -> (f64, [f64; 3]) {
-    use crate::vec3::Vec3;
-    let (vz, _) = unit_normal_area(p0, p1, p2);
-    let z = q.sub(p0).dot(&vz);
-    let u10 = p0.sub(p1).normalize();
-    let u21 = p1.sub(p2).normalize();
-    let u02 = p2.sub(p0).normalize();
-    //
-    let vy0 = vz.cross(&u02);
-    let beta0 = u02.dot(&u10).acos();
-    let q0 = [q.sub(p0).dot(&u02), q.sub(p0).dot(&vy0), z];
-    let (w0, dw0) = wdw_inverse_distance_cubic_integrated_over_wedge(&q0, beta0);
-    let dw0dq = crate::vec3::add_three(&u02.scale(dw0[0]), &vy0.scale(dw0[1]), &vz.scale(dw0[2]));
-    //
-    let vy1 = vz.cross(&u10);
-    let beta1 = u10.dot(&u21).acos();
-    let q1 = [q.sub(p1).dot(&u10), q.sub(p1).dot(&vy1), z];
-    let (w1, dw1) = wdw_inverse_distance_cubic_integrated_over_wedge(&q1, beta1);
-    let dw1dq = crate::vec3::add_three(&u10.scale(dw1[0]), &vy1.scale(dw1[1]), &vz.scale(dw1[2]));
-    //
-    let vy2 = vz.cross(&u21);
-    let beta2 = u21.dot(&u02).acos();
-    let q2 = [q.sub(p2).dot(&u21), q.sub(p2).dot(&vy2), z];
-    let (w2, dw2) = wdw_inverse_distance_cubic_integrated_over_wedge(&q2, beta2);
-    let dw2dq = crate::vec3::add_three(&u21.scale(dw2[0]), &vy2.scale(dw2[1]), &vz.scale(dw2[2]));
-    //
-    let w = core::f64::consts::PI * 2_f64 / z.abs() - w0 - w1 - w2;
-    let signz = if z < 0. { -1. } else { 1. };
-    let dwdq = crate::vec3::add_three(&dw0dq, &dw1dq, &dw2dq);
-    let dw = vz
-        .scale(-signz * core::f64::consts::PI * 2_f64 / (z * z))
-        .sub(&dwdq);
-    (w, dw)
-}
-
-#[test]
-fn test_w_inverse_distance_cubic_integrated_over_wedge() {
-    use crate::vec3::Vec3;
-    use rand::SeedableRng;
-    let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
-    for _ in 0..1000 {
-        let x = crate::vec3::sample_unit_cube::<_, f64>(&mut reng).sub(&[0.5, 0.5, 0.5]);
-        if x[2].abs() < 0.1 {
-            continue;
-        }
-        let b = core::f64::consts::PI * 0.5; // 90 degree
-        let n_r = 200;
-        let n_t = 100;
-        let rad = 20.;
-        //
-        let mut val_nmr = 0.;
-        for i_r in 0..n_r {
-            for i_t in 0..n_t {
-                let r = (i_r as f64 + 0.5) * rad / n_r as f64;
-                let t = (i_t as f64 + 0.5) * b / n_t as f64;
-                let pos = [r * t.cos(), r * t.sin(), 0.];
-                let area = rad / n_r as f64 * r * b / n_t as f64;
-                val_nmr += area * pos.sub(&x).norm().powi(-3);
-            }
-        }
-        use crate::tri3::wdw_inverse_distance_cubic_integrated_over_wedge;
-        let (v_anl, _) = wdw_inverse_distance_cubic_integrated_over_wedge(&x, b);
-        assert!((v_anl - val_nmr).abs() < v_anl * 0.1);
-        // dbg!(v_anl, val_nmr);
-    }
-}
-
-pub fn nearest_to_point3<T>(q0: &[T; 3], q1: &[T; 3], q2: &[T; 3], ps: &[T; 3]) -> ([T; 3], T, T)
-where
-    T: num_traits::Float + std::fmt::Debug,
-{
-    use crate::vec3::Vec3;
-    {
-        let bc = to_barycentric_coords(q0, q1, q2, ps);
-        if bc[0] >= T::zero() && bc[1] >= T::zero() && bc[2] >= T::zero() {
-            let near_pos = position_from_barycentric_coords(q0, q1, q2, &bc);
-            return (near_pos, bc[0], bc[1]);
-        }
-    }
-    let r12 = crate::edge3::nearest_to_point3(q1, q2, ps);
-    let r20 = crate::edge3::nearest_to_point3(q2, q0, ps);
-    let r01 = crate::edge3::nearest_to_point3(q0, q1, ps);
-    let d12 = r12.0;
-    let d20 = r20.0;
-    let d01 = r01.0;
-    let r12 = q1.add(&q2.sub(q1).scale(r12.1));
-    let r20 = q2.add(&q0.sub(q2).scale(r20.1));
-    let r01 = q0.add(&q1.sub(q0).scale(r01.1));
-    if d12 < d20 {
-        if d12 < d01 {
-            // 12 is the smallest
-            let r0 = T::zero();
-            let r1 = r12.sub(q2).norm() / q1.sub(q2).norm();
-            return (r12, r0, r1);
-        }
-    } else if d20 < d01 {
-        // d20 is the smallest
-        let r0 = r20.sub(q2).norm() / q0.sub(q2).norm();
-        let r1 = T::zero();
-        return (r20, r0, r1);
-    }
-    let r0 = r01.sub(q1).norm() / q0.sub(q1).norm();
-    let r1 = T::one() - r0;
-    (r01, r0, r1)
-}
-
-/// if the triangle share a point, set the point as `p0` and `q0`
-pub fn is_intersection_tri3<T>(
+pub fn intersection_against_plane3<T>(
     p0: &[T; 3],
     p1: &[T; 3],
     p2: &[T; 3],
     q0: &[T; 3],
-    q1: &[T; 3],
-    q2: &[T; 3],
+    nq: &[T; 3],
 ) -> Option<([T; 3], [T; 3])>
 where
     T: num_traits::Float,
 {
     use crate::vec3::Vec3;
+    //
     let sec = |p0: &[T; 3], p1: &[T; 3], dp0: T, dp1: T| {
         let r1 = dp0 / (dp0 - dp1);
         let r0 = T::one() - r1;
@@ -512,52 +541,67 @@ where
             2
         }
     };
-    let nq = normal(q0, q1, q2);
-    // heights of (p0,p1,p2) against the plane span by (q0,q1,q2)
+    //
+    let dp0 = p0.sub(q0).dot(nq);
+    let dp1 = p1.sub(q0).dot(nq);
+    let dp2 = p2.sub(q0).dot(nq);
+    let (sp0, sp1, sp2) = (sgn(dp0), sgn(dp1), sgn(dp2));
+    if sp0 == 0 && sp1 == 0 && sp2 == 0 {
+        return None;
+    } // all negative side
+    if sp0 == 2 && sp1 == 2 && sp2 == 2 {
+        return None;
+    } // all positive side
+    if sp0 + sp1 + sp2 == 1 || sp0 + sp1 + sp2 == 5 {
+        return None;
+    } // sharing point but not intersecting
+    if sp0 == 1 && sp1 == 1 && sp2 == 1 {
+        return None;
+    } // degenerate case inside same plane
+      // intersection of the lines connecting (p0,p1),(p1,p2),(p2,p0) and the plane span by (q0,q1,q2)
+    let mut ap = Vec::<[T; 3]>::with_capacity(2);
+    if (sp0 == 0 && sp1 == 2) || (sp0 == 2 && sp1 == 0) {
+        ap.push(sec(p0, p1, dp0, dp1));
+    }
+    if (sp1 == 0 && sp2 == 2) || (sp1 == 2 && sp2 == 0) {
+        ap.push(sec(p1, p2, dp1, dp2));
+    }
+    if (sp2 == 0 && sp0 == 2) || (sp2 == 2 && sp0 == 0) {
+        ap.push(sec(p2, p0, dp2, dp0));
+    }
+    if sp0 == 1 {
+        ap.push(*p0);
+    }
+    if sp1 == 1 {
+        ap.push(*p1);
+    }
+    if sp2 == 1 {
+        ap.push(*p2);
+    }
+    assert_eq!(ap.len(), 2);
+    Some((ap[0], ap[1]))
+}
+
+/// if the triangle share a point, set the point as `p0` and `q0`
+pub fn intersection_against_tri3<T>(
+    p0: &[T; 3],
+    p1: &[T; 3],
+    p2: &[T; 3],
+    q0: &[T; 3],
+    q1: &[T; 3],
+    q2: &[T; 3],
+) -> Option<([T; 3], [T; 3])>
+where
+    T: num_traits::Float,
+{
+    use crate::vec3::Vec3;
     let np = normal(p0, p1, p2);
-    // dbg!(p0,p1,p2,q0,q1,q2);
+    let nq = normal(q0, q1, q2);
+    let (ps, pe) = intersection_against_plane3(p0, p1, p2, q0, &nq)?;
+    let (qs, qe) = intersection_against_plane3(q0, q1, q2, p0, &np)?;
+    // the line direction intersecction of the plane (p0,p1,p2) and the plane (q0,q1,q2)
     let vz = np.cross(&nq);
     //
-    let (ps, pe) = {
-        let dp0 = p0.sub(q0).dot(&nq);
-        let dp1 = p1.sub(q0).dot(&nq);
-        let dp2 = p2.sub(q0).dot(&nq);
-        let (sp0, sp1, sp2) = (sgn(dp0), sgn(dp1), sgn(dp2));
-        if sp0 == 0 && sp1 == 0 && sp2 == 0 {
-            return None;
-        } // all negative side
-        if sp0 == 2 && sp1 == 2 && sp2 == 2 {
-            return None;
-        } // all positive side
-        if sp0 + sp1 + sp2 == 1 || sp0 + sp1 + sp2 == 5 {
-            return None;
-        } // sharing point but not intersecting
-        if sp0 == 1 && sp1 == 1 && sp2 == 1 {
-            return None;
-        } // degenerate case inside same plane
-          // intersection of the lines connecting (p0,p1),(p1,p2),(p2,p0) and the plane span by (q0,q1,q2)
-        let mut ap = Vec::<[T; 3]>::with_capacity(2);
-        if (sp0 == 0 && sp1 == 2) || (sp0 == 2 && sp1 == 0) {
-            ap.push(sec(p0, p1, dp0, dp1));
-        }
-        if (sp1 == 0 && sp2 == 2) || (sp1 == 2 && sp2 == 0) {
-            ap.push(sec(p1, p2, dp1, dp2));
-        }
-        if (sp2 == 0 && sp0 == 2) || (sp2 == 2 && sp0 == 0) {
-            ap.push(sec(p2, p0, dp2, dp0));
-        }
-        if sp0 == 1 {
-            ap.push(*p0);
-        }
-        if sp1 == 1 {
-            ap.push(*p1);
-        }
-        if sp2 == 1 {
-            ap.push(*p2);
-        }
-        assert_eq!(ap.len(), 2);
-        (ap[0], ap[1])
-    };
     let zps = ps.dot(&vz);
     let zpe = pe.dot(&vz);
     let (ps, pe, zps, zpe) = if zps > zpe {
@@ -567,47 +611,6 @@ where
     };
     assert!(zps <= zpe);
     //
-    let (qs, qe) = {
-        // intersection line between triangle p and plane span by (q0,q1,q2)
-        let dq0 = q0.sub(p0).dot(&np); // projection of q0
-        let dq1 = q1.sub(p0).dot(&np); // projection of q1
-        let dq2 = q2.sub(p0).dot(&np); // projection of q2
-        let (sq0, sq1, sq2) = (sgn(dq0), sgn(dq1), sgn(dq2));
-        if sq0 == 0 && sq1 == 0 && sq2 == 0 {
-            return None;
-        }
-        if sq0 == 2 && sq1 == 2 && sq2 == 2 {
-            return None;
-        }
-        if sq0 + sq1 + sq2 == 1 || sq0 + sq1 + sq2 == 5 {
-            return None;
-        } // sharing point
-        if sq0 == 1 && sq1 == 1 && sq2 == 1 {
-            return None;
-        }
-        // intersection of the lines connecting (q0,q1),(q1,q2),(q2,q0) and the plane span by (p0,p1,p2)
-        let mut aq = Vec::<[T; 3]>::with_capacity(2);
-        if (sq0 == 0 && sq1 == 2) || (sq0 == 2 && sq1 == 0) {
-            aq.push(sec(q0, q1, dq0, dq1));
-        }
-        if (sq1 == 0 && sq2 == 2) || (sq1 == 2 && sq2 == 0) {
-            aq.push(sec(q1, q2, dq1, dq2));
-        }
-        if (sq2 == 0 && sq0 == 2) || (sq2 == 2 && sq0 == 0) {
-            aq.push(sec(q2, q0, dq2, dq0));
-        }
-        if sq0 == 1 {
-            aq.push(*q0);
-        }
-        if sq1 == 1 {
-            aq.push(*q1);
-        }
-        if sq2 == 1 {
-            aq.push(*q2);
-        }
-        assert_eq!(aq.len(), 2);
-        (aq[0], aq[1])
-    };
     let zqs = qs.dot(&vz);
     let zqe = qe.dot(&vz);
     let (qs, qe, zqs, zqe) = if zqs > zqe {
@@ -618,6 +621,7 @@ where
     assert!(zqs <= zqe);
     //
     if zps >= zqe || zqs >= zpe {
+        // the intersection does not overlap
         return None;
     } // no overlap or overlap at point
     let s = if zps < zqs { qs } else { ps };
@@ -625,7 +629,26 @@ where
     Some((s, e))
 }
 
+#[allow(unused_variables)]
+pub fn intersection_against_tri3_sharing_vtx<T>(
+    p0: &[T; 3],
+    p1: &[T; 3],
+    p2q0: &[T; 3],
+    q1: &[T; 3],
+    q2: &[T; 3],
+) where
+    T: num_traits::Float,
+{
+    //use crate::vec3::Vec3;
+    //let np = normal(p0, p1, p2q0);
+    //let nq = normal(p2q0, q1, q2);
+    // crate::plane::intersection_line3_triplane3()
+    todo!();
+}
+
+// above: intersection
 // -------------------------
+
 #[derive(Debug, Copy, Clone)]
 pub struct Tri3<'a, Real> {
     pub p0: &'a [Real; 3],
