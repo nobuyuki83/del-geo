@@ -86,29 +86,35 @@ where
     (dist, t)
 }
 
-pub fn wdw_integral_of_inverse_distance_cubic(
-    q: &[f64; 3],
-    p0: &[f64; 3],
-    p1: &[f64; 3],
-) -> (f64, [f64; 3]) {
+pub fn wdw_integral_of_inverse_distance_cubic<T>(
+    q: &[T; 3],
+    p0: &[T; 3],
+    p1: &[T; 3],
+) -> (T, [T; 3])
+where
+    T: num_traits::Float,
+{
     use crate::vec3::Vec3;
+    let one = T::one();
+    let two = one + one;
+    let three = two + one;
     let len = p1.sub(p0).norm();
-    let lsinv = 1.0 / (len * len);
+    let lsinv = one / (len * len);
     // dist^2 = er^2+2br+c
     let d = p0.sub(p1).dot(&q.sub(p0)) * lsinv;
     let a = q.sub(p0).squared_norm() * lsinv - d * d;
     // dist^2 = e{ x^2 + a2}, x = r + d
     // \int 1/sqrt(x^2+a)^3 dx = x/(a\sqrt{a+x^2})
-    let f = |x: f64| x / (a * (a + x * x).sqrt());
-    let v = (f(d + 1.) - f(d)) * lsinv;
+    let f = |x| x / (a * (a + x * x).sqrt());
+    let v = (f(d + one) - f(d)) * lsinv;
     //
     let dd = p0.sub(p1).scale(lsinv);
-    let da = q.sub(p0).scale(2_f64).scale(lsinv).sub(&dd.scale(2.0 * d));
+    let da = q.sub(p0).scale(two).scale(lsinv).sub(&dd.scale(two * d));
     // these formula was calculated by WolframAlpha
-    let dfdx = |x: f64| 1_f64 / (a + x * x).powf(1.5);
-    let dfda = |x: f64| -(x * (3. * a + 2. * x * x)) / (2. * a * a * (a + x * x).powf(1.5));
-    let t0 = dd.scale(dfdx(d + 1.) - dfdx(d));
-    let t1 = da.scale(dfda(d + 1.) - dfda(d));
+    let dfdx = |x| one / (a + x * x).powf(three / two);
+    let dfda = |x| -(x * (three * a + two * x * x)) / (two * a * a * (a + x * x).powf(three / two));
+    let t0 = dd.scale(dfdx(d + one) - dfdx(d));
+    let t1 = da.scale(dfda(d + one) - dfda(d));
     let dv = t0.add(&t1);
     (v, dv.scale(lsinv))
 }
