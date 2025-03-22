@@ -22,6 +22,7 @@ where
     fn angle_between_two_vecs(&self, other: &Self) -> Real;
     fn area_quadrilateral(&self, other: &Self) -> Real;
     fn wdw_angle_between_two_vecs(&self, other: &Self) -> (Real, [Self; 2]);
+    fn rot90(&self) -> Self;
 }
 
 impl<Real> Vec2<Real> for [Real; 2]
@@ -79,6 +80,9 @@ where
     }
     fn wdw_angle_between_two_vecs(&self, other: &Self) -> (Real, [Self; 2]) {
         wdw_angle_between_two_vecs(self, other)
+    }
+    fn rot90(&self) -> Self {
+        rotate90(self)
     }
 }
 

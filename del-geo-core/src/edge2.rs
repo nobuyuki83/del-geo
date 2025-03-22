@@ -228,7 +228,7 @@ fn test_nearest_origin() {
 
 /// Find the nearest point on a line segment to point p
 /// Returns (k,v), where k is the coeffcient, v is the point
-pub fn nearest_point2<T>(
+pub fn nearest_to_point<T>(
     s: &[T; 2], // source
     e: &[T; 2], // end
     p: &[T; 2],
@@ -243,7 +243,7 @@ where
 
 #[test]
 fn test_nearest_point2() {
-    let (_r, pm) = nearest_point2(&[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
+    let (_r, pm) = nearest_to_point(&[-0.1, 1.0], &[1.0, 1.0], &[0.0, 0.3]);
     use crate::vec2::Vec2;
     assert!(pm.sub(&[0., 1.]).norm() < 1.0e-5);
 }

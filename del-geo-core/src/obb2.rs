@@ -94,10 +94,10 @@ pub fn nearest_point2(obb: &[f32; 6], p: &[f32; 2]) -> [f32; 2] {
     }
     let cp = corner_points(obb);
     let ps = [
-        crate::edge2::nearest_point2(&cp[0], &cp[1], p).1,
-        crate::edge2::nearest_point2(&cp[1], &cp[2], p).1,
-        crate::edge2::nearest_point2(&cp[2], &cp[3], p).1,
-        crate::edge2::nearest_point2(&cp[3], &cp[0], p).1,
+        crate::edge2::nearest_to_point(&cp[0], &cp[1], p).1,
+        crate::edge2::nearest_to_point(&cp[1], &cp[2], p).1,
+        crate::edge2::nearest_to_point(&cp[2], &cp[3], p).1,
+        crate::edge2::nearest_to_point(&cp[3], &cp[0], p).1,
     ];
     let ls = [
         crate::edge2::length(&ps[0], p),
