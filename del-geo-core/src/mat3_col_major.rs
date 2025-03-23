@@ -212,6 +212,24 @@ where
     ]
 }
 
+pub fn from_mat2_col_major_adding_z<T>(r: &[T; 4]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    let zero = T::zero();
+    let one = T::one();
+    [r[0], r[1], zero, r[2], r[3], zero, zero, zero, one]
+}
+
+pub fn from_affine_linear_and_translation<T>(r: &[T; 4], u_se: &[T; 2]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    let zero = T::zero();
+    let one = T::one();
+    [r[0], r[1], zero, r[2], r[3], zero, u_se[0], u_se[1], one]
+}
+
 // above: from methods
 // ---------------------------------------------
 // below: to methods
