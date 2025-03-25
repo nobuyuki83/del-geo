@@ -212,11 +212,7 @@ fn wdw_inverse_distance_cubic_integrated_over_wedge(
     let a = (l - x.x) * c - x.y;
     let t = {
         let t = (x.z.abs() / a).atan();
-        if t > 0. {
-            t
-        } else {
-            t + core::f64::consts::PI
-        }
+        if t > 0. { t } else { t + core::f64::consts::PI }
     };
     let signz = if x.z < 0. { -1. } else { 1. };
     let w = t * 2. / x.z.abs();
@@ -405,7 +401,7 @@ where
         if sp0 == 1 && sp1 == 1 && sp2 == 1 {
             return None;
         } // degenerate case inside same plane
-          // intersection of the lines connecting (p0,p1),(p1,p2),(p2,p0) and the plane span by (q0,q1,q2)
+        // intersection of the lines connecting (p0,p1),(p1,p2),(p2,p0) and the plane span by (q0,q1,q2)
         let mut ap = Vec::<nalgebra::Vector3<T>>::with_capacity(2);
         if (sp0 == 0 && sp1 == 2) || (sp0 == 2 && sp1 == 0) {
             ap.push(sec(p0, p1, dp0, dp1));

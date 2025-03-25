@@ -25,11 +25,7 @@ where
     T: nalgebra::RealField,
 {
     let t = ((o - s).dot(n)) / (d.dot(n));
-    if t < T::zero() {
-        None
-    } else {
-        Some(t)
-    }
+    if t < T::zero() { None } else { Some(t) }
 }
 
 pub fn nearest_to_point3<T>(

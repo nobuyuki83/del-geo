@@ -392,9 +392,9 @@ where
 #[test]
 fn test_svd_differential() {
     use crate::vec3::Vec3;
+    use Mat3RowMajor;
     use rand::Rng;
     use rand::SeedableRng;
-    use Mat3RowMajor;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     let eps = 1.0e-6;
     for _iter in 0..100 {
