@@ -17,7 +17,10 @@ where
     None
 }
 
-pub fn intersection_length(r1: &[f32; 2], r2: &[f32; 2]) -> Option<f32> {
+pub fn intersection_length<Real>(r1: &[Real; 2], r2: &[Real; 2]) -> Option<Real>
+where
+    Real: num_traits::Float,
+{
     debug_assert!(r1[0] <= r1[1]);
     debug_assert!(r2[0] <= r2[1]);
     // separated

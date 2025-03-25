@@ -79,10 +79,16 @@ where
     let pdf = one / (two * T::PI() * (one - cos_theta_max));
     (dir_world, pdf)
 }
-pub fn pdf_light_sample(light_center: &[f32; 3], light_rad: f32) -> f32 {
+pub fn pdf_light_sample<Real>(light_center: &[Real; 3], light_rad: Real) -> Real
+where
+    Real: num_traits::Float + num_traits::FloatConst,
+{
     use crate::vec3::Vec3;
+    let zero = Real::zero();
+    let one = Real::one();
+    let two = one + one;
     let sin_theta_max_squared = light_rad * light_rad / light_center.squared_norm();
-    assert!(sin_theta_max_squared > 0f32 && sin_theta_max_squared < 1f32);
-    let cos_theta_max = (1f32 - sin_theta_max_squared).max(0.0).sqrt();
-    1f32 / (2f32 * std::f32::consts::PI * (1f32 - cos_theta_max))
+    assert!(sin_theta_max_squared > zero && sin_theta_max_squared < one);
+    let cos_theta_max = (one - sin_theta_max_squared).max(zero).sqrt();
+    one / (two * Real::PI() * (one - cos_theta_max))
 }
