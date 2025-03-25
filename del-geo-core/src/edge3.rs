@@ -276,8 +276,8 @@ where
 
 #[test]
 fn test_nearest_to_edge3() {
-    use crate::vec3::axpy;
     use crate::vec3::Vec3;
+    use crate::vec3::axpy;
     use rand::SeedableRng;
     let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     let eps = 1.0e-4;

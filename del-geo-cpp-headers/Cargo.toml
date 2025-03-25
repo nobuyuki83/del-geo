@@ -1,7 +1,7 @@
 [package]
 name = "del-geo-cpp-headers"
 include = ["src/*.h", "src/lib.rs"]
-edition = "2021"
+edition = "2024"
 version.workspace = true
 license = "MIT"
 description = "CUDA device utility functions"

@@ -3,23 +3,24 @@ pub struct Headers {}
 pub const HEADERS: Headers = Headers {};
 
 impl Headers {
-    pub fn get(&self, idx: u32) -> Option<(&str, &str)> {
-        match idx {
-            0 => Some(("aabb.h", include_str!("aabb.h"))),
-            1 => Some(("aabb2.h", include_str!("aabb2.h"))),
-            2 => Some(("aabb3.h", include_str!("aabb3.h"))),
-            3 => Some(("mat2_sym.h", include_str!("mat2_sym.h"))),
-            4 => Some(("mat2x3_col_major.h", include_str!("mat2x3_col_major.h"))),
-            5 => Some(("mat3_col_major.h", include_str!("mat3_col_major.h"))),
-            6 => Some(("mat4_col_major.h", include_str!("mat4_col_major.h"))),
-            7 => Some(("quaternion.h", include_str!("quaternion.h"))),
-            8 => Some(("tri3.h", include_str!("tri3.h"))),
-            9 => Some(("vec3.h", include_str!("vec3.h"))),
-            10 => Some(("edge2.h", include_str!("edge2.h"))),
-            11 => Some(("tri2.h", include_str!("tri2.h"))),
-            12 => Some(("vec2.h", include_str!("vec2.h"))),
-            _ => None,
-        }
+    pub fn get(&self, idx: usize) -> Option<(&str, &str)> {
+        [
+            ("aabb.h", include_str!("aabb.h")),
+            ("aabb2.h", include_str!("aabb2.h")),
+            ("aabb3.h", include_str!("aabb3.h")),
+            ("mat2_sym.h", include_str!("mat2_sym.h")),
+            ("mat2x3_col_major.h", include_str!("mat2x3_col_major.h")),
+            ("mat3_col_major.h", include_str!("mat3_col_major.h")),
+            ("mat4_col_major.h", include_str!("mat4_col_major.h")),
+            ("quaternion.h", include_str!("quaternion.h")),
+            ("tri3.h", include_str!("tri3.h")),
+            ("vec3.h", include_str!("vec3.h")),
+            ("edge2.h", include_str!("edge2.h")),
+            ("tri2.h", include_str!("tri2.h")),
+            ("vec2.h", include_str!("vec2.h")),
+        ]
+        .get(idx)
+        .copied()
     }
 
     pub fn write_files(&self, path_out_dir: &std::path::Path) {

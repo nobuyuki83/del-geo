@@ -137,7 +137,7 @@ where
             sms[3] = st * m[4] + ct * m[3];
             sms[4] = ct * m[4] - st * m[3];
             sms[5] = zero; // (ct*ct-st*st)*m[5]+st*ct*(m[0]-m[1]);
-                           //
+            //
             u[0] = ct * v[0] - st * v[1];
             u[1] = st * v[0] + ct * v[1];
             u[3] = ct * v[3] - st * v[4];
@@ -200,11 +200,7 @@ where
     use crate::vec3::Vec3;
     let (a_norm, b_norm, c_norm) = (a.squared_norm(), b.squared_norm(), c.squared_norm());
     if a_norm > b_norm {
-        if a_norm > c_norm {
-            *a
-        } else {
-            *c
-        }
+        if a_norm > c_norm { *a } else { *c }
     } else if b_norm > c_norm {
         *b
     } else {
