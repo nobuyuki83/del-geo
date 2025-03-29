@@ -666,9 +666,9 @@ where
 
 #[test]
 fn test_svd() {
+    use Mat3ColMajor;
     use rand::Rng;
     use rand::SeedableRng;
-    use Mat3ColMajor;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     for (_iter, i_mode_eigen, is_rot) in itertools::iproduct!(0..100, 0..2, 0..2) {
         let m: [f64; 9] = std::array::from_fn(|_| rng.random_range(-1f64..1f64));
@@ -740,9 +740,9 @@ where
 
 #[test]
 fn test_rotational_component() {
+    use Mat3ColMajor;
     use rand::Rng;
     use rand::SeedableRng;
-    use Mat3ColMajor;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     for _iter in 0..100 {
         let m: [f64; 9] = std::array::from_fn(|_| rng.random_range(-1f64..1f64));

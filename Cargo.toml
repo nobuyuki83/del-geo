@@ -7,7 +7,7 @@ resolver = "2"
 
 [workspace.package]
 version = "0.1.33"
-edition = "2021"
+edition = "2024"
 authors = ["Nobuyuki Umetani <n.umetani@gmail.com>"]
 description = "2D/3D geometry utility codes"
 license = "MIT"

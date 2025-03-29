@@ -295,11 +295,7 @@ fn legendre_coeff_vec(n: u64) -> Vec<Vec<f64>> {
 const fn factorial(n: u128) -> u128 {
     assert!(n <= 34, "The factorial is too large to calculate.");
     // use recursion because const_for is unstable https://github.com/rust-lang/rust/issues/87575
-    if n == 0 {
-        1
-    } else {
-        n * factorial(n - 1)
-    }
+    if n == 0 { 1 } else { n * factorial(n - 1) }
 }
 
 /// Calculate the coefficient of the term in the Legendre Polynomial.

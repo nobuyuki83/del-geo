@@ -253,7 +253,7 @@ where
         crate::vec2::add_three(&db0[2], &db1[2], &db2[2]).scale(tmp),
     ];
     //
-    use crate::mat2_col_major::{from_identity, from_outer_product, Mat2ColMajor};
+    use crate::mat2_col_major::{Mat2ColMajor, from_identity, from_outer_product};
     use crate::vec2;
     let dcc = [
         add_four(
