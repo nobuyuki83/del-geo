@@ -234,6 +234,13 @@ where
 // ---------------------------------------------
 // below: to methods
 
+pub fn to_vec3_column<T>(m: &[T; 9], idx: usize) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    [m[idx * 3], m[idx * 3 + 1], m[idx * 3 + 2]]
+}
+
 pub fn to_vec3_from_skew_mat<T>(m: &[T; 9]) -> [T; 3]
 where
     T: num_traits::Float,

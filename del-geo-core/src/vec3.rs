@@ -128,6 +128,22 @@ fn test_to_mat3_from_axisangle_vec() {
     assert!((aa0 - aa1).norm() < 1.0e-5);
 }
 
+fn to_mat3_from_dw_normalize<T>(u: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float,
+{
+    use crate::mat3_col_major::Mat3ColMajor;
+    use Vec3;
+    let s = T::one() / u.norm();
+    let a = crate::mat3_col_major::from_scaled_outer_product(s * s, u, u);
+    let b = crate::mat3_col_major::from_identity();
+    b.sub(&a).scale(s)
+}
+
+// above: To method
+// -------------------------------------
+
+/// `vec_n` can be not-normalized vector
 pub fn basis_xy_from_basis_z<Real>(vec_n: &[Real; 3]) -> ([Real; 3], [Real; 3])
 where
     Real: num_traits::Float,
@@ -138,8 +154,9 @@ where
     let vec_x = vec_s.cross(vec_n);
     let len = vec_x.norm();
     if len < Real::epsilon() {
+        let vec_n = vec_n.normalize();
         let vec_t = [one, zero, zero];
-        let vec_x = vec_t.cross(vec_n); // z????
+        let vec_x = vec_t.cross(&vec_n); // z????
         let vec_y = vec_n.cross(&vec_x); // x????
         (vec_x, vec_y)
     } else {
@@ -359,6 +376,91 @@ where
     rand::distr::StandardUniform: rand::distr::Distribution<T>,
 {
     std::array::from_fn(|_i| rng.random())
+}
+
+pub fn wdw_angle_between_two_vecs_using_half_tan<T>(
+    u: &[T; 3],
+    v: &[T; 3],
+) -> ([T; 3], [T; 9], [T; 9])
+where
+    T: num_traits::Float + std::fmt::Debug,
+{
+    use crate::mat3_col_major::Mat3ColMajor;
+    let uu = u.normalize();
+    let uv = v.normalize();
+    let c = uu.dot(&uv); // cosine
+    let ns = cross(&uu, &uv);
+    let b = T::one() + c;
+    let w = ns.scale(T::one() / b);
+    // dbg!(w, ns, b, bsq_inv);
+    let duu_du = to_mat3_from_dw_normalize(u);
+    let dvv_dv = to_mat3_from_dw_normalize(v);
+    //
+    let bsq_inv = T::one() / (b * b);
+    let dw_du = {
+        let dc_du = duu_du.mult_vec(&uv);
+        let mat2 = crate::mat3_col_major::from_vec3_to_skew_mat(&uv);
+        let mat0 = mat2.mult_mat_col_major(&duu_du).scale(-b);
+        let mat1 = crate::mat3_col_major::from_scaled_outer_product(T::one(), &ns, &dc_du);
+        mat0.sub(&mat1).scale(bsq_inv)
+    };
+    let dw_dv = {
+        let dc_dv = dvv_dv.mult_vec(&uu);
+        let mat2 = crate::mat3_col_major::from_vec3_to_skew_mat(&uu);
+        let mat0 = mat2.mult_mat_col_major(&dvv_dv).scale(b);
+        let mat1 = crate::mat3_col_major::from_scaled_outer_product(T::one(), &ns, &dc_dv);
+        mat0.sub(&mat1).scale(bsq_inv)
+    };
+    (w, dw_du, dw_dv)
+}
+
+#[test]
+fn test_wdw_angle_between_two_vecs_using_half_tan() {
+    use Vec3;
+    let u0 = [0.3, -0.5, 0.1];
+    let v0 = [-0.4, 0.2, -0.7];
+    let (w0, dw0du, dw0dv) = wdw_angle_between_two_vecs_using_half_tan(&u0, &v0);
+    dbg!(w0);
+    dbg!(dw0du);
+    dbg!(dw0dv);
+    let eps = 1.0e-5f64;
+    for i_dim in 0..3 {
+        {
+            let u1 = {
+                let mut u1 = u0;
+                u1[i_dim] += eps;
+                u1
+            };
+            let (w1, _dw1du, _dw1dv) = wdw_angle_between_two_vecs_using_half_tan(&u1, &v0);
+            let diff_num = w1.sub(&w0).scale(1.0 / eps);
+            let diff_ana = crate::mat3_col_major::to_vec3_column(&dw0du, i_dim);
+            let diffnrm = diff_ana.sub(&diff_num).norm();
+            assert!(
+                diffnrm < diff_ana.norm() * 1.0e-4,
+                "{} {}",
+                diffnrm,
+                diff_ana.norm()
+            );
+        }
+        //
+        {
+            let v1 = {
+                let mut v1 = v0;
+                v1[i_dim] += eps;
+                v1
+            };
+            let (w1, _dw1du, _dw1dv) = wdw_angle_between_two_vecs_using_half_tan(&u0, &v1);
+            let diff_num = w1.sub(&w0).scale(1.0 / eps);
+            let diff_ana = crate::mat3_col_major::to_vec3_column(&dw0dv, i_dim);
+            let diffnrm = diff_ana.sub(&diff_num).norm();
+            assert!(
+                diffnrm < diff_ana.norm() * 1.0e-4,
+                "{} {}",
+                diffnrm,
+                diff_ana.norm()
+            );
+        }
+    }
 }
 
 // ------------------------------------------
