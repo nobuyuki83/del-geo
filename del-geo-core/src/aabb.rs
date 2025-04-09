@@ -6,9 +6,7 @@
 ///
 /// * Return
 ///     * `None`: if there is no intersection
-///     * `(t_min: Real, t_max: Real)` min and max of the depth at intersections.
-///         `t_*` is a ratio of `line_dir` not distance.
-///         For example `p_min = line_org + t_min * line_dir`
+///     * `(t_min: Real, t_max: Real)` min and max of the depth at intersections. `t_*` is a ratio of `line_dir` not distance. For example `p_min = line_org + t_min * line_dir`
 pub fn intersections_against_line<Real, const NDIM: usize, const SIZE_AABB: usize>(
     aabb: &[Real; SIZE_AABB],
     line_org: &[Real; NDIM],
@@ -43,9 +41,7 @@ where
 ///
 /// * Return
 ///     * `None`: if there is no intersection
-///     * `(t_min: Real, t_max: Real)` min and max of the depth at intersections.
-///         `t_*` is a ratio of `ray_dir` not distance.
-///         For example `p_min = ray_org + t_min * ray_dir`
+///     * `(t_min: Real, t_max: Real)` min and max of the depth at intersections. `t_*` is a ratio of `ray_dir` not distance. For example `p_min = ray_org + t_min * ray_dir`
 pub fn intersections_against_ray<Real, const NDIM: usize, const SIZE_AABB: usize>(
     aabb: &[Real; SIZE_AABB],
     ray_org: &[Real; NDIM],
