@@ -36,6 +36,51 @@ where
     a * two / p0.sub(p1).norm()
 }
 
+/// angle p0-p1-p2
+pub fn angle<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> T
+where
+    T: num_traits::Float,
+{
+    let v10 = crate::vec3::sub(p0, p1);
+    let v12 = crate::vec3::sub(p2, p1);
+    let s0 = crate::vec3::cross(&v10, &v12);
+    let s0 = crate::vec3::norm(&s0);
+    let c0 = crate::vec3::dot(&v10, &v12);
+    s0.atan2(c0)
+}
+
+pub fn area_for_2nd_node_mixed<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> T
+where
+    T: num_traits::Float + std::fmt::Debug,
+{
+    use crate::vec2::Vec2;
+    use crate::vec3::Vec3;
+    let zero = T::zero();
+    let one = T::one();
+    let half = one / (one + one);
+    let ez = unit_normal_area(p0, p1, p2).0;
+    let v10 = p0.sub(p1);
+    let v12 = p2.sub(p1);
+    let ex = v10.normalize();
+    let ey = ez.cross(&ex);
+    let q0 = [v10.dot(&ex), zero]; // position of p1 in the local coordinates
+    let q1 = [zero, zero];
+    let q2 = [v12.dot(&ex), v12.dot(&ey)];
+    let qc = if v10.dot(&v12) > zero {
+        crate::tri2::circumcenter(&q0, &q1, &q2)
+    } else {
+        q0.add(&q2).scale(half)
+    };
+    let m10 = q1.add(&q0).scale(half);
+    let m12 = q1.add(&q2).scale(half);
+    let a0 = crate::tri2::area(&m10, &q1, &qc);
+    let a1 = crate::tri2::area(&qc, &q1, &m12);
+    a0 + a1
+}
+
+// above: get scalar property
+// -----------------------------------
+
 pub fn unit_normal_area<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> ([T; 3], T)
 where
     T: num_traits::Float,
