@@ -280,6 +280,13 @@ where
     [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]]
 }
 
+pub fn to_vec3_translation<T>(m: &[T; 16]) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    [m[12], m[13], m[14]]
+}
+
 // above: to method
 // ----------------------------------------
 
@@ -523,6 +530,21 @@ pub fn ray_from_transform_world2ndc(
         ray_stt_world,
         crate::vec3::sub(&ray_end_world, &ray_stt_world),
     )
+}
+
+/// the ray start from the front plane and ends on the back plane
+pub fn ray_from_transform_ndc2world_and_pixel_coordinate(
+    pix_coord: (usize, usize),
+    image_size: &(usize, usize),
+    transform_ndc2world: &[f32; 16],
+) -> ([f32; 3], [f32; 3]) {
+    let x0 = 2. * (pix_coord.0 as f32 + 0.5f32) / (image_size.0 as f32) - 1.;
+    let y0 = 1. - 2. * (pix_coord.1 as f32 + 0.5f32) / (image_size.1 as f32);
+    let p0 = transform_homogeneous(transform_ndc2world, &[x0, y0, 1.]).unwrap();
+    let p1 = transform_homogeneous(transform_ndc2world, &[x0, y0, -1.]).unwrap();
+    let ray_org = p0;
+    let ray_dir = crate::vec3::sub(&p1, &p0);
+    (ray_org, ray_dir)
 }
 
 pub fn mult_three_mats_col_major<Real>(a: &[Real; 16], b: &[Real; 16], c: &[Real; 16]) -> [Real; 16]
