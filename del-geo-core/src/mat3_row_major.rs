@@ -421,7 +421,7 @@ fn test_svd_differential() {
                 let du_num = to_vec3_from_skew_mat(&du_num);
                 let du_ana = &diff_u[i * 3 + j];
                 assert!(
-                    du_num.sub(&du_ana).norm() < 1.0e-4 * (1.0 + du_ana.norm()),
+                    du_num.sub(du_ana).norm() < 1.0e-4 * (1.0 + du_ana.norm()),
                     "{:?} {:?}",
                     du_ana,
                     du_num
@@ -431,7 +431,7 @@ fn test_svd_differential() {
                 let ds_num = s1.sub(&s0).scale(1. / eps);
                 let ds_ana = &diff_s[i * 3 + j];
                 assert!(
-                    ds_num.sub(&ds_ana).norm() < 1.0e-5 * (1.0 + ds_ana.norm()),
+                    ds_num.sub(ds_ana).norm() < 1.0e-5 * (1.0 + ds_ana.norm()),
                     "{:?} {:?}",
                     ds_ana,
                     ds_num
@@ -442,7 +442,7 @@ fn test_svd_differential() {
                 let dv_num = to_vec3_from_skew_mat(&dv_num);
                 let dv_ana = &diff_v[i * 3 + j];
                 assert!(
-                    dv_num.sub(&dv_ana).norm() < 1.0e-4 * (1.0 + dv_ana.norm()),
+                    dv_num.sub(dv_ana).norm() < 1.0e-4 * (1.0 + dv_ana.norm()),
                     "{:?} {:?}",
                     dv_ana,
                     dv_num
