@@ -265,9 +265,9 @@ fn test_is_intersect_to_obb3() {
             let res0 = is_intersect_to_obb3(&obb_i, &obb_j);
             let res1 = len56 < 0.0001;
             if res0 != res1 {
-                let (mut tri2vtx_i, mut vtx2xyz_i) = del_msh_core::trimesh3_primitive::obb3(&obb_i);
-                let (tri2vtx_j, vtx2xyz_j) = del_msh_core::trimesh3_primitive::obb3(&obb_j);
-                del_msh_core::uniform_mesh::merge(
+                let (mut tri2vtx_i, mut vtx2xyz_i) = del_msh_cpu::trimesh3_primitive::obb3(&obb_i);
+                let (tri2vtx_j, vtx2xyz_j) = del_msh_cpu::trimesh3_primitive::obb3(&obb_j);
+                del_msh_cpu::uniform_mesh::merge(
                     &mut tri2vtx_i,
                     &mut vtx2xyz_i,
                     &tri2vtx_j,
@@ -275,7 +275,7 @@ fn test_is_intersect_to_obb3() {
                     3,
                 );
                 // output mesh to visualize the failure case
-                let _ = del_msh_core::io_obj::save_tri2vtx_vtx2xyz(
+                let _ = del_msh_cpu::io_obj::save_tri2vtx_vtx2xyz(
                     "../../target/fail_obb3.obj",
                     &tri2vtx_i,
                     &vtx2xyz_i,

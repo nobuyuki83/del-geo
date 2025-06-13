@@ -19,7 +19,7 @@ repository = "https://github.com/nobuyuki83/del-geo"
 num-traits = "0.2.19"
 nalgebra = "0.33.0"
 num-complex = "0.4.6"
-rand = "0.9.0"
+rand = "0.9.1"
 itertools = "0.14.0"
 rand_chacha = "0.9.0"
 # internal
@@ -28,7 +28,7 @@ del-geo-core = { path="del-geo-core"}
 
 # external my library
 # del-msh-core = {path = "../del-msh/del-msh-core"}
-del-msh-core = { git = "https://github.com/nobuyuki83/del-msh.git"}
+del-msh-cpu = { git = "https://github.com/nobuyuki83/del-msh.git"}
 
 
 
