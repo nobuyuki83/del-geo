@@ -99,14 +99,14 @@ where
     let u = svd.u.unwrap();
     let v_t = svd.v_t.unwrap();
     let u_vt = u * v_t;
-    let u_vt = if u_vt.determinant() > T::zero() {
+
+    if u_vt.determinant() > T::zero() {
         u_vt
     } else {
         let mut v_t = v_t;
         v_t.row_mut(0).scale_mut(-T::one());
         u * v_t
-    };
-    u_vt
+    }
 }
 
 pub fn skew<T>(v: &nalgebra::Vector3<T>) -> nalgebra::Matrix3<T>
