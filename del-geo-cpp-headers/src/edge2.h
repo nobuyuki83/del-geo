@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cuda/std/optional>
 #include <cuda/std/tuple>
 //
@@ -5,6 +7,25 @@
 
 namespace edge2 {
 
+__device__
+float length(
+  const float* ps,
+  const float* pe) {
+  float x = pe[0] - ps[0];
+  float y = pe[1] - ps[1];
+  return sqrt(x*x + y*y);
+}
+
+__device__
+auto unit_edge_vector(
+  const float* ps,
+  const float* pe) -> cuda::std::array<float,2>
+{
+  float x = pe[0] - ps[0];
+  float y = pe[1] - ps[1];
+  float li = 1.f/sqrt(x*x + y*y);
+  return {x * li, y * li };
+}
 
 struct RatioOfEdgeIntersection {
   float r0;

@@ -464,8 +464,7 @@ const EDGE2NODE: [[usize; 2]; 12] = [
 ///
 /// * `cent`  – center of the cell (x, y, z).
 /// * `hw`    – half-width of the cell.
-/// * `ind0` / `ind1` – indices of the two cube vertices that form the edge
-///                     being inspected (0‥7, following `PHEX_SIGN`).
+/// * `ind0` / `ind1` – indices of the two cube vertices that form the edge being inspected (0‥7, following `EDGE2NODE`).
 /// * `dist0` / `dist1` – signed distances at the two end-points.
 ///
 /// Returns the interpolated 3-D point as `[f64; 3]`.
