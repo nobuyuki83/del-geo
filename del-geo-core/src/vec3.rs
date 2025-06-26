@@ -250,6 +250,14 @@ where
     v.scale(linv)
 }
 
+pub fn cast<T, U>(v: &[T; 3]) -> [U; 3]
+where
+    T: num_traits::AsPrimitive<U>,
+    U: Copy + 'static,
+{
+    [v[0].as_(), v[1].as_(), v[2].as_()]
+}
+
 pub fn cross_mut<T>(vo: &mut [T; 3], v1: &[T; 3], v2: &[T; 3])
 where
     T: std::ops::Mul<Output = T> + std::ops::Sub<Output = T> + Copy,
