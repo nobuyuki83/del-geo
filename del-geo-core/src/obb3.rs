@@ -282,7 +282,7 @@ fn test_is_intersect_to_obb3() {
                     3,
                 );
             }
-            assert_eq!(res0, res1, "{} {}", len45, len56);
+            assert_eq!(res0, res1, "{len45} {len56}");
         }
     }
 }
@@ -320,7 +320,7 @@ fn test2_is_intersect_to_obb3() {
 
         let res1 = len56 < 0.0001; // this will be false since not intersected
         let res0 = is_intersect_to_obb3(&obb_i, &obb_j);
-        assert_eq!(res0, res1, "{} {}", len45, len56);
+        assert_eq!(res0, res1, "{len45} {len56}");
     }
 }
 

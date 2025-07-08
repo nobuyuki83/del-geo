@@ -87,10 +87,7 @@ fn test_normal() {
                 let dcc_ana = dcc[i_node] * b;
                 let diff = (dcc_num - dcc_ana).norm();
                 assert!(diff < 1.0e-4);
-                println!(
-                    "normal {}, {} --> {:?}, {:?}, {:?}",
-                    i_node, i_dim, dcc_num, dcc_ana, diff
-                );
+                println!("normal {i_node}, {i_dim} --> {dcc_num:?}, {dcc_ana:?}, {diff:?}");
             }
         }
     }

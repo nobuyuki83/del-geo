@@ -226,7 +226,7 @@ fn test_svd() {
             let s = from_diagonal(&s);
             let m1 = u.mult_mat_col_major(&s).mult_mat_col_major(&transpose(&v));
             let diff = m1.sub(&m).squared_norm();
-            assert!(diff < 1.0e-20f64, "{} {:?} {:?}", diff, m, m1);
+            assert!(diff < 1.0e-20f64, "{diff} {m:?} {m1:?}");
         }
     }
 }

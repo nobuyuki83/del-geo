@@ -422,9 +422,7 @@ fn test_svd_differential() {
                 let du_ana = &diff_u[i * 3 + j];
                 assert!(
                     du_num.sub(du_ana).norm() < 1.0e-4 * (1.0 + du_ana.norm()),
-                    "{:?} {:?}",
-                    du_ana,
-                    du_num
+                    "{du_ana:?} {du_num:?}"
                 );
             }
             {
@@ -432,9 +430,7 @@ fn test_svd_differential() {
                 let ds_ana = &diff_s[i * 3 + j];
                 assert!(
                     ds_num.sub(ds_ana).norm() < 1.0e-5 * (1.0 + ds_ana.norm()),
-                    "{:?} {:?}",
-                    ds_ana,
-                    ds_num
+                    "{ds_ana:?} {ds_num:?}"
                 );
             }
             {
@@ -443,9 +439,7 @@ fn test_svd_differential() {
                 let dv_ana = &diff_v[i * 3 + j];
                 assert!(
                     dv_num.sub(dv_ana).norm() < 1.0e-4 * (1.0 + dv_ana.norm()),
-                    "{:?} {:?}",
-                    dv_ana,
-                    dv_num
+                    "{dv_ana:?} {dv_num:?}"
                 );
             }
         }
