@@ -143,26 +143,28 @@ where
 // above: To method
 // -------------------------------------
 
-/// `vec_n` can be not-normalized vector
-pub fn basis_xy_from_basis_z<Real>(vec_n: &[Real; 3]) -> ([Real; 3], [Real; 3])
+/// `vec_z` can be not-normalized vector
+/// * Return
+///     * (`vec_x`, `vec_y`)
+pub fn basis_xy_from_basis_z<Real>(vec_z: &[Real; 3]) -> ([Real; 3], [Real; 3])
 where
     Real: num_traits::Float,
 {
     let one = Real::one();
     let zero = Real::zero();
     let vec_s: [Real; 3] = [zero, one, zero];
-    let vec_x = vec_s.cross(vec_n);
+    let vec_x = vec_s.cross(vec_z);
     let len = vec_x.norm();
     if len < Real::epsilon() {
-        let vec_n = vec_n.normalize();
+        let vec_n = vec_z.normalize();
         let vec_t = [one, zero, zero];
-        let vec_x = vec_t.cross(&vec_n); // z????
-        let vec_y = vec_n.cross(&vec_x); // x????
+        let vec_x = vec_t.cross(&vec_n);
+        let vec_y = vec_n.cross(&vec_x);
         (vec_x, vec_y)
     } else {
         let invlen = one / len;
         let vec_x = vec_x.scale(invlen);
-        let vec_y = vec_n.cross(&vec_x);
+        let vec_y = vec_z.cross(&vec_x).normalize();
         (vec_x, vec_y)
     }
 }
@@ -384,6 +386,16 @@ where
     rand::distr::StandardUniform: rand::distr::Distribution<T>,
 {
     std::array::from_fn(|_i| rng.random())
+}
+
+pub fn mult_mat3_array_of_array<T>(a: &[T;3], m: &[[T;3];3]) -> [T;3]
+    where T: num_traits::Float
+{
+    [
+        a[0] * m[0][0] + a[1] * m[1][0] + a[2] * m[2][0],
+        a[0] * m[0][1] + a[1] * m[1][1] + a[2] * m[2][1],
+        a[0] * m[0][2] + a[1] * m[1][2] + a[2] * m[2][2],
+    ]
 }
 
 pub fn wdw_angle_between_two_vecs_using_half_tan<T>(

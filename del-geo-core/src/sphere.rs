@@ -33,7 +33,7 @@ where
 }
 
 /// <https://corysimon.github.io/articles/uniformdistn-on-sphere/>
-pub fn sample<T>(rnd: &[T; 2]) -> [T; 3]
+pub fn sample_surface_uniform<T>(rnd: &[T; 2]) -> [T; 3]
 where
     T: num_traits::Float + num_traits::FloatConst,
 {

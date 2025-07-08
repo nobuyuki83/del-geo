@@ -18,6 +18,7 @@ where
     fn transform_homogeneous(&self, x: &[T; 2]) -> Option<[T; 2]>;
     fn squared_norm(&self) -> T;
     fn norm(&self) -> T;
+    fn to_mat3_array_of_array(&self) -> [[T;3];3];
 }
 
 impl<Real> Mat3ColMajor<Real> for [Real; 9]
@@ -62,6 +63,9 @@ where
     }
     fn norm(&self) -> Real {
         crate::mat3_row_major::norm(self)
+    }
+    fn to_mat3_array_of_array(&self) -> [[Real;3];3] {
+        to_mat3_array_of_array(self)
     }
 }
 
@@ -267,6 +271,23 @@ pub fn from_transform_world2pix_ortho_preserve_asp(
     [a, 0., 0., 0., b, 0., c, d, 1.]
 }
 
+pub fn from_projection_onto_plane<T>(n: &[T;3]) -> [T; 9]
+where T: num_traits::Float
+{
+    let one  = T::one();
+    [
+        - n[0] * n[0] + one,
+        - n[0] * n[1],
+        - n[0] * n[2],
+        - n[1] * n[0],
+        - n[1] * n[1] + one,
+        - n[1] * n[2],
+        - n[2] * n[0],
+        - n[2] * n[1],
+        - n[2] * n[2] + one,
+    ]
+}
+
 // above: from methods
 // ---------------------------------------------
 // below: to methods
@@ -411,6 +432,15 @@ where
     T: num_traits::Float,
 {
     ([a[0], a[1], a[2]], [a[3], a[4], a[5]], [a[6], a[7], a[8]])
+}
+
+pub fn to_mat3_array_of_array<T>(a: &[T; 9]) -> [[T;3];3]
+where T: num_traits::Float {
+    [
+        [a[0], a[3], a[6]],
+        [a[1], a[4], a[7]],
+        [a[2], a[5], a[8]],
+    ]
 }
 
 // above: to methods
