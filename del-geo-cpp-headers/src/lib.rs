@@ -31,7 +31,7 @@ impl Headers {
             };
             let path = path_out_dir.join(header_name);
             let mut output = std::fs::File::create(path).unwrap();
-            write!(output, "{}", header_content).unwrap();
+            write!(output, "{header_content}").unwrap();
         }
     }
 }

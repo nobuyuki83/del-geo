@@ -128,10 +128,7 @@ fn test_dw_circumcenter() {
             let dcc_ana = dcc0[i_node] * b;
             let diff = (dcc_num - dcc_ana).norm();
             assert!(diff < 1.0e-4);
-            println!(
-                "{}, {} --> {:?}, {:?}, {:?}",
-                i_node, i_dim, dcc_num, dcc_ana, diff
-            );
+            println!("{i_node}, {i_dim} --> {dcc_num:?}, {dcc_ana:?}, {diff:?}");
         }
     }
 }

@@ -63,12 +63,7 @@ where
     let cos_theta_max = (one - sin_theta_max_squared).max(zero).sqrt();
     let cos_theta = one - unirand[0] * (one - cos_theta_max);
     assert!(cos_theta >= zero);
-    assert!(
-        cos_theta >= cos_theta_max,
-        "{} {}",
-        cos_theta,
-        cos_theta_max
-    );
+    assert!(cos_theta >= cos_theta_max, "{cos_theta} {cos_theta_max}");
     assert!(cos_theta <= one);
     let sin_theta = (one - cos_theta * cos_theta).max(zero).sqrt();
     let phi = two * T::PI() * unirand[1];

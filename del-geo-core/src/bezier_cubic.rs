@@ -123,13 +123,9 @@ where
                 let t = (i_div.as_() + r0) / ndiv_sample.as_();
                 assert!(
                     t < Real::one(),
-                    "t={} idiv={} ndiv_sample={} r0={}",
-                    t,
-                    i_div,
-                    ndiv_sample,
-                    r0
+                    "t={t} idiv={i_div} ndiv_sample={ndiv_sample} r0={r0}"
                 );
-                assert!(t > Real::zero(), "t={}", t);
+                assert!(t > Real::zero(), "t={t}");
                 let q = eval(cps.p0, cps.p1, cps.p2, cps.p3, t);
                 ret.push(q);
             }

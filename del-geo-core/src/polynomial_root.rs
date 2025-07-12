@@ -112,7 +112,7 @@ where
         if xs == xe {
             return if fs == T::zero() { Some(xs) } else { None };
         }
-        assert_ne!(fs, fe, "hoge {} {} {} {} {} {}", xs, xe, c0, c1, c2, c3);
+        assert_ne!(fs, fe, "hoge {xs} {xe} {c0} {c1} {c2} {c3}");
         let mut r = (fs * xe - fe * xs) / (fs - fe);
         assert!(r >= T::zero() && r <= t);
         for _i in 0..20 {

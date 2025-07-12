@@ -444,8 +444,9 @@ where
     std::array::from_fn(|_i| rng.random())
 }
 
-pub fn mult_mat3_array_of_array<T>(a: &[T;3], m: &[[T;3];3]) -> [T;3]
-    where T: num_traits::Float
+pub fn mult_mat3_array_of_array<T>(a: &[T; 3], m: &[[T; 3]; 3]) -> [T; 3]
+where
+    T: num_traits::Float,
 {
     [
         a[0] * m[0][0] + a[1] * m[1][0] + a[2] * m[2][0],
