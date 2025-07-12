@@ -110,15 +110,15 @@ where
     if sqt <= T::epsilon() {
         // infinitesimal rotation approximation I + skew(w) + 1/2skew(w)^2
         return [
-            one + half*(w[0]*w[0]-sqt),
-            w[2] + half*w[1]*w[0],
-            -w[1] + half*w[2]*w[0],
-            -w[2] + half*w[0]*w[1],
-            one + half*(w[1]*w[1]-sqt),
-            w[0]+ half*w[2]*w[1],
-            w[1] + half*w[0]*w[2],
-            -w[0]  + half*w[1]*w[2],
-            one + half*(w[2]*w[2]-sqt),
+            one + half * (w[0] * w[0] - sqt),
+            w[2] + half * w[1] * w[0],
+            -w[1] + half * w[2] * w[0],
+            -w[2] + half * w[0] * w[1],
+            one + half * (w[1] * w[1] - sqt),
+            w[0] + half * w[2] * w[1],
+            w[1] + half * w[0] * w[2],
+            -w[0] + half * w[1] * w[2],
+            one + half * (w[2] * w[2] - sqt),
         ];
         /*
         return [
@@ -163,7 +163,9 @@ fn test_to_mat3_from_axisangle_vec() {
         assert!((aa0 - aa1).norm() < 1.0e-5);
     }
     {
-        let org = [1.0, 0.3, -0.5f64].normalize().scale(std::f64::EPSILON.sqrt());
+        let org = [1.0, 0.3, -0.5f64]
+            .normalize()
+            .scale(std::f64::EPSILON.sqrt());
         let a0 = org.scale(1.6);
         let a1 = org.scale(0.8);
         let r0 = to_mat3_from_axisangle_vec(&a0);
@@ -172,7 +174,7 @@ fn test_to_mat3_from_axisangle_vec() {
         let r0a = r1.mult_mat_col_major(&r1);
         for i in 0..9 {
             let err = (r0[i] - r0a[i]).abs();
-            assert!(err<std::f64::EPSILON);
+            assert!(err < std::f64::EPSILON);
         }
     }
 }
@@ -455,8 +457,9 @@ where
     ]
 }
 
-pub fn mult_mat3_col_major<T>(a: &[T;3], m: &[T;9]) -> [T;3]
-where T: num_traits::Float
+pub fn mult_mat3_col_major<T>(a: &[T; 3], m: &[T; 9]) -> [T; 3]
+where
+    T: num_traits::Float,
 {
     [
         a[0] * m[0] + a[1] * m[1] + a[2] * m[2],

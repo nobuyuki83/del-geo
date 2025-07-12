@@ -1,6 +1,5 @@
 //! methods for 3x3 matrix where storage is column major order
 
-
 /// trait for 3x3 matrix where storage is column major order
 pub trait Mat3ColMajor<T: num_traits::Float>
 where
@@ -290,8 +289,9 @@ where
     ]
 }
 
-pub fn from_axisangle_vec<T>(n: &[T;3]) -> [T;9]
-where T: num_traits::Float + std::fmt::Debug
+pub fn from_axisangle_vec<T>(n: &[T; 3]) -> [T; 9]
+where
+    T: num_traits::Float + std::fmt::Debug,
 {
     crate::vec3::to_mat3_from_axisangle_vec(n)
 }
@@ -653,13 +653,13 @@ where
         if ct > one - T::epsilon() {
             return [
                 T::one() + half * (n[0] * n[0] - st2), // 00
-                n[2] + half * (n[1] * n[0]), // 10
-                -n[1] + half * (n[2] * n[0]), // 20
-                -n[2] + half * (n[0] * n[1]), // 01
+                n[2] + half * (n[1] * n[0]),           // 10
+                -n[1] + half * (n[2] * n[0]),          // 20
+                -n[2] + half * (n[0] * n[1]),          // 01
                 T::one() + half * (n[1] * n[1] - st2), // 11
-                n[0] + half * (n[2] * n[1]), // 21
-                n[1] + half * (n[0] * n[2]), // 02
-                -n[0] + half * (n[1] * n[2]), // 12
+                n[0] + half * (n[2] * n[1]),           // 21
+                n[1] + half * (n[0] * n[2]),           // 02
+                -n[0] + half * (n[1] * n[2]),          // 12
                 T::one() + half * (n[2] * n[2] - st2), // 22
             ];
         } else {
@@ -669,13 +669,13 @@ where
             return [
                 eqx.dot(&epx), // 00
                 eqx.dot(&epy), // 10
-                eqx.dot(&ep), // 20
+                eqx.dot(&ep),  // 20
                 eqy.dot(&epx), // 01
                 eqy.dot(&epy), // 11
-                eqy.dot(&ep), // 21
-                eq.dot(&epx), // 02
-                eq.dot(&epy), // 12
-                eq.dot(&ep), // 22
+                eqy.dot(&ep),  // 21
+                eq.dot(&epx),  // 02
+                eq.dot(&epy),  // 12
+                eq.dot(&ep),   // 22
             ];
         }
     }
@@ -683,15 +683,15 @@ where
     let n = n.normalize();
     // Rodoriguez's rotation formula
     [
-        ct + (T::one() - ct) * n[0] * n[0], // 00
-        n[2] * st + (T::one() - ct) * n[1] * n[0], // 10
+        ct + (T::one() - ct) * n[0] * n[0],         // 00
+        n[2] * st + (T::one() - ct) * n[1] * n[0],  // 10
         -n[1] * st + (T::one() - ct) * n[2] * n[0], // 20
         -n[2] * st + (T::one() - ct) * n[0] * n[1], // 01
-        ct + (T::one() - ct) * n[1] * n[1], // 11
-        n[0] * st + (T::one() - ct) * n[2] * n[1], // 21
-        n[1] * st + (T::one() - ct) * n[0] * n[2], // 02
+        ct + (T::one() - ct) * n[1] * n[1],         // 11
+        n[0] * st + (T::one() - ct) * n[2] * n[1],  // 21
+        n[1] * st + (T::one() - ct) * n[0] * n[2],  // 02
         -n[0] * st + (T::one() - ct) * n[1] * n[2], // 12
-        ct + (T::one() - ct) * n[2] * n[2], // 22
+        ct + (T::one() - ct) * n[2] * n[2],         // 22
     ]
 }
 
@@ -714,7 +714,7 @@ fn test_minimum_rotation() {
             let b0 = mult_vec(&r1_mat, &a);
             let r_mat = minimum_rotation_matrix(&a, &b0);
             let b1 = mult_vec(&r_mat, &a);
-            assert!(b0.sub(&b1).norm()<1.0e-15);
+            assert!(b0.sub(&b1).norm() < 1.0e-15);
         }
     }
 }

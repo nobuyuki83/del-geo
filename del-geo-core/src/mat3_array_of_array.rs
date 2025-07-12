@@ -93,14 +93,11 @@ fn test_inverse_matmul() {
     }
 }
 
-pub fn from_identity<T>() -> [[T;3];3]
-where T: num_traits::Float
+pub fn from_identity<T>() -> [[T; 3]; 3]
+where
+    T: num_traits::Float,
 {
     let zero = T::zero();
     let one = T::one();
-    [
-        [one, zero, zero],
-        [zero, one, zero],
-        [zero, zero, one],
-    ]
+    [[one, zero, zero], [zero, one, zero], [zero, zero, one]]
 }
