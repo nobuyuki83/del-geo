@@ -636,7 +636,7 @@ where
 /// That rotation matrix rotate `v0: &[T;3]` to `v1: &[T;3]`.
 pub fn minimum_rotation_matrix<T>(v0: &[T; 3], v1: &[T; 3]) -> [T; 9]
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     use crate::vec3::Vec3;
     let one = T::one();
