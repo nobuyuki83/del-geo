@@ -49,3 +49,4 @@ pub mod uvec3;
 pub mod vecn;
 pub mod view_projection;
 pub mod view_rotation;
+pub mod ndc;

@@ -1,5 +1,6 @@
 //! methods for 3x3 matrix where storage is column major order
 
+
 /// trait for 3x3 matrix where storage is column major order
 pub trait Mat3ColMajor<T: num_traits::Float>
 where
@@ -286,6 +287,12 @@ where T: num_traits::Float
         - n[2] * n[1],
         - n[2] * n[2] + one,
     ]
+}
+
+pub fn from_axisangle_vec<T>(n: &[T;3]) -> [T;9]
+where T: num_traits::Float + std::fmt::Debug
+{
+    crate::vec3::to_mat3_from_axisangle_vec(n)
 }
 
 // above: from methods
@@ -630,7 +637,7 @@ where
 /// That rotation matrix rotate `v0: &[T;3]` to `v1: &[T;3]`.
 pub fn minimum_rotation_matrix<T>(v0: &[T; 3], v1: &[T; 3]) -> [T; 9]
 where
-    T: num_traits::Float,
+    T: num_traits::Float + std::fmt::Debug,
 {
     use crate::vec3::Vec3;
     let one = T::one();
@@ -646,30 +653,30 @@ where
         // inifinitesimal rotation
         if ct > one - T::epsilon() {
             return [
-                T::one() + half * (n[0] * n[0] - st2),
-                -n[2] + half * (n[0] * n[1]),
-                n[1] + half * (n[0] * n[2]),
-                n[2] + half * (n[1] * n[0]),
-                T::one() + half * (n[1] * n[1] - st2),
-                -n[0] + half * (n[1] * n[2]),
-                -n[1] + half * (n[2] * n[0]),
-                n[0] + half * (n[2] * n[1]),
-                T::one() + half * (n[2] * n[2] - st2),
+                T::one() + half * (n[0] * n[0] - st2), // 00
+                n[2] + half * (n[1] * n[0]), // 10
+                -n[1] + half * (n[2] * n[0]), // 20
+                -n[2] + half * (n[0] * n[1]), // 01
+                T::one() + half * (n[1] * n[1] - st2), // 11
+                n[0] + half * (n[2] * n[1]), // 21
+                n[1] + half * (n[0] * n[2]), // 02
+                -n[0] + half * (n[1] * n[2]), // 12
+                T::one() + half * (n[2] * n[2] - st2), // 22
             ];
         } else {
             let (epx, epy) = crate::vec3::basis_xy_from_basis_z(&ep);
             let eqx = epx.sub(&eq.scale(eq.dot(&epx))); // vector orthogonal to eq
             let eqy = eq.cross(&eqx);
             return [
-                eqx.dot(&epx),
-                eqy.dot(&epx),
-                eq.dot(&epx),
-                eqx.dot(&epy),
-                eqy.dot(&epy),
-                eq.dot(&epy),
-                eqx.dot(&ep),
-                eqy.dot(&ep),
-                eq.dot(&ep),
+                eqx.dot(&epx), // 00
+                eqx.dot(&epy), // 10
+                eqx.dot(&ep), // 20
+                eqy.dot(&epx), // 01
+                eqy.dot(&epy), // 11
+                eqy.dot(&ep), // 21
+                eq.dot(&epx), // 02
+                eq.dot(&epy), // 12
+                eq.dot(&ep), // 22
             ];
         }
     }
@@ -677,16 +684,40 @@ where
     let n = n.normalize();
     // Rodoriguez's rotation formula
     [
-        ct + (T::one() - ct) * n[0] * n[0],
-        -n[2] * st + (T::one() - ct) * n[0] * n[1],
-        n[1] * st + (T::one() - ct) * n[0] * n[2],
-        n[2] * st + (T::one() - ct) * n[1] * n[0],
-        ct + (T::one() - ct) * n[1] * n[1],
-        -n[0] * st + (T::one() - ct) * n[1] * n[2],
-        -n[1] * st + (T::one() - ct) * n[2] * n[0],
-        n[0] * st + (T::one() - ct) * n[2] * n[1],
-        ct + (T::one() - ct) * n[2] * n[2],
+        ct + (T::one() - ct) * n[0] * n[0], // 00
+        n[2] * st + (T::one() - ct) * n[1] * n[0], // 10
+        -n[1] * st + (T::one() - ct) * n[2] * n[0], // 20
+        -n[2] * st + (T::one() - ct) * n[0] * n[1], // 01
+        ct + (T::one() - ct) * n[1] * n[1], // 11
+        n[0] * st + (T::one() - ct) * n[2] * n[1], // 21
+        n[1] * st + (T::one() - ct) * n[0] * n[2], // 02
+        -n[0] * st + (T::one() - ct) * n[1] * n[2], // 12
+        ct + (T::one() - ct) * n[2] * n[2], // 22
     ]
+}
+
+#[test]
+fn test_minimum_rotation() {
+    use crate::vec3::Vec3;
+    use rand::SeedableRng;
+    let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
+    for _iter in 0..10 {
+        use rand::Rng;
+        let a: [f64; 3] = crate::sphere::sample_surface_uniform(&[rng.random(), rng.random()]);
+        {
+            let b0: [f64; 3] = crate::sphere::sample_surface_uniform(&[rng.random(), rng.random()]);
+            let r_mat = minimum_rotation_matrix(&a, &b0);
+            let b1 = mult_vec(&r_mat, &a);
+            assert!(b0.sub(&b1).norm() < 1.0e-15);
+        }
+        {
+            let r1_mat = from_rotate_x(1.0e-8);
+            let b0 = mult_vec(&r1_mat, &a);
+            let r_mat = minimum_rotation_matrix(&a, &b0);
+            let b1 = mult_vec(&r_mat, &a);
+            assert!(b0.sub(&b1).norm()<1.0e-15);
+        }
+    }
 }
 
 // -----------------------------------

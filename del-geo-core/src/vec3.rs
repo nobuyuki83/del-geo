@@ -12,6 +12,7 @@ where
     fn squared_norm(&self) -> Real;
     fn dot(&self, other: &Self) -> Real;
     fn sub(&self, other: &Self) -> Self;
+    fn sub_in_place(&mut self, other: &Self);
     fn add(&self, other: &Self) -> Self;
     fn add_in_place(&mut self, other: &Self);
     fn cross(&self, other: &Self) -> Self;
@@ -21,6 +22,8 @@ where
     fn normalize_in_place(&mut self) -> Real;
     fn element_wise_mult(&self, other: &Self) -> Self;
     fn cross_mut(&mut self, v1: &Self, v2: &Self);
+    fn mult_mat3_col_major(&self, a: &[Real; 9]) -> Self;
+    fn mult_mat3_array_of_array(&self, a: &[[Real; 3]; 3]) -> Self;
 }
 
 impl<Real> Vec3<Real> for [Real; 3]
@@ -41,6 +44,9 @@ where
     }
     fn sub(&self, other: &Self) -> Self {
         sub(self, other)
+    }
+    fn sub_in_place(&mut self, other: &Self) {
+        sub_in_place(self, other);
     }
     fn add(&self, other: &Self) -> Self {
         add(self, other)
@@ -75,6 +81,12 @@ where
     fn cross_mut(&mut self, v1: &Self, v2: &Self) {
         cross_mut(self, v1, v2)
     }
+    fn mult_mat3_col_major(&self, a: &[Real; 9]) -> Self {
+        mult_mat3_col_major(self, a)
+    }
+    fn mult_mat3_array_of_array(&self, a: &[[Real; 3]; 3]) -> Self {
+        mult_mat3_array_of_array(self, a)
+    }
 }
 
 /// orthogonalize v against u, remove u component from v
@@ -88,21 +100,43 @@ where
 }
 
 /// From axis-angle vector returns a rotation matrix
-pub fn to_mat3_from_axisangle_vec<T>(vec: &[T; 3]) -> [T; 9]
+pub fn to_mat3_from_axisangle_vec<T>(w: &[T; 3]) -> [T; 9]
 where
-    T: num_traits::Float,
+    T: num_traits::Float + std::fmt::Debug,
 {
     let one = T::one();
-    let sqt = vec.squared_norm();
+    let half = one / (one + one);
+    let sqt = w.squared_norm();
     if sqt <= T::epsilon() {
-        // infinitesimal rotation approximation
+        // infinitesimal rotation approximation I + skew(w) + 1/2skew(w)^2
         return [
-            one, vec[2], -vec[1], -vec[2], one, vec[0], vec[1], -vec[0], one,
+            one + half*(w[0]*w[0]-sqt),
+            w[2] + half*w[1]*w[0],
+            -w[1] + half*w[2]*w[0],
+            -w[2] + half*w[0]*w[1],
+            one + half*(w[1]*w[1]-sqt),
+            w[0]+ half*w[2]*w[1],
+            w[1] + half*w[0]*w[2],
+            -w[0]  + half*w[1]*w[2],
+            one + half*(w[2]*w[2]-sqt),
         ];
+        /*
+        return [
+            one,
+            w[2],
+            -w[1],
+            -w[2],
+            one,
+            w[0],
+            w[1],
+            -w[0],
+            one,
+        ];
+         */
     }
     let t = sqt.sqrt();
     let invt = one / t;
-    let n = [vec[0] * invt, vec[1] * invt, vec[2] * invt];
+    let n = [w[0] * invt, w[1] * invt, w[2] * invt];
     let c0 = t.cos();
     let s0 = t.sin();
     [
@@ -120,12 +154,27 @@ where
 
 #[test]
 fn test_to_mat3_from_axisangle_vec() {
-    let aa0 = [1.0, 0.3, -0.5f64];
-    let rmat = to_mat3_from_axisangle_vec(&aa0);
-    let aa1 = crate::mat3_col_major::to_vec3_axisangle_from_rot_mat(&rmat);
-    let aa0 = del_geo_nalgebra::vec3::from_array(&aa0);
-    let aa1 = del_geo_nalgebra::vec3::from_array(&aa1);
-    assert!((aa0 - aa1).norm() < 1.0e-5);
+    {
+        let aa0 = [1.0, 0.3, -0.5f64];
+        let rmat = to_mat3_from_axisangle_vec(&aa0);
+        let aa1 = crate::mat3_col_major::to_vec3_axisangle_from_rot_mat(&rmat);
+        let aa0 = del_geo_nalgebra::vec3::from_array(&aa0);
+        let aa1 = del_geo_nalgebra::vec3::from_array(&aa1);
+        assert!((aa0 - aa1).norm() < 1.0e-5);
+    }
+    {
+        let org = [1.0, 0.3, -0.5f64].normalize().scale(std::f64::EPSILON.sqrt());
+        let a0 = org.scale(1.6);
+        let a1 = org.scale(0.8);
+        let r0 = to_mat3_from_axisangle_vec(&a0);
+        let r1 = to_mat3_from_axisangle_vec(&a1);
+        use crate::mat3_col_major::Mat3ColMajor;
+        let r0a = r1.mult_mat_col_major(&r1);
+        for i in 0..9 {
+            let err = (r0[i] - r0a[i]).abs();
+            assert!(err<std::f64::EPSILON);
+        }
+    }
 }
 
 fn to_mat3_from_dw_normalize<T>(u: &[T; 3]) -> [T; 9]
@@ -298,6 +347,13 @@ where
     std::array::from_fn(|i| a[i] - b[i])
 }
 
+pub fn sub_in_place<T>(a: &mut [T; 3], b: &[T; 3])
+where
+    T: num_traits::Float,
+{
+    *a = a.sub(b);
+}
+
 pub fn scale<T>(a: &[T; 3], s: T) -> [T; 3]
 where
     T: Copy + std::ops::Mul<Output = T>,
@@ -395,6 +451,16 @@ pub fn mult_mat3_array_of_array<T>(a: &[T;3], m: &[[T;3];3]) -> [T;3]
         a[0] * m[0][0] + a[1] * m[1][0] + a[2] * m[2][0],
         a[0] * m[0][1] + a[1] * m[1][1] + a[2] * m[2][1],
         a[0] * m[0][2] + a[1] * m[1][2] + a[2] * m[2][2],
+    ]
+}
+
+pub fn mult_mat3_col_major<T>(a: &[T;3], m: &[T;9]) -> [T;3]
+where T: num_traits::Float
+{
+    [
+        a[0] * m[0] + a[1] * m[1] + a[2] * m[2],
+        a[0] * m[3] + a[1] * m[4] + a[2] * m[5],
+        a[0] * m[6] + a[1] * m[7] + a[2] * m[8],
     ]
 }
 
