@@ -636,7 +636,7 @@ where
 /// That rotation matrix rotate `v0: &[T;3]` to `v1: &[T;3]`.
 pub fn minimum_rotation_matrix<T>(v0: &[T; 3], v1: &[T; 3]) -> [T; 9]
 where
-    T: num_traits::Float + std::fmt::Debug,
+    T: num_traits::Float
 {
     use crate::vec3::Vec3;
     let one = T::one();
@@ -831,7 +831,7 @@ where
     let (u, _s, v) = svd(a, EigenDecompositionModes::JacobiNumIter(20)).unwrap();
     let v_t = transpose(&v);
     let u_vt = mult_mat_col_major(&u, &v_t);
-    dbg!(determinant(&u_vt));
+    // dbg!(determinant(&u_vt));
     if determinant(&u_vt) > T::zero() {
         u_vt
     } else {
