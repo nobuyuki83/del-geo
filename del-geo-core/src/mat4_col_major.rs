@@ -485,6 +485,19 @@ where
     o
 }
 
+pub fn mult_vec<Real>(a: &[Real; 16], b: &[Real; 4]) -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
+    let mut o = [Real::zero(); 4];
+    for i in 0..4 {
+        for j in 0..4 {
+            o[i] = o[i] + a[i + 4 * j] * b[j];
+        }
+    }
+    o
+}
+
 #[test]
 fn test_inverse_multmat() {
     let a: [f64; 16] = [
