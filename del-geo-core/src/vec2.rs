@@ -5,9 +5,10 @@ pub trait Vec2<Real>
 where
     Self: Sized,
 {
-    fn sub(&self, other: &Self) -> Self;
     fn add(&self, other: &Self) -> Self;
+    fn sub(&self, other: &Self) -> Self;
     fn add_in_place(&mut self, other: &Self);
+    fn sub_in_place(&mut self, other: &Self);
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<[Real; 2]>;
     fn dot(&self, other: &Self) -> Real;
     fn scale(&self, s: Real) -> Self;
@@ -37,6 +38,10 @@ where
     }
     fn add_in_place(&mut self, other: &Self) {
         add_in_place(self, other);
+    }
+    fn sub_in_place(&mut self, other: &Self) {
+        self[0] = self[0] - other[0];
+        self[1] = self[1] - other[1];
     }
     fn transform_homogeneous(&self, v: &[Real; 9]) -> Option<Self> {
         crate::mat3_col_major::transform_homogeneous(v, self)

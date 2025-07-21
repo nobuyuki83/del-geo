@@ -35,6 +35,7 @@ pub mod mat2_sym;
 pub mod mat3_row_major;
 pub mod mat3_sym;
 pub mod mat3x4_col_major;
+pub mod matn_col_major;
 pub mod matn_row_major;
 pub mod ndc;
 pub mod obb2;

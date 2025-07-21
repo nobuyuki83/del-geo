@@ -93,7 +93,6 @@ where
     T: num_traits::Float,
 {
     use crate::vec3::Vec3;
-    assert!(p0.len() == 2 && p1.len() == 2 && p2.len() == 2);
     let half = T::one() / (T::one() + T::one());
     let a0 = area(p0, p1, p2);
     let tmp1: T = half / a0;

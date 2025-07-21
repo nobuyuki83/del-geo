@@ -4,6 +4,7 @@ pub trait VecN<T, const N: usize> {
     fn add(&self, other: &[T; N]) -> Self;
     fn add_in_place(&mut self, other: &[T; N]);
     fn sub(&self, other: &[T; N]) -> Self;
+    fn sub_in_place(&mut self, other: &[T; N]);
     fn scale(&self, scalar: T) -> Self;
     fn scale_in_place(&mut self, scale: T);
     fn norm(&self) -> T;
@@ -21,6 +22,11 @@ where
     }
     fn sub(&self, other: &[T; N]) -> Self {
         std::array::from_fn(|i| self[i] - other[i])
+    }
+    fn sub_in_place(&mut self, other: &[T; N]) {
+        self.iter_mut()
+            .zip(other.iter())
+            .for_each(|(a, &b)| *a = *a - b);
     }
     fn norm(&self) -> T {
         // self.iter().map(|&v| v * v).sum::<T>().sqrt() // remove because it requires std:iter::Sum
@@ -86,4 +92,20 @@ where
     a.iter()
         .zip(b.iter())
         .fold(T::zero(), |sum, (&u, &v)| sum + u * v)
+}
+
+pub fn scale_in_place<T, const N: usize>(a: &mut [T; N], s: T)
+where
+    T: num_traits::Float,
+{
+    a.iter_mut().for_each(|v| *v = (*v) * s);
+}
+
+pub fn add_in_place<T, const N: usize>(a: &mut [T; N], s: &[T; N])
+where
+    T: num_traits::Float,
+{
+    a.iter_mut()
+        .zip(s.iter())
+        .for_each(|(b, c)| *b = (*b) + (*c));
 }

@@ -8,10 +8,12 @@ where
     fn mult_mat_col_major(&self, other: &Self) -> Self;
     fn mult_vec(&self, other: &[T; 2]) -> [T; 2];
     fn add(&self, other: &Self) -> Self;
+    fn add_in_place(&mut self, other: &Self);
     fn sub(&self, other: &Self) -> Self;
     fn transpose(&self) -> Self;
     fn squared_norm(&self) -> T;
     fn determinant(&self) -> T;
+    fn set_zero(&mut self);
 }
 
 impl<Real> Mat2ColMajor<Real> for [Real; 4]
@@ -24,6 +26,12 @@ where
 
     fn add(&self, other: &Self) -> Self {
         std::array::from_fn(|i| self[i] + other[i])
+    }
+    fn add_in_place(&mut self, other: &Self) {
+        self[0] = self[0] + other[0];
+        self[1] = self[1] + other[1];
+        self[2] = self[2] + other[2];
+        self[3] = self[3] + other[3];
     }
     fn sub(&self, other: &Self) -> Self {
         std::array::from_fn(|i| self[i] - other[i])
@@ -50,6 +58,10 @@ where
     }
     fn determinant(&self) -> Real {
         determinant(self)
+    }
+
+    fn set_zero(&mut self) {
+        self.fill(Real::zero());
     }
 }
 
