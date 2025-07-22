@@ -258,15 +258,14 @@ where
     ]
 }
 
-pub fn from_mat3_col_major_adding_w<Real>(m: &[Real; 9]) -> [Real; 16]
+pub fn from_mat3_col_major_adding_w<Real>(m: &[Real; 9], dia: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
 {
     let zero = Real::zero();
-    let one = Real::one();
     [
         m[0], m[1], m[2], zero, m[3], m[4], m[5], zero, m[6], m[7], m[8], zero, zero, zero, zero,
-        one,
+        dia,
     ]
 }
 

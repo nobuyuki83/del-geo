@@ -99,6 +99,16 @@ where
     v.sub(&u.scale(t))
 }
 
+// -------------------
+// below: "to" methods
+
+pub fn to_vec4_adding_w<T>(v: &[T; 3], w: T) -> [T; 4]
+where
+    T: num_traits::Float,
+{
+    [v[0], v[1], v[2], w]
+}
+
 /// From axis-angle vector returns a rotation matrix
 pub fn to_mat3_from_axisangle_vec<T>(w: &[T; 3]) -> [T; 9]
 where
@@ -155,6 +165,7 @@ where
 #[test]
 fn test_to_mat3_from_axisangle_vec() {
     {
+        // vec3 to Rotation matrix and then back to vec3
         let aa0 = [1.0, 0.3, -0.5f64];
         let rmat = to_mat3_from_axisangle_vec(&aa0);
         let aa1 = crate::mat3_col_major::to_vec3_axisangle_from_rot_mat(&rmat);
@@ -163,6 +174,7 @@ fn test_to_mat3_from_axisangle_vec() {
         assert!((aa0 - aa1).norm() < 1.0e-5);
     }
     {
+        // test small angle rotation
         let org = [1.0, 0.3, -0.5f64]
             .normalize()
             .scale(std::f64::EPSILON.sqrt());
