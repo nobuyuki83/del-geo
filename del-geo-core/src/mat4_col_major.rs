@@ -546,12 +546,12 @@ pub fn ray_from_transform_world2ndc(
 
 /// the ray start from the front plane and ends on the back plane
 pub fn ray_from_transform_ndc2world_and_pixel_coordinate(
-    pix_coord: (usize, usize),
-    image_size: &(usize, usize),
+    pix_coord: (f32, f32),
+    image_size: &(f32, f32),
     transform_ndc2world: &[f32; 16],
 ) -> ([f32; 3], [f32; 3]) {
-    let x0 = 2. * (pix_coord.0 as f32 + 0.5f32) / (image_size.0 as f32) - 1.;
-    let y0 = 1. - 2. * (pix_coord.1 as f32 + 0.5f32) / (image_size.1 as f32);
+    let x0 = 2. * (pix_coord.0 + 0.5f32) / (image_size.0) - 1.;
+    let y0 = 1. - 2. * (pix_coord.1 + 0.5f32) / (image_size.1);
     let p0 = transform_homogeneous(transform_ndc2world, &[x0, y0, 1.]).unwrap();
     let p1 = transform_homogeneous(transform_ndc2world, &[x0, y0, -1.]).unwrap();
     let ray_org = p0;
