@@ -9,6 +9,7 @@ where
     fn mult_mat(&self, b: &Self) -> Self;
     fn transform_direction(&self, a: &[Real; 3]) -> [Real; 3];
     fn try_inverse(&self) -> Option<Self>;
+    fn add_in_place(&mut self, other: &Self);
 }
 
 impl<Real> Mat4ColMajor<Real> for [Real; 16]
@@ -26,6 +27,11 @@ where
     }
     fn try_inverse(&self) -> Option<Self> {
         try_inverse(self)
+    }
+    fn add_in_place(&mut self, other: &Self) {
+        self.iter_mut()
+            .zip(other.iter())
+            .for_each(|(a, &b)| *a = *a + b);
     }
 }
 
