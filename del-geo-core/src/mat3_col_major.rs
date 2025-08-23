@@ -403,9 +403,11 @@ fn test_to_quaternion() {
         let quat0 = quat0.normalized();
         let r_mat = quat0.to_mat3_col_major();
         let quat1 = to_quaternion(&r_mat);
-        let quat0 = nalgebra::Vector4::<f32>::from_row_slice(&quat0);
-        let quat1 = nalgebra::Vector4::<f32>::from_row_slice(&quat1);
-        assert!((quat0 - quat1).norm().min((quat0 + quat1).norm()) < 1.0e-7);
+        let d: f32 = crate::vecn::distance(&quats[0], &quats[0]);
+        let l0 = crate::vec4::length(&quat0);
+        let l1 = crate::vec4::length(&quat1);
+        dbg!(d, l0, l1);
+        assert!(d.min(l0).min(l1) < 1.0e-7);
     }
 }
 

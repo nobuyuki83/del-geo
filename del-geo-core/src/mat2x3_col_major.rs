@@ -42,3 +42,22 @@ pub fn transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 6] {
         0.5 * (img_shape.1 as f32),
     ]
 }
+
+pub fn mult_mat3x2_col_major<Real>(a: &[Real; 6], b: &[Real; 6]) -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
+    [
+        a[0] * b[0] + a[2] * b[1] + a[4] * b[2],
+        a[1] * b[0] + a[3] * b[1] + a[5] * b[2],
+        a[0] * b[3] + a[2] * b[4] + a[4] * b[5],
+        a[1] * b[3] + a[3] * b[4] + a[5] * b[5],
+    ]
+}
+
+pub fn transpose<Real>(a: &[Real; 6]) -> [Real; 6]
+where
+    Real: num_traits::Float,
+{
+    [a[0], a[2], a[4], a[1], a[3], a[5]]
+}
