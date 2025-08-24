@@ -274,7 +274,9 @@ where
     for i_dim in 0..3 {
         let range0 = (aabb0[i_dim], aabb0[i_dim + 3]);
         let range1 = (aabb1[i_dim], aabb1[i_dim + 3]);
-        let Some(dist) = crate::range::distance_to_range(range0, range1) else { continue; };
+        let Some(dist) = crate::range::distance_to_range(range0, range1) else {
+            continue;
+        };
         if dist > threshold {
             return false;
         }
