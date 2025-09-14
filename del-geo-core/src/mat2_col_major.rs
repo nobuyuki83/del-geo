@@ -108,6 +108,24 @@ where
     ([a[0], a[1]], [a[2], a[3]])
 }
 
+pub fn try_inverse<T>(a: &[T; 4]) -> Option<[T; 4]>
+where
+    T: num_traits::Float,
+{
+    let det = a[0] * a[3] - a[1] * a[2];
+    let inv_det = det.recip();
+    if det.is_zero() {
+        None
+    } else {
+        Some([
+            inv_det * a[3],
+            -inv_det * a[1],
+            -inv_det * a[2],
+            inv_det * a[0],
+        ])
+    }
+}
+
 // -----------------------------
 
 pub fn determinant<T>(a: &[T; 4]) -> T

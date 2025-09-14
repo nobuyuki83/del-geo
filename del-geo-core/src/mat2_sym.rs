@@ -1,7 +1,5 @@
 //! symmetric matrix `[[a,b],[b,c]]` parameterized as `[a,b,c]`
 
-use crate::vec2::Vec2;
-
 /// symmetric matrix `[[a,b],[b,c]]` parameterized as `[a,b,c]`
 pub trait Mat2Sym<Real>
 where
@@ -91,9 +89,8 @@ fn test_inverse() {
     let a = [2.1, 0.1, 0.5];
     let ai = a.inverse().unwrap();
     let aia = ai.mult_mat_sym(&a);
-    let diff = nalgebra::Vector4::<f32>::from_column_slice(&aia)
-        - nalgebra::Vector4::<f32>::new(1., 0., 0., 1.);
-    assert!(diff.norm() < 1.0e-7);
+    let diff = crate::vec4::distance(&aia, &[1., 0., 0., 1.]);
+    assert!(diff < 1.0e-7);
 }
 
 pub fn safe_inverse<Real>(&[a, b, c]: &[Real; 3]) -> [Real; 3]
@@ -167,7 +164,7 @@ where
     } else {
         [det1, two * b]
     };
-    let u0 = u0.normalize();
+    let u0 = crate::vec2::normalize(&u0);
     let u1 = crate::vec2::rotate90(&u0);
     let u = from_columns(&u0, &u1);
     (u, [lam0, lam1])
@@ -243,40 +240,33 @@ fn test_prinsipal_directions() {
         [4.0, 1.99, 1.0],
     ];
     for mat in mats {
+        use crate::vec2::Vec2;
         let (u_mat, [lam0, lam1]) = eigen_decomposition::<f32>(&mat);
         let (evec0, evec1) = crate::mat2_col_major::to_columns(&u_mat);
-        let evec0 = nalgebra::Vector2::<f32>::from_row_slice(&evec0);
-        let evec1 = nalgebra::Vector2::<f32>::from_row_slice(&evec1);
-        assert!(evec0.norm() > 1.0e-5);
-        assert!(evec1.norm() > 1.0e-5);
+        assert!(crate::vec2::length(&evec0) > 1.0e-5);
+        assert!(crate::vec2::length(&evec1) > 1.0e-5);
         let evec0 = evec0.normalize();
         let evec1 = evec1.normalize();
         assert!(evec0.dot(&evec1).abs() < 1.0e-5, "{}", evec0.dot(&evec1));
         {
-            let tmp0 = nalgebra::Vector2::<f32>::from_row_slice(&mult_vec(
-                &mat,
-                evec0.as_slice()[..2].try_into().unwrap(),
-            ));
-            let diff = (tmp0 - lam0 * evec0).norm();
-            assert!(diff < 1.0e-6, "{}", diff);
+            let tmp0 = &mult_vec(&mat, evec0.as_slice()[..2].try_into().unwrap());
+            assert!(tmp0.sub(&evec0.scale(lam0)).norm() < 1.0e-6);
         }
         {
-            let tmp0 = nalgebra::Vector2::<f32>::from_row_slice(&mult_vec(
-                &mat,
-                evec1.as_slice()[..2].try_into().unwrap(),
-            ));
-            assert!((tmp0 - lam1 * evec1).norm() < 1.0e-6);
+            let tmp0 = &mult_vec(&mat, evec1.as_slice()[..2].try_into().unwrap());
+            assert!(tmp0.sub(&evec1.scale(lam1)).norm() < 1.0e-6);
         }
-        let evec0 = evec0 / lam0.sqrt();
-        let evec1 = evec1 / lam1.sqrt();
-        let sig = nalgebra::Matrix2::<f32>::new(mat[0], mat[1], mat[1], mat[2]);
+        let evec0 = evec0.scale(1. / lam0.sqrt());
+        let evec1 = evec1.scale(1. / lam1.sqrt());
+        let sig = [mat[0], mat[1], mat[1], mat[2]];
         let aabb = aabb2(&mat);
         let ndiv = 128;
         let mut sdf_max = f32::MIN;
         for i in 0..ndiv {
+            use crate::mat2_col_major::Mat2ColMajor;
             let theta = (i as f32) * 2.0 * std::f32::consts::PI / (ndiv as f32);
-            let v = evec0 * theta.cos() + evec1 * theta.sin();
-            let radrad = (v.transpose() * sig * v)[0];
+            let v = evec0.scale(theta.cos()).add(&evec1.scale(theta.sin()));
+            let radrad = sig.mult_vec(&v).dot(&v);
             assert!((radrad - 1.).abs() < 1.0e-3, "{}", radrad);
             assert!(crate::aabb2::is_include_point2(&aabb, &[v[0], v[1]]));
             let sdf = crate::aabb2::sdf(&aabb, &[v[0], v[1]]);
@@ -346,30 +336,42 @@ where
 #[test]
 fn test_wdw_projected_spd_mat3() {
     type Real = f64;
-    let p_mat = [1., 2., 4., 3., 2., 0.];
+    let p_mat: [Real; 6] = [1., 2., 4., 3., 2., 0.];
     let quat0 = crate::quaternion::normalized(&[-3., -2., 0., -1.]);
     let s0_mat = [0.1, 3.0, 1.0];
     let (abc, dabcdt) = wdw_projected_spd_mat3(&p_mat, &quat0, &s0_mat);
-    let p_mat = nalgebra::Matrix2x3::<Real>::from_column_slice(&p_mat);
     let r0_mat = crate::quaternion::to_mat3_col_major(&quat0);
-    let r0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&r0_mat);
     let s0_mat = crate::mat3_col_major::from_diagonal(&s0_mat);
-    let s0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&s0_mat);
     {
-        let sigma0 = p_mat * r0_mat * s0_mat * s0_mat * r0_mat.transpose() * p_mat.transpose();
-        assert!((abc[0] - sigma0.m11).abs() < 1.0e-5);
-        assert!((abc[1] - sigma0.m12).abs() < 1.0e-5);
-        assert!((abc[2] - sigma0.m22).abs() < 1.0e-5);
+        use crate::mat3_col_major::Mat3ColMajor;
+        let prs0 = crate::mat2x3_col_major::mult_mat3_col_major(
+            &p_mat,
+            &r0_mat.mult_mat_col_major(&s0_mat),
+        );
+        let sigma0 = crate::mat2x3_col_major::mult_mat3x2_col_major(
+            &prs0,
+            &crate::mat2x3_col_major::transpose(&prs0),
+        );
+        assert!((abc[0] - sigma0[0]).abs() < 1.0e-5);
+        assert!((abc[1] - sigma0[1]).abs() < 1.0e-5);
+        assert!((abc[2] - sigma0[3]).abs() < 1.0e-5);
     }
     let eps: Real = 1.0e-5;
     for i in 0..3 {
+        use crate::mat3_col_major::Mat3ColMajor;
         let mut s1_mat = s0_mat;
-        s1_mat[(i, i)] += eps;
-        let sigma1: nalgebra::Matrix2<Real> =
-            p_mat * r0_mat * s1_mat * s1_mat.transpose() * r0_mat.transpose() * p_mat.transpose();
-        let a_si_diff = (sigma1.m11 - abc[0]) / eps;
-        let b_si_diff = (sigma1.m12 - abc[1]) / eps;
-        let c_si_diff = (sigma1.m22 - abc[2]) / eps;
+        s1_mat[i * 3 + i] += eps;
+        let prs1 = crate::mat2x3_col_major::mult_mat3_col_major(
+            &p_mat,
+            &r0_mat.mult_mat_col_major(&s1_mat),
+        );
+        let sigma1 = crate::mat2x3_col_major::mult_mat3x2_col_major(
+            &prs1,
+            &crate::mat2x3_col_major::transpose(&prs1),
+        );
+        let a_si_diff = (sigma1[0] - abc[0]) / eps;
+        let b_si_diff = (sigma1[1] - abc[1]) / eps;
+        let c_si_diff = (sigma1[3] - abc[2]) / eps;
         let a_si_ana = dabcdt[0][i];
         let b_si_ana = dabcdt[1][i];
         let c_si_ana = dabcdt[2][i];
@@ -398,12 +400,18 @@ fn test_wdw_projected_spd_mat3() {
     for i in 0..3 {
         let aa = crate::vec3::basis(i, eps);
         let w = crate::vec3::to_mat3_from_axisangle_vec(&aa);
-        let w = nalgebra::Matrix3::<Real>::from_column_slice(&w);
-        let r1_mat = w * r0_mat;
-        let sigma1 = p_mat * r1_mat * s0_mat * s0_mat * r1_mat.transpose() * p_mat.transpose();
-        let a_ri_diff = (sigma1.m11 - abc[0]) / eps;
-        let b_ri_diff = (sigma1.m12 - abc[1]) / eps;
-        let c_ri_diff = (sigma1.m22 - abc[2]) / eps;
+        let r1_mat = crate::mat3_col_major::mult_mat_col_major(&w, &r0_mat);
+        let prs1 = crate::mat2x3_col_major::mult_mat3_col_major(
+            &p_mat,
+            &crate::mat3_col_major::mult_mat_col_major(&r1_mat, &s0_mat),
+        );
+        let sigma1 = crate::mat2x3_col_major::mult_mat3x2_col_major(
+            &prs1,
+            &crate::mat2x3_col_major::transpose(&prs1),
+        );
+        let a_ri_diff = (sigma1[0] - abc[0]) / eps;
+        let b_ri_diff = (sigma1[1] - abc[1]) / eps;
+        let c_ri_diff = (sigma1[3] - abc[2]) / eps;
         let a_ri_ana = dabcdt[0][3 + i];
         let b_ri_ana = dabcdt[1][3 + i];
         let c_ri_ana = dabcdt[2][3 + i];
@@ -435,34 +443,46 @@ where
 #[test]
 fn test_wdw_inv_projected_spd_mat3() {
     type Real = f64;
-    let p_mat = [1., 2., 4., 3., 2., 0.];
+    let p_mat: [Real; 6] = [1., 2., 4., 3., 2., 0.];
     let quat0 = crate::quaternion::normalized(&[-3., -2., 0., -1.]);
     let s0_mat = [0.1, 3.0, 1.0];
     let (abc, dabcdt) = wdw_projected_spd_mat3(&p_mat, &quat0, &s0_mat);
     let xyz = safe_inverse(&abc);
     let dxyzdt = wdw_inverse(&dabcdt, &xyz);
-    let p_mat = nalgebra::Matrix2x3::<Real>::from_column_slice(&p_mat);
     let r0_mat = crate::quaternion::to_mat3_col_major(&quat0);
-    let r0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&r0_mat);
     let s0_mat = crate::mat3_col_major::from_diagonal(&s0_mat);
-    let s0_mat = nalgebra::Matrix3::<Real>::from_column_slice(&s0_mat);
     {
-        let sigma0 = p_mat * r0_mat * s0_mat * s0_mat * r0_mat.transpose() * p_mat.transpose();
-        let sigma0inv = sigma0.try_inverse().unwrap();
-        assert!((xyz[0] - sigma0inv.m11).abs() < 1.0e-5);
-        assert!((xyz[1] - sigma0inv.m12).abs() < 1.0e-5);
-        assert!((xyz[2] - sigma0inv.m22).abs() < 1.0e-5);
+        use crate::mat3_col_major::Mat3ColMajor;
+        let prs0 = crate::mat2x3_col_major::mult_mat3_col_major(
+            &p_mat,
+            &r0_mat.mult_mat_col_major(&s0_mat),
+        );
+        let sigma0 = crate::mat2x3_col_major::mult_mat3x2_col_major(
+            &prs0,
+            &crate::mat2x3_col_major::transpose(&prs0),
+        );
+        let sigma0inv = crate::mat2_col_major::try_inverse(&sigma0).unwrap();
+        assert!((xyz[0] - sigma0inv[0]).abs() < 1.0e-5);
+        assert!((xyz[1] - sigma0inv[1]).abs() < 1.0e-5);
+        assert!((xyz[2] - sigma0inv[3]).abs() < 1.0e-5);
     }
     let eps: Real = 1.0e-5;
     for i in 0..3 {
+        use crate::mat3_col_major::Mat3ColMajor;
         let mut s1_mat = s0_mat;
-        s1_mat[(i, i)] += eps;
-        let sigma1: nalgebra::Matrix2<Real> =
-            p_mat * r0_mat * s1_mat * s1_mat.transpose() * r0_mat.transpose() * p_mat.transpose();
-        let sigma1inv = sigma1.try_inverse().unwrap();
-        let x_si_diff = (sigma1inv.m11 - xyz[0]) / eps;
-        let y_si_diff = (sigma1inv.m12 - xyz[1]) / eps;
-        let z_si_diff = (sigma1inv.m22 - xyz[2]) / eps;
+        s1_mat[i * 3 + i] += eps;
+        let prs1 = crate::mat2x3_col_major::mult_mat3_col_major(
+            &p_mat,
+            &r0_mat.mult_mat_col_major(&s1_mat),
+        );
+        let sigma1 = crate::mat2x3_col_major::mult_mat3x2_col_major(
+            &prs1,
+            &crate::mat2x3_col_major::transpose(&prs1),
+        );
+        let sigma1inv = crate::mat2_col_major::try_inverse(&sigma1).unwrap();
+        let x_si_diff = (sigma1inv[0] - xyz[0]) / eps;
+        let y_si_diff = (sigma1inv[1] - xyz[1]) / eps;
+        let z_si_diff = (sigma1inv[3] - xyz[2]) / eps;
         let x_si_ana = dxyzdt[0][i];
         let y_si_ana = dxyzdt[1][i];
         let z_si_ana = dxyzdt[2][i];
@@ -489,15 +509,22 @@ fn test_wdw_inv_projected_spd_mat3() {
         );
     }
     for i in 0..3 {
+        use crate::mat3_col_major::Mat3ColMajor;
         let aa = crate::vec3::basis(i, eps);
         let w = crate::vec3::to_mat3_from_axisangle_vec(&aa);
-        let w = nalgebra::Matrix3::<Real>::from_column_slice(&w);
-        let r1_mat = w * r0_mat;
-        let sigma1 = p_mat * r1_mat * s0_mat * s0_mat * r1_mat.transpose() * p_mat.transpose();
-        let sigma1inv = sigma1.try_inverse().unwrap();
-        let x_ri_diff = (sigma1inv.m11 - xyz[0]) / eps;
-        let y_ri_diff = (sigma1inv.m12 - xyz[1]) / eps;
-        let z_ri_diff = (sigma1inv.m22 - xyz[2]) / eps;
+        let r1_mat = crate::mat3_col_major::mult_mat_col_major(&w, &r0_mat);
+        let prs1 = crate::mat2x3_col_major::mult_mat3_col_major(
+            &p_mat,
+            &r1_mat.mult_mat_col_major(&s0_mat),
+        );
+        let sigma1 = crate::mat2x3_col_major::mult_mat3x2_col_major(
+            &prs1,
+            &crate::mat2x3_col_major::transpose(&prs1),
+        );
+        let sigma1inv = crate::mat2_col_major::try_inverse(&sigma1).unwrap();
+        let x_ri_diff = (sigma1inv[0] - xyz[0]) / eps;
+        let y_ri_diff = (sigma1inv[1] - xyz[1]) / eps;
+        let z_ri_diff = (sigma1inv[3] - xyz[2]) / eps;
         let x_ri_ana = dxyzdt[0][3 + i];
         let y_ri_ana = dxyzdt[1][3 + i];
         let z_ri_ana = dxyzdt[2][3 + i];

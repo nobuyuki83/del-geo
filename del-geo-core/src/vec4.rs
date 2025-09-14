@@ -17,3 +17,20 @@ where
         self[3] = self[3] + other[3];
     }
 }
+
+pub fn distance<Real>(a: &[Real; 4], b: &[Real; 4]) -> Real
+where
+    Real: num_traits::Float,
+{
+    a.iter()
+        .zip(b.iter())
+        .fold(Real::zero(), |acc, (&a, &b)| acc + (a - b) * (a - b))
+        .sqrt()
+}
+
+pub fn length<Real>(a: &[Real; 4]) -> Real
+where
+    Real: num_traits::Float,
+{
+    a.iter().fold(Real::zero(), |acc, &a| acc + a * a).sqrt()
+}

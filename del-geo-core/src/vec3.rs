@@ -169,9 +169,7 @@ fn test_to_mat3_from_axisangle_vec() {
         let aa0 = [1.0, 0.3, -0.5f64];
         let rmat = to_mat3_from_axisangle_vec(&aa0);
         let aa1 = crate::mat3_col_major::to_vec3_axisangle_from_rot_mat(&rmat);
-        let aa0 = del_geo_nalgebra::vec3::from_array(&aa0);
-        let aa1 = del_geo_nalgebra::vec3::from_array(&aa1);
-        assert!((aa0 - aa1).norm() < 1.0e-5);
+        assert!(distance(&aa0, &aa1) < 1.0e-5);
     }
     {
         // test small angle rotation
