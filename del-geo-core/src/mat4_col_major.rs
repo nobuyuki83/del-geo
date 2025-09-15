@@ -383,6 +383,105 @@ where
     crate::matn_row_major::try_inverse::<Real, 4, 16>(b)
 }
 
+pub fn try_inverse_with_pivot<Real>(a: &[Real; 16]) -> Option<[Real; 16]>
+where
+    Real: num_traits::Float,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    // --- Step 1: Convert to row-major scratch array for LU ---
+    let mut piv = [0usize; 4];
+    for i in 0..4 {
+        piv[i] = i;
+    }
+    let eps = Real::epsilon();
+    let mut a = a.to_owned();
+
+    // --- LU decomposition with partial pivoting ---
+    for k in 0..4 {
+        // pivot row
+        let mut p = k;
+        let mut maxv = a[k * 4 + k].abs();
+        for r in (k + 1)..4 {
+            let v = a[r * 4 + k].abs();
+            if v > maxv {
+                maxv = v;
+                p = r;
+            }
+        }
+        if maxv <= eps {
+            return None;
+        }
+        if p != k {
+            for c in 0..4 {
+                a.swap(k * 4 + c, p * 4 + c);
+            }
+            piv.swap(k, p);
+        }
+        let pivot = a[k * 4 + k];
+        for r in (k + 1)..4 {
+            a[r * 4 + k] = a[r * 4 + k] / pivot;
+            let m = a[r * 4 + k];
+            for c in (k + 1)..4 {
+                a[r * 4 + c] = a[r * 4 + c] - m * a[k * 4 + c];
+            }
+        }
+    }
+
+    // --- Helper: solve (LU)x = P*b ---
+    let solve = |b: [Real; 4]| -> [Real; 4] {
+        let mut y = [zero; 4];
+        for i in 0..4 {
+            y[i] = b[piv[i]];
+        }
+        // forward
+        for i in 0..4 {
+            for j in 0..i {
+                y[i] = y[i] - a[i * 4 + j] * y[j];
+            }
+        }
+        // back
+        let mut x = [zero; 4];
+        for i in (0..4).rev() {
+            let mut s = y[i];
+            for j in (i + 1)..4 {
+                s = s - a[i * 4 + j] * x[j];
+            }
+            x[i] = s / a[i * 4 + i];
+        }
+        x
+    };
+
+    // --- Step 2: Solve for each column of identity ---
+    let mut inv_cols = [zero; 16];
+    for col in 0..4 {
+        let mut e = [zero; 4];
+        e[col] = one;
+        let x = solve(e);
+        for row in 0..4 {
+            inv_cols[col + 4 * row] = x[row];
+        }
+    }
+    Some(inv_cols)
+}
+
+#[test]
+fn test_try_inverse_with_pivot() {
+    let a = [
+        1.0, 3.0, 2.0, 4.0, 2.0, 5.0, 3.0, 1.0, 0.0, 1.0, 4.0, 3.0, 4.0, 2.0, 1.0, 3.0,
+    ];
+    let ainv = try_inverse_with_pivot(&a).unwrap();
+    let a_ainv = mult_mat_col_major(&a, &ainv);
+    dbg!(a_ainv);
+    //
+    let a = [
+        0., 0., 1., 0., -1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 1.,
+    ];
+    let ainv = try_inverse_with_pivot(&a).unwrap();
+    let a_ainv = mult_mat_col_major(&a, &ainv);
+    dbg!(a_ainv);
+}
+
 /// perspective transformation matrix (column major) compatible with blender
 /// * asp - aspect ratio (width / height)
 /// * lens - the focus distance (unit: mm) where the sensor size for longest edge is 18*2 mm.
