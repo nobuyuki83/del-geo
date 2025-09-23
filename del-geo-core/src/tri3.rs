@@ -14,6 +14,62 @@ where
     ]
 }
 
+pub fn dw_normal<T>(p0: &[T; 3], p1: &[T; 3], p2: &[T; 3]) -> [[T; 9]; 3]
+where
+    T: num_traits::Float + Copy,
+{
+    [
+        crate::mat3_col_major::from_vec3_to_skew_mat(&crate::vec3::sub(p2, p1)),
+        crate::mat3_col_major::from_vec3_to_skew_mat(&crate::vec3::sub(p0, p2)),
+        crate::mat3_col_major::from_vec3_to_skew_mat(&crate::vec3::sub(p1, p0)),
+    ]
+}
+
+#[test]
+fn test_normal() {
+    use crate::vec3::Vec3;
+    {
+        let p0 = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]];
+        let pn = normal(&p0[0], &p0[1], &p0[2]);
+        assert!(pn.sub(&[0., 0., 1.]).norm() < 1.0e-10);
+    }
+    {
+        let p0 = [0.1, 0.5, 0.4];
+        let p1 = [1.2, 0.3, 0.2];
+        let p2 = [0.3, 1.4, 0.1];
+        let pn = normal(&p0, &p1, &p2);
+        assert!(p0.sub(&p1).dot(&pn) < 1.0e-10);
+        assert!(p1.sub(&p2).dot(&pn) < 1.0e-10);
+        assert!(p2.sub(&p0).dot(&pn) < 1.0e-10);
+    }
+    {
+        let p0 = [[0.1, 0.4, 0.2], [1.2, 0.3, 0.7], [0.3, 1.5, 0.3]];
+        let cc0 = normal(&p0[0], &p0[1], &p0[2]);
+        let dcc = dw_normal(&p0[0], &p0[1], &p0[2]);
+        let eps = 1.0e-5;
+        for i_node in 0..3 {
+            for i_dim in 0..3 {
+                let p1 = {
+                    let mut p1 = p0;
+                    p1[i_node][i_dim] += eps;
+                    p1
+                };
+                let cc1 = normal(&p1[0], &p1[1], &p1[2]);
+                let dcc_num = cc1.sub(&cc0).scale(1.0 / eps);
+                let mut b = [0.0; 3];
+                b[i_dim] = 1.0;
+                let dcc_ana = crate::mat3_col_major::mult_vec(&dcc[i_node], &b);
+                let diff = dcc_num.sub(&dcc_ana).norm();
+                assert!(diff < 1.0e-4);
+                println!(
+                    "normal {}, {} --> {:?}, {:?}, {:?}",
+                    i_node, i_dim, dcc_num, dcc_ana, diff
+                );
+            }
+        }
+    }
+}
+
 /// area of a 3D triangle (coordinates given by stack-allocated arrays)
 pub fn area<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3]) -> T
 where
