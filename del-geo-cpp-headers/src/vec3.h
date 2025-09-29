@@ -73,5 +73,15 @@ void add_inplace(float* x, const float* y) {
     x[2] += y[2];
 }
 
+__device__
+auto mult_mat3_col_major(const float* a, const float* m) -> cuda::std::array<float,3>
+{
+    return {
+        a[0] * m[0] + a[1] * m[1] + a[2] * m[2],
+        a[0] * m[3] + a[1] * m[4] + a[2] * m[5],
+        a[0] * m[6] + a[1] * m[7] + a[2] * m[8],
+    };
+}
+
 
 }

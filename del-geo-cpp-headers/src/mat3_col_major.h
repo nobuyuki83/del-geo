@@ -5,6 +5,22 @@
 namespace mat3_col_major {
 
 __device__
+auto from_vec3_to_skew_mat(const float* v) -> cuda::std::array<float,9>
+{
+    return {
+        0.,
+        v[2],
+        -v[1],
+        -v[2],
+        0.,
+        v[0],
+        v[1],
+        -v[0],
+        0.
+    };
+}
+
+__device__
 auto mult_mat(const float* a, const float* b) -> cuda::std::array<float,9>
 {
     cuda::std::array<float,9> o;

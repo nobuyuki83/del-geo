@@ -1,6 +1,7 @@
 #pragma once
 #include <cuda/std/optional>
 #include "vec3.h"
+#include "mat3_col_major.h"
 
 namespace tri3 {
 
@@ -12,6 +13,26 @@ auto normal(const float* v1, const  float* v2, const float* v3) -> cuda::std::ar
         (v2[1] - v1[1]) * (v3[2] - v1[2]) - (v2[2] - v1[2]) * (v3[1] - v1[1]),
         (v2[2] - v1[2]) * (v3[0] - v1[0]) - (v2[0] - v1[0]) * (v3[2] - v1[2]),
         (v2[0] - v1[0]) * (v3[1] - v1[1]) - (v2[1] - v1[1]) * (v3[0] - v1[0]),
+    };
+}
+
+struct DwNormal {
+    cuda::std::array<float,9> d_p0;
+    cuda::std::array<float,9> d_p1;
+    cuda::std::array<float,9> d_p2;
+};
+
+__device__
+auto dw_normal(const float* p0, const float* p1, const float* p2) -> DwNormal
+{
+    using V3f = cuda::std::array<float,3>;
+    const auto v01 = vec3::sub(p1, p0);
+    const auto v12 = vec3::sub(p2, p1);
+    const auto v20 = vec3::sub(p0, p2);
+    return DwNormal {
+        mat3_col_major::from_vec3_to_skew_mat(v12.data()),
+        mat3_col_major::from_vec3_to_skew_mat(v20.data()),
+        mat3_col_major::from_vec3_to_skew_mat(v01.data()),
     };
 }
 
