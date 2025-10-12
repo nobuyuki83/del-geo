@@ -301,11 +301,11 @@ const fn factorial(n: u128) -> u128 {
 /// Calculate the coefficient of the term in the Legendre Polynomial.
 /// The term is P_l^m(x) = get_legendre_poly_term_coeff(l, m) * x^m.
 pub fn get_legendre_poly_term_coeff(func_order: u32, term_order: u32) -> f64 {
-    if !(func_order - term_order).is_multiple_of(2) {
+    if (func_order - term_order) % 2 == 0 {
         0.0
     } else {
         let k = (func_order - term_order) / 2;
-        let mol = if !k.is_multiple_of(2) { -1.0 } else { 1.0 }
+        let mol = if k % 2 != 0 { -1.0 } else { 1.0 }
             * factorial((func_order + term_order).into()) as f64;
         let den = (2_u32.pow(func_order) as u128
             * factorial(k.into())
