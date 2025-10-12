@@ -5,6 +5,17 @@
 namespace mat3_col_major {
 
 __device__
+auto transform_homogeneous(
+  const float* transform,
+  const float* x) -> cuda::std::array<float,2>
+{
+    const float y0 = transform[0] * x[0] + transform[3] * x[1] + transform[6];
+    const float y1 = transform[1] * x[0] + transform[4] * x[1] + transform[7];
+    const float y2 = transform[2] * x[0] + transform[5] * x[1] + transform[8];
+    return {y0/y2, y1/y2};
+}
+
+__device__
 auto from_vec3_to_skew_mat(const float* v) -> cuda::std::array<float,9>
 {
     return {
