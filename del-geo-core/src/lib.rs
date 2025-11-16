@@ -47,6 +47,7 @@ pub mod spherical_harmonics;
 pub mod tet;
 pub mod tri2;
 pub mod tri3;
+pub mod unit2;
 pub mod uvec3;
 pub mod vec4;
 pub mod vecn;
