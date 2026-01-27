@@ -16,6 +16,7 @@ impl Headers {
             ("tri3.h", include_str!("tri3.h")),
             ("vec3.h", include_str!("vec3.h")),
             ("edge2.h", include_str!("edge2.h")),
+            ("edge3.h", include_str!("edge3.h")),
             ("tri2.h", include_str!("tri2.h")),
             ("vec2.h", include_str!("vec2.h")),
         ]
