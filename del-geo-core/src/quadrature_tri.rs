@@ -36,7 +36,6 @@ pub const IDX2POSWEIGHT_F64: [[f64; 3]; 11] = [
     [0.3333333333, 0.3333333333, 0.225],
 ];
 
-
 pub struct Quad<Real> {
     _marker: std::marker::PhantomData<fn() -> Real>,
 }

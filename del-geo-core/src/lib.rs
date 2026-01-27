@@ -44,6 +44,7 @@ pub mod polynomial_root;
 pub mod prism;
 pub mod pyramid;
 pub mod quadrature_line;
+pub mod quadrature_tri;
 pub mod quaternion;
 pub mod sphere;
 pub mod spherical_harmonics;
@@ -56,5 +57,3 @@ pub mod vec4;
 pub mod vecn;
 pub mod view_projection;
 pub mod view_rotation;
-pub mod quadrature_tri;
-

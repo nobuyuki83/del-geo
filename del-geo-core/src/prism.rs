@@ -8,18 +8,11 @@ where
     let t = pco[2];
     let tm = one - t;
     let rs = one - r - s;
-    [
-        rs * tm,
-        s * tm,
-        r * tm,
-        rs * t,
-        s * t,
-        r * t,
-    ]
+    [rs * tm, s * tm, r * tm, rs * t, s * t, r * t]
 }
 
 #[test]
-fn test_shapefunc(){
+fn test_shapefunc() {
     let a = shapefunc(&[0., 0., 0.]);
     let a = shapefunc(&[1., 0., 0.]);
     let a = shapefunc(&[0., 1., 0.]);
@@ -27,7 +20,8 @@ fn test_shapefunc(){
 }
 
 pub fn dndr<Real>(pco: &[Real; 3]) -> [[Real; 3]; 6]
-where Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
     let zero = Real::zero();
     let one = Real::one();
@@ -79,7 +73,7 @@ fn test_dxdr() {
     let p3 = [0., 0., 1.];
     let p4 = [0., 1., 1.];
     let p5 = [1., 0., 1.];
-    let dxdr = dxdr(&p0, &p1, &p2, &p3, &p4, &p5, &[1./3., 1./3., 0.5]);
+    let dxdr = dxdr(&p0, &p1, &p2, &p3, &p4, &p5, &[1. / 3., 1. / 3., 0.5]);
     dbg!(dxdr);
 }
 
@@ -117,7 +111,8 @@ where
             let w = quad_l[ir_l][1] * quad_t[ir_t][2];
             let dxdr = dxdr(p0, p1, p2, p3, p4, p5, &pco);
             use slice_of_array::SliceFlatExt;
-            let detjac = crate::mat3_col_major::determinant::<Real>(dxdr.flat().try_into().unwrap());
+            let detjac =
+                crate::mat3_col_major::determinant::<Real>(dxdr.flat().try_into().unwrap());
             volume = volume + detjac * w;
         }
     }
