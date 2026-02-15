@@ -8,7 +8,7 @@ where
     let t = pco[2];
     let tm = one - t;
     let rs = one - r - s;
-    [rs * tm, s * tm, r * tm, rs * t, s * t, r * t]
+    [rs * tm, r * tm, s * tm, rs * t, r * t, s * t]
 }
 
 #[test]
@@ -30,11 +30,11 @@ where
     let t = pco[2];
     [
         [-one + t, -one + t, -one + r + s],
-        [zero, one - t, -s],
         [one - t, zero, -r],
+        [zero, one - t, -s],
         [-t, -t, one - r - s],
-        [zero, t, s],
         [t, zero, r],
+        [zero, t, s],
     ]
 }
 
@@ -68,13 +68,15 @@ where
 #[test]
 fn test_dxdr() {
     let p0 = [0., 0., 0.];
-    let p1 = [0., 1., 0.];
-    let p2 = [1., 0., 0.];
+    let p1 = [1., 0., 0.];
+    let p2 = [0., 1., 0.];
     let p3 = [0., 0., 1.];
-    let p4 = [0., 1., 1.];
-    let p5 = [1., 0., 1.];
-    let dxdr = dxdr(&p0, &p1, &p2, &p3, &p4, &p5, &[1. / 3., 1. / 3., 0.5]);
-    dbg!(dxdr);
+    let p4 = [1., 0., 1.];
+    let p5 = [0., 1., 1.];
+    let dxdr: [[f64; 3]; 3] = dxdr(&p0, &p1, &p2, &p3, &p4, &p5, &[1. / 3., 1. / 3., 0.5]);
+    use slice_of_array::SliceFlatExt;
+    let vol = crate::mat3_col_major::determinant(dxdr.flat().try_into().unwrap());
+    assert!((vol - 1.0).abs() < 1.0e-10);
 }
 
 pub fn volume<Real>(
