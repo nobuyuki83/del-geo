@@ -13,10 +13,10 @@ where
 
 #[test]
 fn test_shapefunc() {
-    let a = shapefunc(&[0., 0., 0.]);
-    let a = shapefunc(&[1., 0., 0.]);
-    let a = shapefunc(&[0., 1., 0.]);
-    let a = shapefunc(&[0., 0., 1.]);
+    let _a = shapefunc(&[0., 0., 0.]);
+    let _a = shapefunc(&[1., 0., 0.]);
+    let _a = shapefunc(&[0., 1., 0.]);
+    let _a = shapefunc(&[0., 0., 1.]);
 }
 
 pub fn dndr<Real>(pco: &[Real; 3]) -> [[Real; 3]; 6]
