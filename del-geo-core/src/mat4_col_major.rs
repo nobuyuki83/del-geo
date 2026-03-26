@@ -650,6 +650,7 @@ pub fn ray_from_transform_world2ndc(
 }
 
 /// the ray start from the front plane and ends on the back plane
+/// "integer corner" coordinate is used here (the center of the top-left pixel is (0.5, 0.5) )
 pub fn ray_from_transform_ndc2world_and_pixel_coordinate(
     pix_coord: (f32, f32),
     image_size: &(f32, f32),

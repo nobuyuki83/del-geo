@@ -10,3 +10,9 @@ where
     let two = one + one;
     std::array::from_fn(|_i| rng.random() * two - one)
 }
+
+pub fn to_image_coordinate(ndc: &[f32; 3], (img_width, img_height): (usize, usize)) -> [f32; 2] {
+    let x0 = (ndc[0] + 1.0) * 0.5;
+    let y0 = (-ndc[1] + 1.0) * 0.5;
+    [img_width as f32 * x0, img_height as f32 * y0]
+}
