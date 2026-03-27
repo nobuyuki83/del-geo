@@ -275,7 +275,7 @@ fn test_is_intersect_to_obb3() {
                     3,
                 );
                 // output mesh to visualize the failure case
-                let _ = del_msh_cpu::io_obj::save_tri2vtx_vtx2xyz(
+                let _ = del_msh_cpu::io_wavefront_obj::save_tri2vtx_vtx2xyz(
                     "../../target/fail_obb3.obj",
                     &tri2vtx_i,
                     &vtx2xyz_i,
