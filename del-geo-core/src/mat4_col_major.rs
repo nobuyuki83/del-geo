@@ -10,6 +10,7 @@ where
     fn transform_direction(&self, a: &[Real; 3]) -> [Real; 3];
     fn try_inverse(&self) -> Option<Self>;
     fn add_in_place(&mut self, other: &Self);
+    fn transpose(&self) -> [Real; 16];
 }
 
 impl<Real> Mat4ColMajor<Real> for [Real; 16]
@@ -32,6 +33,9 @@ where
         self.iter_mut()
             .zip(other.iter())
             .for_each(|(a, &b)| *a = *a + b);
+    }
+    fn transpose(&self) -> [Real; 16] {
+        transpose(self)
     }
 }
 
@@ -650,6 +654,7 @@ pub fn ray_from_transform_world2ndc(
 }
 
 /// the ray start from the front plane and ends on the back plane
+/// "integer corner" coordinate is used here (the center of the top-left pixel is (0.5, 0.5) )
 pub fn ray_from_transform_ndc2world_and_pixel_coordinate(
     pix_coord: (f32, f32),
     image_size: &(f32, f32),

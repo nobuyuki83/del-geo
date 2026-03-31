@@ -74,7 +74,7 @@ pub fn dxdr<Real>(
 where
     Real: num_traits::Float,
 {
-    let dndr = dndr(&pco);
+    let dndr = dndr(pco);
     let mut dxdr = [[Real::zero(); 3]; 3];
     for idim in 0..3 {
         for ir in 0..3 {
