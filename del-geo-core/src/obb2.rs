@@ -40,6 +40,7 @@ where
     RAND: rand::Rng,
 {
     use crate::vec2::Vec2;
+    use rand::RngExt;
     let cntr = [
         2. * reng.random::<f32>() - 1.,
         2. * reng.random::<f32>() - 1.,
@@ -154,7 +155,7 @@ pub fn is_intersect_aabb2(obb: &[f32; 6], aabb: &[f32; 4]) -> bool {
 
 #[test]
 fn test_is_intersect_aabb2() {
-    use rand::Rng;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     for _iter in 0..100 {

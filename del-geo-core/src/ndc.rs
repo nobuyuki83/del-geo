@@ -6,6 +6,7 @@ where
     T: num_traits::Float,
     rand::distr::StandardUniform: rand::distr::Distribution<T>,
 {
+    use rand::RngExt;
     let one = T::one();
     let two = one + one;
     std::array::from_fn(|_i| rng.random() * two - one)

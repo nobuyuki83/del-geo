@@ -218,7 +218,7 @@ where
 #[test]
 fn test_svd() {
     use crate::mat2_col_major::Mat2ColMajor;
-    use rand::Rng;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     for (_iter, is_rot) in itertools::iproduct!(0..100, 0..2) {

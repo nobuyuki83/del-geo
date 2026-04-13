@@ -172,7 +172,7 @@ where
 
 #[test]
 fn test_eigen_decomposition() {
-    use rand::Rng;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     // std::uniform_real_distribution < double > dist(-50.0, 50.0);

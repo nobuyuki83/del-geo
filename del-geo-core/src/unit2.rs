@@ -40,7 +40,7 @@ where
 
 #[test]
 fn test_unit2_uvec3_unit2() {
-    use rand::Rng;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0);
     for _itr in 0..1000 {

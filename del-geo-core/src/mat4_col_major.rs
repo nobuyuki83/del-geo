@@ -661,7 +661,7 @@ pub fn ray_from_transform_ndc2world_and_pixel_coordinates(
     transform_ndc2world: &[f32; 16],
 ) -> ([f32; 3], [f32; 3]) {
     let x0 = 2. * pix_coord.0 / (image_size.0) - 1.;
-    let y0 = 1. - 2. * pix_coord.1  / (image_size.1);
+    let y0 = 1. - 2. * pix_coord.1 / (image_size.1);
     let p0 = transform_homogeneous(transform_ndc2world, &[x0, y0, 1.]).unwrap();
     let p1 = transform_homogeneous(transform_ndc2world, &[x0, y0, -1.]).unwrap();
     let ray_org = p0;

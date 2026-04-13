@@ -220,6 +220,7 @@ where
     T: num_traits::Float,
     rand::distr::StandardUniform: rand::distr::Distribution<T>,
 {
+    use rand::RngExt;
     let r0 = reng.random::<T>();
     let r1 = reng.random::<T>();
     let r2 = reng.random::<T>();

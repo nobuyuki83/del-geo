@@ -35,7 +35,7 @@ where
 
 #[test]
 fn test_quadratic_root() {
-    use rand::Rng;
+    use rand::RngExt;
     let mut rng = rand::rng();
     for _ in 0..1000 {
         let x0 = 4. * rng.random::<f64>() - 2.;
@@ -170,7 +170,7 @@ where
 
 #[test]
 fn test_cubic_root() {
-    use rand::Rng;
+    use rand::RngExt;
     let mut rng = rand::rng();
     let eps = 1.0e-8;
     for _ in 0..10000 {

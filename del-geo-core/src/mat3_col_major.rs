@@ -700,10 +700,10 @@ where
 #[test]
 fn test_minimum_rotation() {
     use crate::vec3::Vec3;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
     for _iter in 0..10 {
-        use rand::Rng;
         let a: [f64; 3] = crate::sphere::sample_surface_uniform(&[rng.random(), rng.random()]);
         {
             let b0: [f64; 3] = crate::sphere::sample_surface_uniform(&[rng.random(), rng.random()]);
@@ -773,7 +773,7 @@ where
 #[test]
 fn test_svd() {
     use Mat3ColMajor;
-    use rand::Rng;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     for (_iter, i_mode_eigen, is_rot) in itertools::iproduct!(0..100, 0..2, 0..2) {
@@ -847,7 +847,7 @@ where
 #[test]
 fn test_rotational_component() {
     use Mat3ColMajor;
-    use rand::Rng;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     for _iter in 0..100 {
@@ -885,7 +885,7 @@ where
 #[test]
 fn test_svd_differential() {
     use crate::vec3::Vec3;
-    use rand::Rng;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     let eps = 1.0e-6;
@@ -969,7 +969,7 @@ where
 #[test]
 fn test_gradient_and_hessian_of_svd_scale() {
     use crate::vec3::Vec3;
-    use rand::Rng;
+    use rand::RngExt;
     use rand::SeedableRng;
     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(0);
     let eps = 1.0e-4;
