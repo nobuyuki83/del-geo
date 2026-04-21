@@ -264,6 +264,19 @@ where
     aabb[5] = aabb[5].max(xyz[2] + eps);
 }
 
+pub fn min_sq_dist_to_point3<Real>(aabb: &[Real; 6], p: &[Real; 3]) -> Real
+where
+    Real: num_traits::Float,
+{
+    let mut dist_sq = Real::zero();
+    for i in 0..3 {
+        let clamped = p[i].max(aabb[i]).min(aabb[i + 3]);
+        let d = p[i] - clamped;
+        dist_sq = dist_sq + d * d;
+    }
+    dist_sq
+}
+
 pub fn is_possible_distance_to_aabb2_smaller_than_threshold<Real>(
     aabb0: &[Real; 6],
     aabb1: &[Real; 6],

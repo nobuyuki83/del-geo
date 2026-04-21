@@ -59,6 +59,17 @@ where
     ]
 }
 
+pub fn nearest_to_origin3<T>(p0: &[T; 3], p1: &[T; 3]) -> ([T; 3], T, T)
+where
+    T: num_traits::Float,
+{
+    let origin = &[T::zero(); 3];
+    let (_dist, t) = nearest_to_point3(p0, p1, origin);
+    let p = position_from_ratio(p0, p1, t);
+    let s0 = T::one() - t;
+    (p, s0, t)
+}
+
 /// * Returns `(dist, ratio)`
 ///   - `dist` : distance
 ///   - `ratio`: ratio

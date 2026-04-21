@@ -447,6 +447,13 @@ where
     [a[0] + b[0] + c[0], a[1] + b[1] + c[1], a[2] + b[2] + c[2]]
 }
 
+pub fn add4<T>(a: &[T; 3], wa: T, b: &[T; 3], wb: T, c: &[T; 3], wc: T, d: &[T; 3], wd: T) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    std::array::from_fn(|i| wa * a[i] + wb * b[i] + wc * c[i] + wd * d[i])
+}
+
 pub fn sample_unit_cube<Reng, T>(rng: &mut Reng) -> [T; 3]
 where
     Reng: rand::Rng,

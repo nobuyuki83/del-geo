@@ -408,6 +408,16 @@ where
 }
 
 // -------------------------------------
+pub fn nearest_to_origin3<T>(q0: &[T; 3], q1: &[T; 3], q2: &[T; 3]) -> ([T; 3], T, T, T)
+where
+    T: num_traits::Float + std::fmt::Debug,
+{
+    let origin = &[T::zero(); 3];
+    let (p, bc0, bc1) = nearest_to_point3(q0, q1, q2, origin);
+    let bc2 = T::one() - bc0 - bc1;
+    (p, bc0, bc1, bc2)
+}
+
 // below: intersection
 
 /// # Returns
