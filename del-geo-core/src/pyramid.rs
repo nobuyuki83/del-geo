@@ -245,7 +245,7 @@ pub fn volume<Real>(
     i_gauss_degree: usize,
 ) -> Real
 where
-    Real: num_traits::Float + 'static + std::fmt::Debug,
+    Real: num_traits::Float + 'static,
     crate::quadrature_line::Quad<Real>: crate::quadrature_line::QuadratureLine<Real>,
 {
     let one = Real::one();
@@ -332,4 +332,26 @@ fn test_nearest_to_origin() {
             );
         }
     }
+}
+
+pub fn jacobian_determinant_and_conditiona_number<Real>(
+    p0: &[Real; 3],
+    p1: &[Real; 3],
+    p2: &[Real; 3],
+    p3: &[Real; 3],
+    p4: &[Real; 3],
+    pco: &[Real; 3],
+) -> Option<(Real, Real)>
+where
+    Real: num_traits::Float + num_traits::FloatConst,
+{
+    let dxdr = dxdr(p0, p1, p2, p3, p4, &pco);
+    use slice_of_array::SliceFlatExt;
+    let detjac = crate::mat3_row_major::determinant(dxdr.flat().try_into().unwrap());
+    let jtj = crate::mat3_sym::from_mat3_array_of_array_by_ata(&dxdr);
+    let Some(es) = crate::mat3_sym::eigen_values_analytic(&jtj) else {
+        return None;
+    };
+    let c = (es[2] / es[0]).sqrt();
+    Some((detjac, c))
 }

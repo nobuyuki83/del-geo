@@ -303,3 +303,26 @@ fn test_nearest_to_origin() {
         );
     }
 }
+
+/// Returns condition number sigma_max / sigma_min.
+/// Returns None if the tetrahedron is degenerate.
+pub fn condition_number(p0: &[f64; 3], p1: &[f64; 3], p2: &[f64; 3], p3: &[f64; 3]) -> Option<f64> {
+    use crate::vec3::{dot, sub};
+    let e1 = sub(p1, p0);
+    let e2 = sub(p2, p0);
+    let e3 = sub(p3, p0);
+
+    // G = J^T J
+    let g00 = dot(&e1, &e1);
+    let g11 = dot(&e2, &e2);
+    let g22 = dot(&e3, &e3);
+    let g01 = dot(&e1, &e2);
+    let g12 = dot(&e2, &e3);
+    let g02 = dot(&e1, &e3);
+
+    let Some(eig) = crate::mat3_sym::eigen_values_analytic(&[g00, g11, g22, g12, g02, g01]) else {
+        return None;
+    };
+
+    Some((eig[2] / eig[0]).sqrt())
+}

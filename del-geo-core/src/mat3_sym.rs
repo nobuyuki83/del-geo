@@ -20,6 +20,24 @@ where
     ]
 }
 
+pub fn from_mat3_array_of_array_by_ata<Real>(a: &[[Real; 3]; 3]) -> [Real; 6]
+where
+    Real: num_traits::Float,
+{
+    let e0 = [a[0][0], a[1][0], a[2][0]];
+    let e1 = [a[0][1], a[1][1], a[2][1]];
+    let e2 = [a[0][2], a[1][2], a[2][2]];
+    use crate::vec3::dot;
+    [
+        dot(&e0, &e0),
+        dot(&e1, &e1),
+        dot(&e2, &e2),
+        dot(&e1, &e2),
+        dot(&e2, &e0),
+        dot(&e0, &e1),
+    ]
+}
+
 pub fn to_mat3_row_major<Real>(sm: &[Real; 6]) -> [Real; 9]
 where
     Real: num_traits::Float,
