@@ -369,13 +369,11 @@ pub fn jacobian_determinant_and_conditiona_number<Real>(
 where
     Real: num_traits::Float + num_traits::FloatConst,
 {
-    let dxdr = dxdr(p0, p1, p2, p3, p4, &pco);
+    let dxdr = dxdr(p0, p1, p2, p3, p4, pco);
     use slice_of_array::SliceFlatExt;
     let detjac = crate::mat3_row_major::determinant(dxdr.flat().try_into().unwrap());
     let jtj = crate::mat3_sym::from_mat3_array_of_array_by_ata(&dxdr);
-    let Some(es) = crate::mat3_sym::eigen_values_analytic(&jtj) else {
-        return None;
-    };
+    let es = crate::mat3_sym::eigen_values_analytic(&jtj)?;
     let c = (es[2] / es[0]).sqrt();
     Some((detjac, c))
 }

@@ -332,9 +332,7 @@ pub fn condition_number(p0: &[f64; 3], p1: &[f64; 3], p2: &[f64; 3], p3: &[f64; 
     let g12 = dot(&e2, &e3);
     let g02 = dot(&e1, &e3);
 
-    let Some(eig) = crate::mat3_sym::eigen_values_analytic(&[g00, g11, g22, g12, g02, g01]) else {
-        return None;
-    };
+    let eig = crate::mat3_sym::eigen_values_analytic(&[g00, g11, g22, g12, g02, g01])?;
 
     Some((eig[2] / eig[0]).sqrt())
 }

@@ -121,6 +121,7 @@ where
     (an, dndx, detjac)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn dxdr<Real>(
     p0: &[Real; 3],
     p1: &[Real; 3],
@@ -554,6 +555,7 @@ pub fn iso_position_on_edge(
     pos_iso[2] = p0[2] * r0 + p1[2] * r1;
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn volume<Real>(
     p0: &[Real; 3],
     p1: &[Real; 3],
@@ -572,7 +574,7 @@ where
     use crate::quadrature_line::QuadratureLine;
     let quadrature: &[[Real; 2]] = crate::quadrature_line::Quad::<Real>::hoge(i_gauss_degree);
     let nq = quadrature.len();
-    let vol = itertools::iproduct!(0..nq, 0..nq, 0..nq)
+    itertools::iproduct!(0..nq, 0..nq, 0..nq)
         .map(|(ir0, ir1, ir2)| {
             let r0 = quadrature[ir0][0];
             let r1 = quadrature[ir1][0];
@@ -584,8 +586,7 @@ where
                 crate::mat3_col_major::determinant::<Real>(dxdr.flat().try_into().unwrap());
             detjac * w
         })
-        .sum();
-    vol
+        .sum()
 }
 
 #[test]
@@ -617,6 +618,7 @@ fn test_volume() {
 /// Returns parametric coordinates (r0,r1,r2) of the origin inside the hex, or None if outside.
 /// Valid domain: r0,r1,r2 in [-1,1].
 /// Vertices: [xyz, Xyz, XYz, xYz, xyZ, XyZ, XYZ, xYZ] (lowercase=-1, uppercase=+1).
+#[allow(clippy::too_many_arguments)]
 pub fn parametric_coord_for_origin<Real>(
     p0: &[Real; 3],
     p1: &[Real; 3],
@@ -681,6 +683,7 @@ where
 /// Returns the nearest point to the origin on the hex and its parametric coordinates (r0,r1,r2).
 /// Valid domain: r0,r1,r2 in [-1,1].
 /// Vertices: [xyz, Xyz, XYz, xYz, xyZ, XyZ, XYZ, xYZ] (lowercase=-1, uppercase=+1).
+#[allow(clippy::too_many_arguments)]
 pub fn nearest_to_origin<Real>(
     p0: &[Real; 3],
     p1: &[Real; 3],

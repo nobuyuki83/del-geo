@@ -344,7 +344,7 @@ fn calculate_assoc_legendre_poly(l: u64, m: i64, x: f64) -> f64 {
         (if m.abs() % 2 == 0 { 1.0 } else { -1.0 })
             * factorial((l - m.unsigned_abs()).into()) as f64
             / factorial((l + m.unsigned_abs()).into()) as f64
-    } as f64;
+    };
     res
 }
 
