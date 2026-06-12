@@ -87,7 +87,7 @@ fn test_dxdr() {
 }
 
 /// Returns parametric coordinates (r,s,t) of the origin inside the prism, or None if outside.
-/// Valid domain: r>=0, s>=0, r+s<=1, t in [0,1].
+/// Valid domain: r>=0, s>=0, r+s<=1, t in \[0,1\].
 pub fn parametric_coord_for_origin<Real>(
     p0: &[Real; 3],
     p1: &[Real; 3],
@@ -145,7 +145,7 @@ where
 }
 
 /// Returns the nearest point to the origin on the prism and its parametric coordinates (r, s, t).
-/// Valid domain: r>=0, s>=0, r+s<=1, t in [0,1].
+/// Valid domain: r>=0, s>=0, r+s<=1, t in \[0,1\].
 /// Vertices: p0,p1,p2 are the bottom triangle, p3,p4,p5 are the top triangle.
 pub fn nearest_to_origin<Real>(
     p0: &[Real; 3],

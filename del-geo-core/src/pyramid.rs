@@ -82,7 +82,7 @@ where
 }
 
 /// Returns the nearest point to the origin on the pyramid and its parametric coordinates (r, s, t).
-/// Valid domain: r,s,t in [0,1].
+/// Valid domain: r,s,t in \[0,1\].
 /// Vertices: p0,p1,p2,p3 are the base quad (VTK order), p4 is the apex.
 pub fn nearest_to_origin<Real>(
     p0: &[Real; 3],
