@@ -1,5 +1,17 @@
 //! methods for 3D tetrahedron
 
+pub const EDGE2NODE: [[usize; 2]; 6] = [
+    [0, 1], // edge 0
+    [0, 2], // edge 1
+    [0, 3], // edge 2
+    [1, 2], // edge 3
+    [1, 3], // edge 4
+    [2, 3], // edge 5
+];
+
+pub const FACE2IDX: [usize; 5] = [0, 3, 6, 9, 12];
+pub const IDX2NODE: [usize; 12] = [1, 2, 3, 2, 0, 3, 0, 1, 3, 0, 2, 1];
+
 pub fn volume<T>(v1: &[T; 3], v2: &[T; 3], v3: &[T; 3], v4: &[T; 3]) -> T
 where
     T: num_traits::Float,
@@ -49,7 +61,7 @@ where
     t1 - t2
 }
 
-fn barycentric_coord_for_origin<Real>(
+pub fn barycentric_coord_for_origin<Real>(
     q0: &[Real; 3],
     q1: &[Real; 3],
     q2: &[Real; 3],
@@ -325,4 +337,30 @@ pub fn condition_number(p0: &[f64; 3], p1: &[f64; 3], p2: &[f64; 3], p3: &[f64; 
     };
 
     Some((eig[2] / eig[0]).sqrt())
+}
+
+pub fn subdivide<INDEX>(corner: &[INDEX; 4], edge: &[INDEX; 6]) -> [[INDEX; 4]; 8]
+where
+    INDEX: num_traits::PrimInt,
+{
+    // edge:
+    //   0 : midpoint of (0,1)
+    //   1 : midpoint of (0,2)
+    //   2 : midpoint of (0,3)
+    //   3 : midpoint of (1,2)
+    //   4 : midpoint of (1,3)
+    //   5 : midpoint of (2,3)
+
+    [
+        // 4 corner tetrahedra
+        [corner[0], edge[0], edge[1], edge[2]],
+        [edge[0], corner[1], edge[3], edge[4]],
+        [edge[1], edge[3], corner[2], edge[5]],
+        [edge[2], edge[4], edge[5], corner[3]],
+        // central octahedron split along diagonal edge[0] - edge[5]
+        [edge[0], edge[1], edge[2], edge[5]],
+        [edge[0], edge[3], edge[1], edge[5]], // 修正
+        [edge[0], edge[4], edge[3], edge[5]], // 修正
+        [edge[0], edge[2], edge[4], edge[5]],
+    ]
 }

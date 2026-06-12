@@ -180,6 +180,22 @@ where
     i0[0] <= i0[3]
 }
 
+pub fn is_contain<T>(aabb: &[T; 6], p: &[T; 3]) -> bool
+where
+    T: PartialOrd,
+{
+    if p[0] < aabb[0]
+        || p[0] > aabb[3]
+        || p[1] < aabb[1]
+        || p[1] > aabb[4]
+        || p[2] < aabb[2]
+        || p[2] > aabb[5]
+    {
+        return false;
+    }
+    true
+}
+
 pub fn is_intersect<T>(i0: &[T; 6], i1: &[T; 6]) -> bool
 where
     T: PartialOrd,

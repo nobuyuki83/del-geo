@@ -1,5 +1,19 @@
 //! vtx index is the same as the VTK
 
+pub const EDGE2NODE: [[usize; 2]; 8] = [
+    [0, 1], // edge 0
+    [1, 2], // edge 1
+    [2, 3], // edge 2
+    [3, 0], // edge 3
+    [0, 4], // edge 4
+    [1, 4], // edge 5
+    [2, 4], // edge 6
+    [3, 4], // edge 7
+];
+
+pub const FACE2IDX: [usize; 6] = [0, 4, 7, 10, 13, 16];
+pub const IDX2NODE: [usize; 16] = [0, 3, 2, 1, 0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4];
+
 pub fn shapefunc<Real>(pco: [Real; 3]) -> [Real; 5]
 where
     Real: num_traits::Float,
@@ -23,7 +37,7 @@ where
 }
 
 /// Returns parametric coordinates of the origin inside the pyramid, or None if outside.
-fn parametric_coord_for_origin<Real>(
+pub fn parametric_coord_for_origin<Real>(
     p0: &[Real; 3],
     p1: &[Real; 3],
     p2: &[Real; 3],
@@ -67,7 +81,8 @@ where
     }
 }
 
-/// Returns the nearest point to the origin on the pyramid surface, and the 5 shape function weights.
+/// Returns the nearest point to the origin on the pyramid and its parametric coordinates (r, s, t).
+/// Valid domain: r,s,t in [0,1].
 /// Vertices: p0,p1,p2,p3 are the base quad (VTK order), p4 is the apex.
 pub fn nearest_to_origin<Real>(
     p0: &[Real; 3],
@@ -75,99 +90,103 @@ pub fn nearest_to_origin<Real>(
     p2: &[Real; 3],
     p3: &[Real; 3],
     p4: &[Real; 3],
-) -> ([Real; 3], [Real; 5])
+) -> ([Real; 3], [Real; 3])
 where
     Real: num_traits::Float + std::fmt::Debug,
 {
     let zero = Real::zero();
     let one = Real::one();
 
-    // if origin is inside the pyramid, return origin with interior shape function weights
     if let Some(pco) = parametric_coord_for_origin(p0, p1, p2, p3, p4) {
-        let sf = shapefunc(pco);
-        return ([zero; 3], sf);
+        return ([zero; 3], pco);
     }
 
     let mut p_min = *p0;
-    let mut w_min = [one, zero, zero, zero, zero];
+    let mut pco_min = [zero; 3]; // p0 is at (r=0, s=0, t=0)
     let mut d_min = crate::vec3::norm(p0);
 
-    let mut update = |p: [Real; 3], w: [Real; 5]| {
+    let mut update = |p: [Real; 3], pco: [Real; 3]| {
         let d = crate::vec3::norm(&p);
         if d < d_min {
             d_min = d;
             p_min = p;
-            w_min = w;
+            pco_min = pco;
         }
     };
 
-    // base quad face: w0=(1-s0)(1-s1)→p0, w1=s0(1-s1)→p1, w2=s0*s1→p2, w3=(1-s0)*s1→p3
+    // base quad face (t=0): quad s0→r, s1→s
     {
         let (p, s0, s1) = crate::quad3::nearest_to_origin(p0, p1, p2, p3);
-        let (w0, w1, w2, w3) = (
-            (one - s0) * (one - s1),
-            s0 * (one - s1),
-            s0 * s1,
-            (one - s0) * s1,
-        );
-        update(p, [w0, w1, w2, w3, zero]);
+        update(p, [s0, s1, zero]);
     }
 
-    // triangular lateral faces
+    // lateral tri faces: recover the free parameter from (1 - a_apex)
+    // face p0,p1,p4 (s=0): a0=(1-r)(1-t), a1=r(1-t), a4=t → r = a1/(a0+a1)
     {
         let (p, a0, a1, a4) = crate::tri3::nearest_to_origin3(p0, p1, p4);
-        update(p, [a0, a1, zero, zero, a4]);
+        let denom = a0 + a1;
+        let r = if denom > zero { a1 / denom } else { zero };
+        update(p, [r, zero, a4]);
     }
+    // face p1,p2,p4 (r=1): a1=(1-s)(1-t), a2=s(1-t), a4=t → s = a2/(a1+a2)
     {
         let (p, a1, a2, a4) = crate::tri3::nearest_to_origin3(p1, p2, p4);
-        update(p, [zero, a1, a2, zero, a4]);
+        let denom = a1 + a2;
+        let s = if denom > zero { a2 / denom } else { zero };
+        update(p, [one, s, a4]);
     }
+    // face p2,p3,p4 (s=1): a2=r(1-t), a3=(1-r)(1-t), a4=t → r = a2/(a2+a3)
     {
         let (p, a2, a3, a4) = crate::tri3::nearest_to_origin3(p2, p3, p4);
-        update(p, [zero, zero, a2, a3, a4]);
+        let denom = a2 + a3;
+        let r = if denom > zero { a2 / denom } else { zero };
+        update(p, [r, one, a4]);
     }
+    // face p3,p0,p4 (r=0): a3=s(1-t), a0=(1-s)(1-t), a4=t → s = a3/(a3+a0)
     {
         let (p, a3, a0, a4) = crate::tri3::nearest_to_origin3(p3, p0, p4);
-        update(p, [a0, zero, zero, a3, a4]);
+        let denom = a3 + a0;
+        let s = if denom > zero { a3 / denom } else { zero };
+        update(p, [zero, s, a4]);
     }
 
-    // base edges
+    // base edges (t=0): edge3 returns (p, s0=1-t_edge, s1=t_edge)
     {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p0, p1);
-        update(p, [s0, s1, zero, zero, zero]);
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p0, p1);
+        update(p, [s1, zero, zero]);
+    } // r=s1, s=0
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p1, p2);
+        update(p, [one, s1, zero]);
+    } // r=1, s=s1
+    {
+        let (p, s0, _s1) = crate::edge3::nearest_to_origin3(p2, p3);
+        update(p, [s0, one, zero]);
+    } // r=s0, s=1
+    {
+        let (p, s0, _s1) = crate::edge3::nearest_to_origin3(p3, p0);
+        update(p, [zero, s0, zero]);
+    } // r=0, s=s0
+
+    // lateral edges (to apex): t=s1, base corner fixes r,s
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p0, p4);
+        update(p, [zero, zero, s1]);
     }
     {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p1, p2);
-        update(p, [zero, s0, s1, zero, zero]);
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p1, p4);
+        update(p, [one, zero, s1]);
     }
     {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p2, p3);
-        update(p, [zero, zero, s0, s1, zero]);
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p2, p4);
+        update(p, [one, one, s1]);
     }
     {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p3, p0);
-        update(p, [s1, zero, zero, s0, zero]);
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p3, p4);
+        update(p, [zero, one, s1]);
     }
 
-    // lateral edges
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p0, p4);
-        update(p, [s0, zero, zero, zero, s1]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p1, p4);
-        update(p, [zero, s0, zero, zero, s1]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p2, p4);
-        update(p, [zero, zero, s0, zero, s1]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p3, p4);
-        update(p, [zero, zero, zero, s0, s1]);
-    }
-
-    (p_min, w_min)
+    (p_min, pco_min)
 }
 
 /// pco: parametric coordinates
@@ -279,19 +298,19 @@ fn test_nearest_to_origin() {
         let p2 = [1.0, 1.0, -1.0];
         let p3 = [-1.0, 1.0, -1.0];
         let p4 = [0.0, 0.0, 2.0];
-        let (p, w) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4);
+        let (p, pco) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4);
         assert!(
             crate::vec3::norm(&p) < 1.0e-10,
             "inside: nearest point should be origin, got {:?}",
             p
         );
+        let (r, s, t) = (pco[0], pco[1], pco[2]);
         assert!(
-            w.iter().all(|&wi| wi > 0.0),
-            "inside: all weights should be positive: {:?}",
-            w
+            r > 0.0 && s > 0.0 && t > 0.0 && r < 1.0 && s < 1.0 && t < 1.0,
+            "inside: pco should be strictly interior: {:?}",
+            pco
         );
-        let wsum: f64 = w.iter().sum();
-        assert!((wsum - 1.0).abs() < 1.0e-10, "weights sum to {}", wsum);
+        let w = shapefunc(pco);
         let vs = [p0, p1, p2, p3, p4];
         let recon: [f64; 3] =
             std::array::from_fn(|i| w.iter().zip(vs.iter()).map(|(&wi, vi)| wi * vi[i]).sum());
@@ -308,14 +327,19 @@ fn test_nearest_to_origin() {
         let p2 = [5.0, 1.0, -1.0];
         let p3 = [3.0, 1.0, -1.0];
         let p4 = [4.0, 0.0, 2.0];
-        let (p, w) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4);
-        let wsum: f64 = w.iter().sum();
-        assert!((wsum - 1.0).abs() < 1.0e-10, "weights sum to {}", wsum);
+        let (p, pco) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4);
+        let (r, s, t) = (pco[0], pco[1], pco[2]);
         assert!(
-            w.iter().all(|&wi| wi >= -1.0e-10),
-            "negative weight: {:?}",
-            w
+            r >= -1.0e-10
+                && s >= -1.0e-10
+                && t >= -1.0e-10
+                && r <= 1.0 + 1.0e-10
+                && s <= 1.0 + 1.0e-10
+                && t <= 1.0 + 1.0e-10,
+            "pco out of domain: {:?}",
+            pco
         );
+        let w = shapefunc(pco);
         let vs = [p0, p1, p2, p3, p4];
         let recon: [f64; 3] =
             std::array::from_fn(|i| w.iter().zip(vs.iter()).map(|(&wi, vi)| wi * vi[i]).sum());
@@ -354,4 +378,48 @@ where
     };
     let c = (es[2] / es[0]).sqrt();
     Some((detjac, c))
+}
+
+pub fn subdivide<INDEX>(
+    corner: &[INDEX; 5],
+    edge: &[INDEX; 8],
+    quad: INDEX,
+) -> ([[INDEX; 5]; 6], [[INDEX; 4]; 4])
+where
+    INDEX: num_traits::PrimInt,
+{
+    // corner:
+    //   0,1,2,3 : base quad vertices
+    //   4       : apex
+    //
+    // edge:
+    //   0 : midpoint of (0,1)
+    //   1 : midpoint of (1,2)
+    //   2 : midpoint of (2,3)
+    //   3 : midpoint of (3,0)
+    //   4 : midpoint of (0,4)
+    //   5 : midpoint of (1,4)
+    //   6 : midpoint of (2,4)
+    //   7 : midpoint of (3,4)
+    //
+    // quad:
+    //   center of base quad (0,1,2,3)
+
+    let pyramids = [
+        [corner[0], edge[0], quad, edge[3], edge[4]],
+        [edge[0], corner[1], edge[1], quad, edge[5]],
+        [quad, edge[1], corner[2], edge[2], edge[6]],
+        [edge[3], quad, edge[2], corner[3], edge[7]],
+        [edge[4], edge[5], edge[6], edge[7], corner[4]],
+        [edge[7], edge[6], edge[5], edge[4], quad],
+    ];
+
+    let tetrahedra = [
+        [edge[0], edge[4], edge[5], quad],
+        [edge[1], edge[5], edge[6], quad],
+        [edge[2], edge[6], edge[7], quad],
+        [edge[3], edge[7], edge[4], quad],
+    ];
+
+    (pyramids, tetrahedra)
 }

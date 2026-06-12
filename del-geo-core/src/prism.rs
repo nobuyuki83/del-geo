@@ -1,3 +1,18 @@
+pub const EDGE2NODE: [[usize; 2]; 9] = [
+    [0, 1], // edge 0
+    [1, 2], // edge 1
+    [2, 0], // edge 2
+    [3, 4], // edge 3
+    [4, 5], // edge 4
+    [5, 3], // edge 5
+    [0, 3], // edge 6
+    [1, 4], // edge 7
+    [2, 5], // edge 8
+];
+
+pub const FACE2IDX: [usize; 6] = [0, 3, 7, 11, 15, 18];
+pub const IDX2NODE: [usize; 18] = [0, 1, 2, 0, 3, 4, 1, 1, 4, 5, 2, 2, 5, 3, 0, 3, 5, 4];
+
 pub fn shapefunc<Real>(pco: &[Real; 3]) -> [Real; 6]
 where
     Real: num_traits::Float,
@@ -9,188 +24,6 @@ where
     let tm = one - t;
     let rs = one - r - s;
     [rs * tm, r * tm, s * tm, rs * t, r * t, s * t]
-}
-
-/// Returns parametric coordinates (r,s,t) of the origin inside the prism, or None if outside.
-/// Valid domain: r>=0, s>=0, r+s<=1, t in [0,1].
-pub fn parametric_coord_for_origin<Real>(
-    p0: &[Real; 3],
-    p1: &[Real; 3],
-    p2: &[Real; 3],
-    p3: &[Real; 3],
-    p4: &[Real; 3],
-    p5: &[Real; 3],
-) -> Option<[Real; 3]>
-where
-    Real: num_traits::Float,
-{
-    use slice_of_array::SliceFlatExt;
-    let zero = Real::zero();
-    let one = Real::one();
-    let third = one / (one + one + one);
-    let half = one / (one + one);
-    let mut pco = [third, third, half];
-    for _ in 0..20 {
-        let sf = shapefunc(&pco);
-        let pos = [
-            sf[0] * p0[0]
-                + sf[1] * p1[0]
-                + sf[2] * p2[0]
-                + sf[3] * p3[0]
-                + sf[4] * p4[0]
-                + sf[5] * p5[0],
-            sf[0] * p0[1]
-                + sf[1] * p1[1]
-                + sf[2] * p2[1]
-                + sf[3] * p3[1]
-                + sf[4] * p4[1]
-                + sf[5] * p5[1],
-            sf[0] * p0[2]
-                + sf[1] * p1[2]
-                + sf[2] * p2[2]
-                + sf[3] * p3[2]
-                + sf[4] * p4[2]
-                + sf[5] * p5[2],
-        ];
-        let jac = dxdr(p0, p1, p2, p3, p4, p5, &pco);
-        let jac_col: &[Real; 9] = jac.flat().try_into().unwrap();
-        let jac_col = crate::mat3_col_major::transpose(jac_col);
-        let j_inv = crate::mat3_col_major::try_inverse(&jac_col)?;
-        let dpco = crate::mat3_col_major::mult_vec(&j_inv, &pos);
-        for i in 0..3 {
-            pco[i] = pco[i] - dpco[i];
-        }
-    }
-    let (r, s, t) = (pco[0], pco[1], pco[2]);
-    if r >= zero && s >= zero && r + s <= one && t >= zero && t <= one {
-        Some(pco)
-    } else {
-        None
-    }
-}
-
-/// Returns the nearest point to the origin on the prism surface, and the 6 shape function weights.
-/// Vertices: p0,p1,p2 are the bottom triangle, p3,p4,p5 are the top triangle.
-pub fn nearest_to_origin<Real>(
-    p0: &[Real; 3],
-    p1: &[Real; 3],
-    p2: &[Real; 3],
-    p3: &[Real; 3],
-    p4: &[Real; 3],
-    p5: &[Real; 3],
-) -> ([Real; 3], [Real; 6])
-where
-    Real: num_traits::Float + std::fmt::Debug,
-{
-    let zero = Real::zero();
-    let one = Real::one();
-
-    if let Some(pco) = parametric_coord_for_origin(p0, p1, p2, p3, p4, p5) {
-        return ([zero; 3], shapefunc(&pco));
-    }
-
-    let mut p_min = *p0;
-    let mut w_min = [one, zero, zero, zero, zero, zero];
-    let mut d_min = crate::vec3::norm(p0);
-
-    let mut update = |p: [Real; 3], w: [Real; 6]| {
-        let d = crate::vec3::norm(&p);
-        if d < d_min {
-            d_min = d;
-            p_min = p;
-            w_min = w;
-        }
-    };
-
-    // triangular faces
-    {
-        let (p, a0, a1, a2) = crate::tri3::nearest_to_origin3(p0, p1, p2);
-        update(p, [a0, a1, a2, zero, zero, zero]);
-    }
-    {
-        let (p, a3, a4, a5) = crate::tri3::nearest_to_origin3(p3, p4, p5);
-        update(p, [zero, zero, zero, a3, a4, a5]);
-    }
-
-    // quad faces: weights follow quad::position formula w0=(1-s0)(1-s1), w1=s0(1-s1), w2=s0*s1, w3=(1-s0)*s1
-    {
-        let (p, s0, s1) = crate::quad3::nearest_to_origin(p0, p1, p4, p3);
-        let (w0, w1, w2, w3) = (
-            (one - s0) * (one - s1),
-            s0 * (one - s1),
-            s0 * s1,
-            (one - s0) * s1,
-        );
-        update(p, [w0, w1, zero, w3, w2, zero]); // q0→p0, q1→p1, q2→p4, q3→p3
-    }
-    {
-        let (p, s0, s1) = crate::quad3::nearest_to_origin(p1, p2, p5, p4);
-        let (w0, w1, w2, w3) = (
-            (one - s0) * (one - s1),
-            s0 * (one - s1),
-            s0 * s1,
-            (one - s0) * s1,
-        );
-        update(p, [zero, w0, w1, zero, w3, w2]); // q0→p1, q1→p2, q2→p5, q3→p4
-    }
-    {
-        let (p, s0, s1) = crate::quad3::nearest_to_origin(p2, p0, p3, p5);
-        let (w0, w1, w2, w3) = (
-            (one - s0) * (one - s1),
-            s0 * (one - s1),
-            s0 * s1,
-            (one - s0) * s1,
-        );
-        update(p, [w1, zero, w0, w2, zero, w3]); // q0→p2, q1→p0, q2→p3, q3→p5
-    }
-
-    // edges
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p0, p1);
-        update(p, [s0, s1, zero, zero, zero, zero]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p1, p2);
-        update(p, [zero, s0, s1, zero, zero, zero]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p2, p0);
-        update(p, [s1, zero, s0, zero, zero, zero]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p3, p4);
-        update(p, [zero, zero, zero, s0, s1, zero]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p4, p5);
-        update(p, [zero, zero, zero, zero, s0, s1]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p5, p3);
-        update(p, [zero, zero, zero, s1, zero, s0]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p0, p3);
-        update(p, [s0, zero, zero, s1, zero, zero]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p1, p4);
-        update(p, [zero, s0, zero, zero, s1, zero]);
-    }
-    {
-        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p2, p5);
-        update(p, [zero, zero, s0, zero, zero, s1]);
-    }
-
-    (p_min, w_min)
-}
-
-#[test]
-fn test_shapefunc() {
-    let _a = shapefunc(&[0., 0., 0.]);
-    let _a = shapefunc(&[1., 0., 0.]);
-    let _a = shapefunc(&[0., 1., 0.]);
-    let _a = shapefunc(&[0., 0., 1.]);
 }
 
 pub fn dndr<Real>(pco: &[Real; 3]) -> [[Real; 3]; 6]
@@ -253,6 +86,176 @@ fn test_dxdr() {
     assert!((vol - 1.0).abs() < 1.0e-10);
 }
 
+/// Returns parametric coordinates (r,s,t) of the origin inside the prism, or None if outside.
+/// Valid domain: r>=0, s>=0, r+s<=1, t in [0,1].
+pub fn parametric_coord_for_origin<Real>(
+    p0: &[Real; 3],
+    p1: &[Real; 3],
+    p2: &[Real; 3],
+    p3: &[Real; 3],
+    p4: &[Real; 3],
+    p5: &[Real; 3],
+) -> Option<[Real; 3]>
+where
+    Real: num_traits::Float,
+{
+    use slice_of_array::SliceFlatExt;
+    let zero = Real::zero();
+    let one = Real::one();
+    let third = one / (one + one + one);
+    let half = one / (one + one);
+    let mut pco = [third, third, half];
+    for _ in 0..20 {
+        let sf = shapefunc(&pco);
+        let pos = [
+            sf[0] * p0[0]
+                + sf[1] * p1[0]
+                + sf[2] * p2[0]
+                + sf[3] * p3[0]
+                + sf[4] * p4[0]
+                + sf[5] * p5[0],
+            sf[0] * p0[1]
+                + sf[1] * p1[1]
+                + sf[2] * p2[1]
+                + sf[3] * p3[1]
+                + sf[4] * p4[1]
+                + sf[5] * p5[1],
+            sf[0] * p0[2]
+                + sf[1] * p1[2]
+                + sf[2] * p2[2]
+                + sf[3] * p3[2]
+                + sf[4] * p4[2]
+                + sf[5] * p5[2],
+        ];
+        let jac = dxdr(p0, p1, p2, p3, p4, p5, &pco);
+        let jac_col: &[Real; 9] = jac.flat().try_into().unwrap();
+        let jac_col = crate::mat3_col_major::transpose(jac_col);
+        let j_inv = crate::mat3_col_major::try_inverse(&jac_col)?;
+        let dpco = crate::mat3_col_major::mult_vec(&j_inv, &pos);
+        for i in 0..3 {
+            pco[i] = pco[i] - dpco[i];
+        }
+    }
+    let (r, s, t) = (pco[0], pco[1], pco[2]);
+    if r >= zero && s >= zero && r + s <= one && t >= zero && t <= one {
+        Some(pco)
+    } else {
+        None
+    }
+}
+
+/// Returns the nearest point to the origin on the prism and its parametric coordinates (r, s, t).
+/// Valid domain: r>=0, s>=0, r+s<=1, t in [0,1].
+/// Vertices: p0,p1,p2 are the bottom triangle, p3,p4,p5 are the top triangle.
+pub fn nearest_to_origin<Real>(
+    p0: &[Real; 3],
+    p1: &[Real; 3],
+    p2: &[Real; 3],
+    p3: &[Real; 3],
+    p4: &[Real; 3],
+    p5: &[Real; 3],
+) -> ([Real; 3], [Real; 3])
+where
+    Real: num_traits::Float + std::fmt::Debug,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+
+    if let Some(pco) = parametric_coord_for_origin(p0, p1, p2, p3, p4, p5) {
+        return ([zero; 3], pco);
+    }
+
+    let mut p_min = *p0;
+    let mut pco_min = [zero; 3]; // p0 is at (r=0, s=0, t=0)
+    let mut d_min = crate::vec3::norm(p0);
+
+    let mut update = |p: [Real; 3], pco: [Real; 3]| {
+        let d = crate::vec3::norm(&p);
+        if d < d_min {
+            d_min = d;
+            p_min = p;
+            pco_min = pco;
+        }
+    };
+
+    // bottom face (t=0): sf[0]=1-r-s, sf[1]=r, sf[2]=s → r=a1, s=a2
+    {
+        let (p, _a0, a1, a2) = crate::tri3::nearest_to_origin3(p0, p1, p2);
+        update(p, [a1, a2, zero]);
+    }
+    // top face (t=1): sf[3]=1-r-s, sf[4]=r, sf[5]=s → r=a4, s=a5
+    {
+        let (p, _a3, a4, a5) = crate::tri3::nearest_to_origin3(p3, p4, p5);
+        update(p, [a4, a5, one]);
+    }
+
+    // quad face p0,p1,p4,p3 (s=0): quad s0→r, s1→t
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p0, p1, p4, p3);
+        update(p, [s0, zero, s1]);
+    }
+    // quad face p1,p2,p5,p4 (r+s=1): quad s0→s, s1→t, so r=1-s0
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p1, p2, p5, p4);
+        update(p, [one - s0, s0, s1]);
+    }
+    // quad face p2,p0,p3,p5 (r=0): quad s0→1-s, s1→t
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p2, p0, p3, p5);
+        update(p, [zero, one - s0, s1]);
+    }
+
+    // bottom edges (t=0): edge3 returns (p, s0=1-t, s1=t)
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p0, p1);
+        update(p, [s1, zero, zero]);
+    }
+    {
+        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p1, p2);
+        update(p, [s0, s1, zero]);
+    }
+    {
+        let (p, s0, _s1) = crate::edge3::nearest_to_origin3(p2, p0);
+        update(p, [zero, s0, zero]);
+    }
+    // top edges (t=1)
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p3, p4);
+        update(p, [s1, zero, one]);
+    }
+    {
+        let (p, s0, s1) = crate::edge3::nearest_to_origin3(p4, p5);
+        update(p, [s0, s1, one]);
+    }
+    {
+        let (p, s0, _s1) = crate::edge3::nearest_to_origin3(p5, p3);
+        update(p, [zero, s0, one]);
+    }
+    // vertical edges
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p0, p3);
+        update(p, [zero, zero, s1]);
+    }
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p1, p4);
+        update(p, [one, zero, s1]);
+    }
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p2, p5);
+        update(p, [zero, one, s1]);
+    }
+
+    (p_min, pco_min)
+}
+
+#[test]
+fn test_shapefunc() {
+    let _a = shapefunc(&[0., 0., 0.]);
+    let _a = shapefunc(&[1., 0., 0.]);
+    let _a = shapefunc(&[0., 1., 0.]);
+    let _a = shapefunc(&[0., 0., 1.]);
+}
+
 pub fn volume<Real>(
     p0: &[Real; 3],
     p1: &[Real; 3],
@@ -311,7 +314,7 @@ fn test_nearest_to_origin() {
         dbg!(v);
     }
 
-    let (p, w) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4, &p5);
+    let (p, pco) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4, &p5);
 
     // nearest point should be on the bottom face at (0, 0, 2)
     assert!(
@@ -320,16 +323,20 @@ fn test_nearest_to_origin() {
         p
     );
 
-    // weights must sum to 1 and be non-negative
-    let wsum: f64 = w.iter().sum();
-    assert!((wsum - 1.0).abs() < 1.0e-10, "weights sum to {}", wsum);
+    // parametric coords must be in valid domain
+    let (r, s, t) = (pco[0], pco[1], pco[2]);
     assert!(
-        w.iter().all(|&wi| wi >= -1.0e-10),
-        "negative weight: {:?}",
-        w
+        r >= -1.0e-10
+            && s >= -1.0e-10
+            && r + s <= 1.0 + 1.0e-10
+            && t >= -1.0e-10
+            && t <= 1.0 + 1.0e-10,
+        "pco out of domain: {:?}",
+        pco
     );
 
-    // reconstruction: sum(w[i] * p_i) == p
+    // reconstruction via shape functions must match p
+    let w = shapefunc(&pco);
     let verts = [p0, p1, p2, p3, p4, p5];
     let recon: [f64; 3] =
         std::array::from_fn(|i| w.iter().zip(verts.iter()).map(|(&wi, vi)| wi * vi[i]).sum());
@@ -347,4 +354,28 @@ fn test_nearest_to_origin() {
             v
         );
     }
+}
+
+pub fn subdivide<INDEX>(
+    corner: &[INDEX; 6],
+    edge: &[INDEX; 9],
+    quad: &[INDEX; 3],
+) -> [[INDEX; 6]; 8]
+where
+    INDEX: num_traits::PrimInt,
+{
+    let (c, e, q) = (corner, edge, quad);
+    // Midpoint-subdivide each triangular face into 4 sub-triangles, split vertically at mid-level.
+    // quad: [0]=face(0,3,4,1), [1]=face(1,4,5,2), [2]=face(2,5,3,0)
+    // edge: [0..2]=bottom tri, [3..5]=top tri, [6..8]=verticals (0-3, 1-4, 2-5)
+    [
+        [c[0], e[0], e[2], e[6], q[0], q[2]], // col A (corner 0), bottom half
+        [e[0], c[1], e[1], q[0], e[7], q[1]], // col B (corner 1), bottom half
+        [e[2], e[1], c[2], q[2], q[1], e[8]], // col C (corner 2), bottom half
+        [e[0], e[1], e[2], q[0], q[1], q[2]], // col D (center),   bottom half
+        [e[6], q[0], q[2], c[3], e[3], e[5]], // col A, top half
+        [q[0], e[7], q[1], e[3], c[4], e[4]], // col B, top half
+        [q[2], q[1], e[8], e[5], e[4], c[5]], // col C, top half
+        [q[0], q[1], q[2], e[3], e[4], e[5]], // col D, top half
+    ]
 }

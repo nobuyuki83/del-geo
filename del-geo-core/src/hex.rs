@@ -2,19 +2,46 @@
 //! the coordinates of the points are stored in the array of array as`[[Real;3];8]`.
 //! where `[xyz, Xyz, XYz, xYz, xyZ, XyZ, XYZ, xYZ]`.
 
-pub fn shapefunc<Real>(
-    node2xyz: &[[Real; 3]; 8],
-    r0: Real,
-    r1: Real,
-    r2: Real,
-) -> ([Real; 8], [[Real; 3]; 8], Real)
+pub const HEX_SIGN: [[f64; 3]; 8] = [
+    [-1., -1., -1.],
+    [1., -1., -1.],
+    [1., 1., -1.],
+    [-1., 1., -1.],
+    [-1., -1., 1.],
+    [1., -1., 1.],
+    [1., 1., 1.],
+    [-1., 1., 1.],
+];
+
+pub const EDGE2NODE: [[usize; 2]; 12] = [
+    [0, 1],
+    [1, 2],
+    [2, 3],
+    [3, 0],
+    [4, 5],
+    [5, 6],
+    [6, 7],
+    [7, 4],
+    [0, 4],
+    [1, 5],
+    [2, 6],
+    [3, 7],
+];
+
+pub const FACE2IDX: [usize; 7] = [0, 4, 8, 12, 16, 20, 24];
+pub const IDX2NODE: [usize; 24] = [
+    0, 3, 2, 1, 0, 1, 5, 4, 1, 2, 6, 5, 2, 3, 7, 6, 3, 0, 4, 7, 4, 5, 6, 7,
+];
+
+pub fn shapefunc<Real>(pco: &[Real; 3]) -> [Real; 8]
 where
     Real: num_traits::Float,
 {
     let one = Real::one();
     let two = one + one;
     let one8 = one / (two * two * two);
-    let an = [
+    let (r0, r1, r2) = (pco[0], pco[1], pco[2]);
+    [
         one8 * (one - r0) * (one - r1) * (one - r2), // xyz
         one8 * (one + r0) * (one - r1) * (one - r2), // Xyz
         one8 * (one + r0) * (one + r1) * (one - r2), // XYz
@@ -23,9 +50,18 @@ where
         one8 * (one + r0) * (one - r1) * (one + r2),
         one8 * (one + r0) * (one + r1) * (one + r2),
         one8 * (one - r0) * (one + r1) * (one + r2),
-    ];
+    ]
+}
 
-    let dndr = [
+pub fn dndr<Real>(pco: &[Real; 3]) -> [[Real; 3]; 8]
+where
+    Real: num_traits::Float,
+{
+    let one = Real::one();
+    let two = one + one;
+    let one8 = one / (two * two * two);
+    let (r0, r1, r2) = (pco[0], pco[1], pco[2]);
+    [
         [
             -one8 * (one - r1) * (one - r2),
             -one8 * (one - r0) * (one - r2),
@@ -66,10 +102,55 @@ where
             one8 * (one - r0) * (one + r2),
             one8 * (one - r0) * (one + r1),
         ],
-    ];
+    ]
+}
 
+pub fn dndx<Real>(
+    node2xyz: &[[Real; 3]; 8],
+    r0: Real,
+    r1: Real,
+    r2: Real,
+) -> ([Real; 8], [[Real; 3]; 8], Real)
+where
+    Real: num_traits::Float,
+{
+    let pco = [r0, r1, r2];
+    let dndr = dndr(&pco);
+    let an = shapefunc(&pco);
     let (dndx, detjac) = crate::hex::grad_shapefunc_from_dndr(node2xyz, &dndr);
     (an, dndx, detjac)
+}
+
+pub fn dxdr<Real>(
+    p0: &[Real; 3],
+    p1: &[Real; 3],
+    p2: &[Real; 3],
+    p3: &[Real; 3],
+    p4: &[Real; 3],
+    p5: &[Real; 3],
+    p6: &[Real; 3],
+    p7: &[Real; 3],
+    pco: &[Real; 3],
+) -> [[Real; 3]; 3]
+where
+    Real: num_traits::Float,
+{
+    let dndr = dndr(pco);
+    let zero = Real::zero();
+    let mut dxdr = [[zero; 3]; 3];
+    for idim in 0..3 {
+        for jdim in 0..3 {
+            dxdr[idim][jdim] = dxdr[idim][jdim] + p0[idim] * dndr[0][jdim];
+            dxdr[idim][jdim] = dxdr[idim][jdim] + p1[idim] * dndr[1][jdim];
+            dxdr[idim][jdim] = dxdr[idim][jdim] + p2[idim] * dndr[2][jdim];
+            dxdr[idim][jdim] = dxdr[idim][jdim] + p3[idim] * dndr[3][jdim];
+            dxdr[idim][jdim] = dxdr[idim][jdim] + p4[idim] * dndr[4][jdim];
+            dxdr[idim][jdim] = dxdr[idim][jdim] + p5[idim] * dndr[5][jdim];
+            dxdr[idim][jdim] = dxdr[idim][jdim] + p6[idim] * dndr[6][jdim];
+            dxdr[idim][jdim] = dxdr[idim][jdim] + p7[idim] * dndr[7][jdim];
+        }
+    }
+    dxdr
 }
 
 pub fn grad_shapefunc_from_dndr<Real>(
@@ -80,15 +161,24 @@ where
     Real: num_traits::Float,
 {
     let zero = Real::zero();
-    let mut dxdr = [[zero; 3]; 3];
-    for inode in 0..8 {
+    let dxdr = {
+        let mut dxdr = [[zero; 3]; 3];
         for idim in 0..3 {
             for jdim in 0..3 {
-                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[inode][idim] * dndr[inode][jdim];
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[0][idim] * dndr[0][jdim];
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[1][idim] * dndr[1][jdim];
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[2][idim] * dndr[2][jdim];
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[3][idim] * dndr[3][jdim];
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[4][idim] * dndr[4][jdim];
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[5][idim] * dndr[5][jdim];
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[6][idim] * dndr[6][jdim];
+                dxdr[idim][jdim] = dxdr[idim][jdim] + node2xyz[7][idim] * dndr[7][jdim];
             }
         }
-    }
+        dxdr
+    };
 
+    let zero = Real::zero();
     let detjac = dxdr[0][0] * dxdr[1][1] * dxdr[2][2]
         + dxdr[1][0] * dxdr[2][1] * dxdr[0][2]
         + dxdr[2][0] * dxdr[0][1] * dxdr[1][2]
@@ -142,7 +232,7 @@ where
     let r1 = quadrature[ir1][0];
     let r2 = quadrature[ir2][0];
     let r3 = quadrature[ir3][0];
-    let (_an, dndx, detjac) = crate::hex::shapefunc(node2xyz, r1, r2, r3);
+    let (_an, dndx, detjac) = crate::hex::dndx(node2xyz, r1, r2, r3);
     let detwei = detjac * quadrature[ir1][1] * quadrature[ir2][1] * quadrature[ir3][1];
     (dndx, detwei)
 }
@@ -433,32 +523,6 @@ const ISO_TRI: [[i8; 16]; 256] = [
     ],
 ];
 
-pub const HEX_SIGN: [[f64; 3]; 8] = [
-    [-1., -1., -1.],
-    [1., -1., -1.],
-    [1., 1., -1.],
-    [-1., 1., -1.],
-    [-1., -1., 1.],
-    [1., -1., 1.],
-    [1., 1., 1.],
-    [-1., 1., 1.],
-];
-
-const EDGE2NODE: [[usize; 2]; 12] = [
-    [0, 1],
-    [1, 2],
-    [2, 3],
-    [3, 0],
-    [4, 5],
-    [5, 6],
-    [6, 7],
-    [7, 4],
-    [0, 4],
-    [1, 5],
-    [2, 6],
-    [3, 7],
-];
-
 /// Interpolates the intersection point of an isosurface with an edge of a
 /// hexahedral cell,
 ///
@@ -488,6 +552,324 @@ pub fn iso_position_on_edge(
     pos_iso[0] = p0[0] * r0 + p1[0] * r1;
     pos_iso[1] = p0[1] * r0 + p1[1] * r1;
     pos_iso[2] = p0[2] * r0 + p1[2] * r1;
+}
+
+pub fn volume<Real>(
+    p0: &[Real; 3],
+    p1: &[Real; 3],
+    p2: &[Real; 3],
+    p3: &[Real; 3],
+    p4: &[Real; 3],
+    p5: &[Real; 3],
+    p6: &[Real; 3],
+    p7: &[Real; 3],
+    i_gauss_degree: usize,
+) -> Real
+where
+    Real: num_traits::Float + 'static + std::fmt::Debug + std::iter::Sum,
+    crate::quadrature_line::Quad<Real>: crate::quadrature_line::QuadratureLine<Real>,
+{
+    use crate::quadrature_line::QuadratureLine;
+    let quadrature: &[[Real; 2]] = crate::quadrature_line::Quad::<Real>::hoge(i_gauss_degree);
+    let nq = quadrature.len();
+    let vol = itertools::iproduct!(0..nq, 0..nq, 0..nq)
+        .map(|(ir0, ir1, ir2)| {
+            let r0 = quadrature[ir0][0];
+            let r1 = quadrature[ir1][0];
+            let r2 = quadrature[ir2][0];
+            let w = quadrature[ir0][1] * quadrature[ir1][1] * quadrature[ir2][1];
+            let dxdr = dxdr(p0, p1, p2, p3, p4, p5, p6, p7, &[r0, r1, r2]);
+            use slice_of_array::SliceFlatExt;
+            let detjac =
+                crate::mat3_col_major::determinant::<Real>(dxdr.flat().try_into().unwrap());
+            detjac * w
+        })
+        .sum();
+    vol
+}
+
+#[test]
+fn test_volume() {
+    let node2xyz: [[f64; 3]; 8] = [
+        [0., 0., 0.],
+        [1., 0., 0.],
+        [1., 1., 0.],
+        [0., 1., 0.],
+        [0., 0., 1.],
+        [1., 0., 1.],
+        [1., 1., 1.],
+        [0., 1., 1.],
+    ];
+    let v = volume(
+        &node2xyz[0],
+        &node2xyz[1],
+        &node2xyz[2],
+        &node2xyz[3],
+        &node2xyz[4],
+        &node2xyz[5],
+        &node2xyz[6],
+        &node2xyz[7],
+        2,
+    );
+    assert!((v - 1.0).abs() < 1.0e-10, "volume of unit cube: {}", v);
+}
+
+/// Returns parametric coordinates (r0,r1,r2) of the origin inside the hex, or None if outside.
+/// Valid domain: r0,r1,r2 in [-1,1].
+/// Vertices: [xyz, Xyz, XYz, xYz, xyZ, XyZ, XYZ, xYZ] (lowercase=-1, uppercase=+1).
+pub fn parametric_coord_for_origin<Real>(
+    p0: &[Real; 3],
+    p1: &[Real; 3],
+    p2: &[Real; 3],
+    p3: &[Real; 3],
+    p4: &[Real; 3],
+    p5: &[Real; 3],
+    p6: &[Real; 3],
+    p7: &[Real; 3],
+) -> Option<[Real; 3]>
+where
+    Real: num_traits::Float,
+{
+    use slice_of_array::SliceFlatExt;
+    let zero = Real::zero();
+    let one = Real::one();
+    let mut pco = [zero; 3];
+    for _ in 0..20 {
+        let an = shapefunc(&pco);
+        let pos = [
+            an[0] * p0[0]
+                + an[1] * p1[0]
+                + an[2] * p2[0]
+                + an[3] * p3[0]
+                + an[4] * p4[0]
+                + an[5] * p5[0]
+                + an[6] * p6[0]
+                + an[7] * p7[0],
+            an[0] * p0[1]
+                + an[1] * p1[1]
+                + an[2] * p2[1]
+                + an[3] * p3[1]
+                + an[4] * p4[1]
+                + an[5] * p5[1]
+                + an[6] * p6[1]
+                + an[7] * p7[1],
+            an[0] * p0[2]
+                + an[1] * p1[2]
+                + an[2] * p2[2]
+                + an[3] * p3[2]
+                + an[4] * p4[2]
+                + an[5] * p5[2]
+                + an[6] * p6[2]
+                + an[7] * p7[2],
+        ];
+        let jac = dxdr(p0, p1, p2, p3, p4, p5, p6, p7, &pco);
+        let jac_col: &[Real; 9] = jac.flat().try_into().unwrap();
+        let jac_col = crate::mat3_col_major::transpose(jac_col);
+        let j_inv = crate::mat3_col_major::try_inverse(&jac_col)?;
+        let dpco = crate::mat3_col_major::mult_vec(&j_inv, &pos);
+        for i in 0..3 {
+            pco[i] = pco[i] - dpco[i];
+        }
+    }
+    if pco.iter().all(|&x| x >= -one && x <= one) {
+        Some(pco)
+    } else {
+        None
+    }
+}
+
+/// Returns the nearest point to the origin on the hex and its parametric coordinates (r0,r1,r2).
+/// Valid domain: r0,r1,r2 in [-1,1].
+/// Vertices: [xyz, Xyz, XYz, xYz, xyZ, XyZ, XYZ, xYZ] (lowercase=-1, uppercase=+1).
+pub fn nearest_to_origin<Real>(
+    p0: &[Real; 3],
+    p1: &[Real; 3],
+    p2: &[Real; 3],
+    p3: &[Real; 3],
+    p4: &[Real; 3],
+    p5: &[Real; 3],
+    p6: &[Real; 3],
+    p7: &[Real; 3],
+) -> ([Real; 3], [Real; 3])
+where
+    Real: num_traits::Float + std::fmt::Debug,
+{
+    let zero = Real::zero();
+    let one = Real::one();
+    let two = one + one;
+
+    if let Some(pco) = parametric_coord_for_origin(p0, p1, p2, p3, p4, p5, p6, p7) {
+        return ([zero; 3], pco);
+    }
+
+    // p0 is at (r0=-1, r1=-1, r2=-1)
+    let mut p_min = *p0;
+    let mut pco_min = [-one, -one, -one];
+    let mut d_min = crate::vec3::norm(p0);
+
+    let mut update = |p: [Real; 3], pco: [Real; 3]| {
+        let d = crate::vec3::norm(&p);
+        if d < d_min {
+            d_min = d;
+            p_min = p;
+            pco_min = pco;
+        }
+    };
+
+    // 6 quad faces: quad3 returns (s0,s1) in [0,1]^2; hex uses [-1,1]^3, so r = 2s-1
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p0, p1, p2, p3);
+        update(p, [two * s0 - one, two * s1 - one, -one]);
+    } // r2=-1
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p4, p5, p6, p7);
+        update(p, [two * s0 - one, two * s1 - one, one]);
+    } // r2=+1
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p0, p1, p5, p4);
+        update(p, [two * s0 - one, -one, two * s1 - one]);
+    } // r1=-1
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p3, p2, p6, p7);
+        update(p, [two * s0 - one, one, two * s1 - one]);
+    } // r1=+1
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p0, p3, p7, p4);
+        update(p, [-one, two * s0 - one, two * s1 - one]);
+    } // r0=-1
+    {
+        let (p, s0, s1) = crate::quad3::nearest_to_origin(p1, p2, p6, p5);
+        update(p, [one, two * s0 - one, two * s1 - one]);
+    } // r0=+1
+
+    // 12 edges: edge3 returns (p, s0=1-t, s1=t); r of free axis = 2*s1-1 or 2*s0-1 depending on direction
+    // bottom face (r2=-1)
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p0, p1);
+        update(p, [two * s1 - one, -one, -one]);
+    } // r0 free
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p1, p2);
+        update(p, [one, two * s1 - one, -one]);
+    } // r1 free
+    {
+        let (p, s0, _s1) = crate::edge3::nearest_to_origin3(p2, p3);
+        update(p, [two * s0 - one, one, -one]);
+    } // r0 free (reversed)
+    {
+        let (p, s0, _s1) = crate::edge3::nearest_to_origin3(p3, p0);
+        update(p, [-one, two * s0 - one, -one]);
+    } // r1 free (reversed)
+    // top face (r2=+1)
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p4, p5);
+        update(p, [two * s1 - one, -one, one]);
+    }
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p5, p6);
+        update(p, [one, two * s1 - one, one]);
+    }
+    {
+        let (p, s0, _s1) = crate::edge3::nearest_to_origin3(p6, p7);
+        update(p, [two * s0 - one, one, one]);
+    }
+    {
+        let (p, s0, _s1) = crate::edge3::nearest_to_origin3(p7, p4);
+        update(p, [-one, two * s0 - one, one]);
+    }
+    // vertical edges (r2 free)
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p0, p4);
+        update(p, [-one, -one, two * s1 - one]);
+    }
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p1, p5);
+        update(p, [one, -one, two * s1 - one]);
+    }
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p2, p6);
+        update(p, [one, one, two * s1 - one]);
+    }
+    {
+        let (p, _s0, s1) = crate::edge3::nearest_to_origin3(p3, p7);
+        update(p, [-one, one, two * s1 - one]);
+    }
+
+    (p_min, pco_min)
+}
+
+#[test]
+fn test_nearest_to_origin() {
+    // origin inside: hex from [-2,-2,-2] to [2,2,2]
+    {
+        let p0 = [-2.0f64, -2.0, -2.0];
+        let p1 = [2.0, -2.0, -2.0];
+        let p2 = [2.0, 2.0, -2.0];
+        let p3 = [-2.0, 2.0, -2.0];
+        let p4 = [-2.0, -2.0, 2.0];
+        let p5 = [2.0, -2.0, 2.0];
+        let p6 = [2.0, 2.0, 2.0];
+        let p7 = [-2.0, 2.0, 2.0];
+        let (p, pco) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7);
+        assert!(
+            crate::vec3::norm(&p) < 1.0e-10,
+            "inside: expected origin, got {:?}",
+            p
+        );
+        let (r0, r1, r2) = (pco[0], pco[1], pco[2]);
+        assert!(
+            r0 > -1.0 && r0 < 1.0 && r1 > -1.0 && r1 < 1.0 && r2 > -1.0 && r2 < 1.0,
+            "inside: pco should be interior: {:?}",
+            pco
+        );
+        let an = shapefunc(&pco);
+        let verts = [p0, p1, p2, p3, p4, p5, p6, p7];
+        let recon: [f64; 3] =
+            std::array::from_fn(|i| an.iter().zip(verts.iter()).map(|(&w, v)| w * v[i]).sum());
+        assert!(
+            crate::vec3::norm(&crate::vec3::sub(&recon, &p)) < 1.0e-10,
+            "reconstruction failed"
+        );
+    }
+    // origin outside: hex shifted to x in [3,7]
+    {
+        let p0 = [3.0f64, -1.0, -1.0];
+        let p1 = [7.0, -1.0, -1.0];
+        let p2 = [7.0, 1.0, -1.0];
+        let p3 = [3.0, 1.0, -1.0];
+        let p4 = [3.0, -1.0, 1.0];
+        let p5 = [7.0, -1.0, 1.0];
+        let p6 = [7.0, 1.0, 1.0];
+        let p7 = [3.0, 1.0, 1.0];
+        let (p, pco) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7);
+        let (r0, r1, r2) = (pco[0], pco[1], pco[2]);
+        assert!(
+            r0 >= -1.0 - 1.0e-10
+                && r0 <= 1.0 + 1.0e-10
+                && r1 >= -1.0 - 1.0e-10
+                && r1 <= 1.0 + 1.0e-10
+                && r2 >= -1.0 - 1.0e-10
+                && r2 <= 1.0 + 1.0e-10,
+            "outside: pco out of domain: {:?}",
+            pco
+        );
+        let an = shapefunc(&pco);
+        let verts = [p0, p1, p2, p3, p4, p5, p6, p7];
+        let recon: [f64; 3] =
+            std::array::from_fn(|i| an.iter().zip(verts.iter()).map(|(&w, v)| w * v[i]).sum());
+        assert!(
+            crate::vec3::norm(&crate::vec3::sub(&recon, &p)) < 1.0e-10,
+            "reconstruction failed"
+        );
+        let d = crate::vec3::norm(&p);
+        for v in &verts {
+            assert!(
+                d <= crate::vec3::norm(v) + 1.0e-10,
+                "vertex {:?} is closer than result",
+                v
+            );
+        }
+    }
 }
 
 pub fn iso_surface(
@@ -542,4 +924,32 @@ pub fn iso_surface(
         tri2xyz.push(vert_list[tri[1] as usize]);
         tri2xyz.push(vert_list[tri[2] as usize]);
     }
+}
+
+pub fn subdivide<INDEX>(
+    corner: &[INDEX; 8],
+    edge: &[INDEX; 12],
+    quad: &[INDEX; 6],
+    center: INDEX,
+) -> [[INDEX; 8]; 8]
+where
+    INDEX: num_traits::PrimInt,
+{
+    let (c, e, q, ct) = (corner, edge, quad, center);
+    // Each sub-hex i has corner[i] at its local "origin" corner, growing toward ct.
+    // Node ordering: [xyz, Xyz, XYz, xYz, xyZ, XyZ, XYZ, xYZ]
+    // quad: [0]=r2=-1(bottom), [1]=r1=-1(front), [2]=r0=+1(right),
+    //        [3]=r1=+1(back),  [4]=r0=-1(left),  [5]=r2=+1(top)
+    // edge: [0]=0-1, [1]=1-2, [2]=2-3, [3]=3-0, [4]=4-5, [5]=5-6,
+    //        [6]=6-7, [7]=7-4, [8]=0-4, [9]=1-5, [10]=2-6, [11]=3-7
+    [
+        [c[0], e[0], q[0], e[3], e[8], q[1], ct, q[4]], // (−1,−1,−1)
+        [e[0], c[1], e[1], q[0], q[1], e[9], q[2], ct], // (+1,−1,−1)
+        [q[0], e[1], c[2], e[2], ct, q[2], e[10], q[3]], // (+1,+1,−1)
+        [e[3], q[0], e[2], c[3], q[4], ct, q[3], e[11]], // (−1,+1,−1)
+        [e[8], q[1], ct, q[4], c[4], e[4], q[5], e[7]], // (−1,−1,+1)
+        [q[1], e[9], q[2], ct, e[4], c[5], e[5], q[5]], // (+1,−1,+1)
+        [ct, q[2], e[10], q[3], q[5], e[5], c[6], e[6]], // (+1,+1,+1)
+        [q[4], ct, q[3], e[11], e[7], q[5], e[6], c[7]], // (−1,+1,+1)
+    ]
 }

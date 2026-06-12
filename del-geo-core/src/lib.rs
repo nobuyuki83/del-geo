@@ -50,6 +50,7 @@ pub mod quaternion;
 pub mod sphere;
 pub mod spherical_harmonics;
 pub mod tet;
+pub mod tri;
 pub mod tri2;
 pub mod tri2_scanline;
 pub mod tri3;
