@@ -1,5 +1,5 @@
 //! methods for quaternion.
-//! A quaternion is stored as `[i,j,k,w]` where w is the real part
+//! A quaternion is stored as `[i,j,k,w]` where w is the real part (same as Eigen)
 
 /// trait for quaternion
 pub trait Quaternion<Real>
@@ -12,6 +12,7 @@ where
     fn inverse(&self) -> Self;
     fn mult_quaternion(&self, q: &Self) -> Self;
     fn identity() -> Self;
+    fn conjugate(&self) -> Self;
 }
 impl<Real> Quaternion<Real> for [Real; 4]
 where
@@ -35,6 +36,7 @@ where
     fn identity() -> Self {
         identity()
     }
+    fn conjugate(&self) -> Self { conjugate(self) }
 }
 pub fn to_mat3_col_major<Real>(q: &[Real; 4]) -> [Real; 9]
 where
@@ -84,6 +86,13 @@ where
     let len = (q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]).sqrt();
     let invlen = Real::one() / len;
     [q[0] * invlen, q[1] * invlen, q[2] * invlen, q[3] * invlen]
+}
+
+pub fn conjugate<Real>(q: &[Real; 4]) -> [Real; 4]
+where
+    Real: num_traits::Float,
+{
+    [-q[0], -q[1], -q[2], q[3]]
 }
 
 pub fn inverse<Real>(q: [Real; 4]) -> [Real; 4]
@@ -166,6 +175,21 @@ where
         (lena * half).sin() * a[1] / lena,
         (lena * half).sin() * a[2] / lena,
         (lena * half).cos(),
+    ]
+}
+
+pub fn from_minimum_rotation(v0: &[f32;3], v1: &[f32;3]) -> [f32;4] {
+    use crate::vec3::Vec3;
+    let uv0 = v0.normalize();
+    let uv1 = v1.normalize();
+    let dot = uv0.dot(&uv1);
+    let cross = uv0.cross(&uv1);
+    let tmp = 1.0/((1.0+dot)*(1.0+dot)+cross.squared_norm()).sqrt();
+    [
+        cross[0]*tmp,
+        cross[1]*tmp,
+        cross[2]*tmp,
+        (1.+dot)*tmp
     ]
 }
 

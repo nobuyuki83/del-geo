@@ -14,7 +14,7 @@ pub mod range;
 pub mod curve_linear_coords;
 pub mod mat2x3_col_major;
 
-pub mod mat3_array_of_array;
+pub mod mat3_array_of_rows;
 pub mod mat3_col_major;
 pub mod mat4_col_major;
 pub mod obb3;
@@ -60,3 +60,4 @@ pub mod vec4;
 pub mod vecn;
 pub mod view_projection;
 pub mod view_rotation;
+pub mod mat3_array_of_cols;
