@@ -1,0 +1,9 @@
+# clang-format configuration
+# Shared style for C/C++ headers and CUDA files (.h, .hpp, .cu, .cuh)
+---
+BasedOnStyle: Google
+AllowShortLoopsOnASingleLine: false
+
+---
+Language: Cpp
+Standard: c++17
