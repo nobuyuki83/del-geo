@@ -316,7 +316,7 @@ where
 
 pub fn jacobian_transform<Real>(t: &[Real; 16], p: &[Real; 3]) -> [Real; 9]
 where
-    Real: num_traits::Float + Copy + std::fmt::Debug,
+    Real: num_traits::Float
 {
     let a = [t[0], t[1], t[2], t[4], t[5], t[6], t[8], t[9], t[10]];
     let b = [t[12], t[13], t[14]];

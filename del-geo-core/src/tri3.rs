@@ -455,7 +455,7 @@ pub fn intersection_against_line<T>(
     p2: &[T; 3],
     ray_org: &[T; 3],
     ray_dir: &[T; 3],
-) -> Option<T>
+) -> Option<(T, [T;3])>
 where
     T: num_traits::Float,
 {
@@ -481,7 +481,7 @@ where
     }
     // At this stage we can compute t to find out where the intersection point is on the line.
     let t = invdet * edge2.dot(&qvec);
-    Some(t)
+    Some((t, [T::one()-u-v, u, v]))
 }
 
 /// ray triangle intersection.
@@ -576,7 +576,6 @@ fn test_dw_ray_triangle_intersection() {
     type Real = f64;
     let p0: [[Real; 3]; 3] = [[-13., -5., 8.], [14., -5., 8.], [1., 3., -3.]];
 
-    // let origin = nalgebra::Vector3::<Real>::new(9., 11., 12.);
     let origin = [8., 11., 10.];
     let dir = [1., 0., 2.].sub(&origin);
     // d_t, d_u, d_u are back-propagated from the loss
@@ -587,8 +586,13 @@ fn test_dw_ray_triangle_intersection() {
     let (t0, u0, v0, d_p0, d_p1, d_p2) =
         intersection_against_line_bwd_wrt_tri(&p0[0], &p0[1], &p0[2], &origin, &dir, d_t, d_u, d_v);
     {
-        let t1 = intersection_against_line(&p0[0], &p0[1], &p0[2], &origin, &dir).unwrap();
+        let (t1, bc1) = intersection_against_line(&p0[0], &p0[1], &p0[2], &origin, &dir).unwrap();
         assert!((t0 - t1).abs() < 1.0e-5);
+        let qa = position_from_barycentric_coords(&p0[0], &p0[1], &p0[2], &bc1);
+        use crate::vec3::Vec3;
+        let qb = dir.scale(t1).add(&origin);
+        assert!(bc1[0]>0. && bc1[1]>0. && bc1[2]>0.);
+        assert!( qa.sub(&qb).norm() < 1.0e-13 );
     }
 
     let ha = p0[0]
@@ -784,16 +788,16 @@ where
         &self,
         ray_org: &[Real; 3],
         ray_dir: &[Real; 3],
-    ) -> Option<Real> {
+    ) -> Option<(Real, [Real;3])> {
         intersection_against_line(self.p0, self.p1, self.p2, ray_org, ray_dir)
-            .filter(|&t| t >= Real::zero())
+            .filter(|(t, _bc)| *t >= Real::zero())
     }
 
     pub fn intersection_against_line(
         &self,
         line_org: &[Real; 3],
         line_dir: &[Real; 3],
-    ) -> Option<Real> {
+    ) -> Option<(Real, [Real;3])> {
         intersection_against_line(self.p0, self.p1, self.p2, line_org, line_dir)
     }
 
