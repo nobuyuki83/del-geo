@@ -492,8 +492,8 @@ fn test_try_inverse_with_pivot() {
 /// * near - distance to the near clipping plane (>0)
 /// * far - distance  to the far clipping plane (>0)
 /// * proj_direction - projection direction
-///     * true: projection from +Z
-///     * false: projection from -Z
+///     * true: projection from +Z (ray is going -Z direction, compatible to this library's definition)
+///     * false: projection from -Z (ray is going +Z direction, compatible to OpenGl)
 pub fn camera_perspective_blender<Real>(
     asp: Real,
     lens: Real,
