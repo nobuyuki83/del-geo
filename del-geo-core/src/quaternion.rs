@@ -37,6 +37,7 @@ where
     fn identity() -> Self {
         identity()
     }
+
     fn conjugate(&self) -> Self { conjugate(self) }
     fn rotate_vec3(&self, v: &[Real;3]) -> [Real;3] { rotate_vec3(self, v) }
 }
@@ -180,18 +181,18 @@ where
     ]
 }
 
-pub fn from_minimum_rotation(v0: &[f32;3], v1: &[f32;3]) -> [f32;4] {
+pub fn from_minimum_rotation(v0: &[f32; 3], v1: &[f32; 3]) -> [f32; 4] {
     use crate::vec3::Vec3;
     let uv0 = v0.normalize();
     let uv1 = v1.normalize();
     let dot = uv0.dot(&uv1);
     let cross = uv0.cross(&uv1);
-    let tmp = 1.0/((1.0+dot)*(1.0+dot)+cross.squared_norm()).sqrt();
+    let tmp = 1.0 / ((1.0 + dot) * (1.0 + dot) + cross.squared_norm()).sqrt();
     [
-        cross[0]*tmp,
-        cross[1]*tmp,
-        cross[2]*tmp,
-        (1.+dot)*tmp
+        cross[0] * tmp,
+        cross[1] * tmp,
+        cross[2] * tmp,
+        (1. + dot) * tmp,
     ]
 }
 
