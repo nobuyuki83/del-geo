@@ -455,7 +455,7 @@ pub fn intersection_against_line<T>(
     p2: &[T; 3],
     ray_org: &[T; 3],
     ray_dir: &[T; 3],
-) -> Option<(T, [T;3])>
+) -> Option<(T, [T; 3])>
 where
     T: num_traits::Float,
 {
@@ -481,7 +481,7 @@ where
     }
     // At this stage we can compute t to find out where the intersection point is on the line.
     let t = invdet * edge2.dot(&qvec);
-    Some((t, [T::one()-u-v, u, v]))
+    Some((t, [T::one() - u - v, u, v]))
 }
 
 /// ray triangle intersection.
@@ -591,8 +591,8 @@ fn test_dw_ray_triangle_intersection() {
         let qa = position_from_barycentric_coords(&p0[0], &p0[1], &p0[2], &bc1);
         use crate::vec3::Vec3;
         let qb = dir.scale(t1).add(&origin);
-        assert!(bc1[0]>0. && bc1[1]>0. && bc1[2]>0.);
-        assert!( qa.sub(&qb).norm() < 1.0e-13 );
+        assert!(bc1[0] > 0. && bc1[1] > 0. && bc1[2] > 0.);
+        assert!(qa.sub(&qb).norm() < 1.0e-13);
     }
 
     let ha = p0[0]
@@ -788,7 +788,7 @@ where
         &self,
         ray_org: &[Real; 3],
         ray_dir: &[Real; 3],
-    ) -> Option<(Real, [Real;3])> {
+    ) -> Option<(Real, [Real; 3])> {
         intersection_against_line(self.p0, self.p1, self.p2, ray_org, ray_dir)
             .filter(|(t, _bc)| *t >= Real::zero())
     }
@@ -797,7 +797,7 @@ where
         &self,
         line_org: &[Real; 3],
         line_dir: &[Real; 3],
-    ) -> Option<(Real, [Real;3])> {
+    ) -> Option<(Real, [Real; 3])> {
         intersection_against_line(self.p0, self.p1, self.p2, line_org, line_dir)
     }
 

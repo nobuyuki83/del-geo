@@ -13,7 +13,7 @@ where
     fn mult_quaternion(&self, q: &Self) -> Self;
     fn identity() -> Self;
     fn conjugate(&self) -> Self;
-    fn rotate_vec3(&self, v: &[Real;3]) -> [Real;3];
+    fn rotate_vec3(&self, v: &[Real; 3]) -> [Real; 3];
 }
 impl<Real> Quaternion<Real> for [Real; 4]
 where
@@ -38,8 +38,12 @@ where
         identity()
     }
 
-    fn conjugate(&self) -> Self { conjugate(self) }
-    fn rotate_vec3(&self, v: &[Real;3]) -> [Real;3] { rotate_vec3(self, v) }
+    fn conjugate(&self) -> Self {
+        conjugate(self)
+    }
+    fn rotate_vec3(&self, v: &[Real; 3]) -> [Real; 3] {
+        rotate_vec3(self, v)
+    }
 }
 pub fn to_mat3_col_major<Real>(q: &[Real; 4]) -> [Real; 9]
 where
@@ -215,10 +219,13 @@ where
     [v[0] * sin, v[1] * sin, v[2] * sin, half.cos()]
 }
 
-pub fn rotate_vec3<Real>(q: &[Real;4], v: &[Real;3]) -> [Real;3]
-where Real: num_traits::Float
+pub fn rotate_vec3<Real>(q: &[Real; 4], v: &[Real; 3]) -> [Real; 3]
+where
+    Real: num_traits::Float,
 {
     use Quaternion;
-    let a = q.mult_quaternion( &[v[0], v[1], v[2], Real::zero()]).mult_quaternion(&q.conjugate());
+    let a = q
+        .mult_quaternion(&[v[0], v[1], v[2], Real::zero()])
+        .mult_quaternion(&q.conjugate());
     [a[0], a[1], a[2]]
 }
