@@ -66,4 +66,13 @@ __device__ auto to_mat2x3_col_major_xy(const float *m)
   return {m[0], m[1], m[3], m[4], m[6], m[7]};
 }
 
+__device__ auto transpose(const float *b)
+    -> cuda::std::array<float, 9> {
+  return {
+      b[0], b[3], b[6],
+      b[1], b[4], b[7],
+      b[2], b[5], b[8]
+  };
+}
+
 }  // namespace mat3_col_major
