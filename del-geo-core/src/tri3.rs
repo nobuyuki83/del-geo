@@ -460,12 +460,11 @@ where
     T: num_traits::Float,
 {
     use crate::vec3::Vec3;
-    let eps: T = T::epsilon();
     let edge1 = p1.sub(p0);
     let edge2 = p2.sub(p0);
     let pvec = ray_dir.cross(&edge2);
     let det = edge1.dot(&pvec);
-    if det == 0.0 {
+    if det == T::zero() {
         return None;
     }
     let invdet = T::one() / det;
