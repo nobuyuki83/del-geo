@@ -40,12 +40,12 @@ __device__ auto intersection_against_ray(const float *p0, const float *p1,
                                          const float *ray_dir)
     -> cuda::std::optional<float> {
   using V3f = cuda::std::array<float, 3>;
-  float eps = 1.0e-5;
+  float eps = 1.0e-7;
   const V3f edge1 = vec3::sub(p1, p0);
   const V3f edge2 = vec3::sub(p2, p0);
   const V3f pvec = vec3::cross(ray_dir, edge2.data());
   const float det = vec3::dot(edge1.data(), pvec.data());
-  if (det > -eps && det < eps) {
+  if (det == 0.0) {
     return {};
   }
   float invdet = 1.f / det;

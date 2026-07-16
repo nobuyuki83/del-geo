@@ -465,7 +465,7 @@ where
     let edge2 = p2.sub(p0);
     let pvec = ray_dir.cross(&edge2);
     let det = edge1.dot(&pvec);
-    if det > -eps && det < eps {
+    if det == 0.0 {
         return None;
     }
     let invdet = T::one() / det;
