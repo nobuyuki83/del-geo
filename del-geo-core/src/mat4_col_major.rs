@@ -660,7 +660,8 @@ pub fn ray_from_transform_ndc2world_and_pixel_coordinates<Real>(
     image_size: &(Real, Real),
     transform_ndc2world: &[Real; 16],
 ) -> ([Real; 3], [Real; 3])
-where Real: num_traits::Float
+where
+    Real: num_traits::Float,
 {
     let one = Real::one();
     let two = one + one;
