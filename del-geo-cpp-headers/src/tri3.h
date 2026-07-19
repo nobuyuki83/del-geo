@@ -35,10 +35,38 @@ __device__ auto dw_normal(const float *p0, const float *p1, const float *p2)
   };
 }
 
-__device__ auto intersection_against_ray(const float *p0, const float *p1,
-                                         const float *p2, const float *ray_org,
-                                         const float *ray_dir)
-    -> cuda::std::optional<float> {
+struct RayCoeffBarycentricCoord {
+  float ray_coeff;
+  cuda::std::array<float, 3> barycentric_coord;
+};
+
+__device__
+auto intersection_plane_of_tri3_against_line(
+     const float *p0, const float *p1,
+     const float *p2, const float *ray_org,
+     const float *ray_dir
+) -> RayCoeffBarycentricCoord {
+    // Möller–Trumbore: compute barycentric coords (u, v) where
+    //   ray_org + t*ray_dir = (1-u-v)*p0 + u*p1 + v*p2
+    using V3f = cuda::std::array<float, 3>;
+    const V3f edge1 = vec3::sub(p1, p0);
+    const V3f edge2 = vec3::sub(p2, p0);
+    const V3f pvec = vec3::cross(ray_dir, edge2.data());
+    const float inv_det = 1.f / vec3::dot(edge1.data(), pvec.data());
+    const V3f tvec = vec3::sub(ray_org, p0);
+    const float u = inv_det * vec3::dot(tvec.data(), pvec.data());
+    const V3f qvec = vec3::cross(tvec.data(), edge1.data());
+    const float v = inv_det * vec3::dot(ray_dir, qvec.data());
+    const float t = inv_det * vec3::dot(edge2.data(), qvec.data());
+    return RayCoeffBarycentricCoord{t, {1.f - u - v, u, v}};
+}
+
+
+__device__ auto intersection_against_ray(
+     const float *p0, const float *p1,
+     const float *p2, const float *ray_org,
+     const float *ray_dir)
+    -> cuda::std::optional<RayCoeffBarycentricCoord> {
   using V3f = cuda::std::array<float, 3>;
   const V3f edge1 = vec3::sub(p1, p0);
   const V3f edge2 = vec3::sub(p2, p0);
@@ -61,7 +89,7 @@ __device__ auto intersection_against_ray(const float *p0, const float *p1,
   // At this stage we can compute t to find out where the intersection point is
   // on the line.
   const float t = invdet * vec3::dot(edge2.data(), qvec.data());
-  return t;
+  return RayCoeffBarycentricCoord{t, {1.f - u - v, u, v}};
 }
 
 struct IntersectionAgainstLineBwdWrtTri {

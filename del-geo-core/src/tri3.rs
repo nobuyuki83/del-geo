@@ -510,40 +510,15 @@ where
     let e2 = p2.sub(p0);
     let n = e1.cross(&e2);
     let n_dot_dir = n.dot(dir);
-    /*
-    if n_dot_dir.is_zero() {
-        return None;
-    }
-     */
     let inv_det = Real::one() / n_dot_dir;
     let c = p0.sub(org);
     let n_dot_c = n.dot(&c);
     let t = inv_det * n_dot_c;
-    /*
-    if t < Real::zero() {
-        return None;
-    }
-     */
     let r = dir.cross(&c);
-    //
     let r_dot_e2 = r.dot(&e2);
     let u = inv_det * r_dot_e2;
-    /*
-    if u < Real::zero() {
-        return None;
-    }
-     */
-    //
     let r_dot_e1 = r.dot(&e1);
     let v = inv_det * r_dot_e1;
-    /*
-    if v < Real::zero() {
-        return None;
-    }
-    if u + v >= Real::one() {
-        return None;
-    }
-     */
     // --------------
     // below: bwd
     let d_n_dot_c = d_t * inv_det;
