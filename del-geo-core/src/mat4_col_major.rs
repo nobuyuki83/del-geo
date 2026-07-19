@@ -655,15 +655,20 @@ pub fn ray_from_transform_world2ndc(
 
 /// the ray start from the front plane and ends on the back plane
 /// "integer corner" coordinate is used here (the center of the top-left pixel is (0.5, 0.5) )
-pub fn ray_from_transform_ndc2world_and_pixel_coordinates(
-    pix_coord: (f32, f32),
-    image_size: &(f32, f32),
-    transform_ndc2world: &[f32; 16],
-) -> ([f32; 3], [f32; 3]) {
-    let x0 = 2. * pix_coord.0 / (image_size.0) - 1.;
-    let y0 = 1. - 2. * pix_coord.1 / (image_size.1);
-    let p0 = transform_homogeneous(transform_ndc2world, &[x0, y0, 1.]).unwrap();
-    let p1 = transform_homogeneous(transform_ndc2world, &[x0, y0, -1.]).unwrap();
+pub fn ray_from_transform_ndc2world_and_pixel_coordinates<Real>(
+    pix_coord: (Real, Real),
+    image_size: &(Real, Real),
+    transform_ndc2world: &[Real; 16],
+) -> ([Real; 3], [Real; 3])
+where
+    Real: num_traits::Float,
+{
+    let one = Real::one();
+    let two = one + one;
+    let x0 = two * pix_coord.0 / (image_size.0) - one;
+    let y0 = one - two * pix_coord.1 / (image_size.1);
+    let p0 = transform_homogeneous(transform_ndc2world, &[x0, y0, one]).unwrap();
+    let p1 = transform_homogeneous(transform_ndc2world, &[x0, y0, -one]).unwrap();
     let ray_org = p0;
     let ray_dir = crate::vec3::sub(&p1, &p0);
     (ray_org, ray_dir)
