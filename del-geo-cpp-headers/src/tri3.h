@@ -16,6 +16,17 @@ __device__ auto normal(const float *v1, const float *v2, const float *v3)
   };
 }
 
+__device__ auto position_from_barycentric_coord(
+    const float *v0, const float *v1, const float *v2,
+    const float *bc) -> cuda::std::array<float, 3>
+{
+    return {
+        v0[0] * bc[0] + v1[0] * bc[1] + v2[0] * bc[2],
+        v0[1] * bc[0] + v1[1] * bc[1] + v2[1] * bc[2],
+        v0[2] * bc[0] + v1[2] * bc[1] + v2[2] * bc[2],
+    };
+}
+
 struct DwNormal {
   cuda::std::array<float, 9> d_p0;
   cuda::std::array<float, 9> d_p1;
