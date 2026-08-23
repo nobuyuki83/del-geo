@@ -19,4 +19,3 @@ slice-of-array.workspace = true
 
 [dev-dependencies]
 rand_chacha = {workspace = true}
-del-msh-cpu = {workspace = true}

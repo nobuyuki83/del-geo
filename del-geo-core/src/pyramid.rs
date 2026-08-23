@@ -47,7 +47,6 @@ pub fn parametric_coord_for_origin<Real>(
 where
     Real: num_traits::Float,
 {
-    use slice_of_array::SliceFlatExt;
     let zero = Real::zero();
     let one = Real::one();
     let half = one / (one + one);
@@ -60,6 +59,7 @@ where
             sf[0] * p0[2] + sf[1] * p1[2] + sf[2] * p2[2] + sf[3] * p3[2] + sf[4] * p4[2],
         ];
         let jac = dxdr(p0, p1, p2, p3, p4, &pco);
+        use slice_of_array::SliceFlatExt;
         let jac_col: &[Real; 9] = jac.flat().try_into().unwrap();
         let jac_col = crate::mat3_col_major::transpose(jac_col);
         let j_inv = crate::mat3_col_major::try_inverse(&jac_col)?;

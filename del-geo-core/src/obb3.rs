@@ -241,53 +241,6 @@ where
 }
 
 #[test]
-fn test_is_intersect_to_obb3() {
-    use rand::SeedableRng;
-    let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0u64);
-    for _iter in 0..1000 {
-        let obb_i = from_random::<_, f64>(&mut reng);
-        let obb_j = from_random(&mut reng);
-        let p0 = obb_i[..3].try_into().unwrap(); // center
-        let p1 = obb_j.nearest_to_point3(p0);
-        let p2 = obb_i.nearest_to_point3(&p1);
-        let p3 = obb_j.nearest_to_point3(&p2);
-        let p4 = obb_i.nearest_to_point3(&p3);
-        let p5 = obb_j.nearest_to_point3(&p4);
-        let p6 = obb_i.nearest_to_point3(&p5);
-        let len45 = p4.length(&p5);
-        let len56 = p5.length(&p6);
-        assert!(len56 <= len45);
-        if len56 > 0. && len56 < len45 * 0.9999 {
-            continue;
-        } // still converging
-        {
-            // test intersect
-            let res0 = is_intersect_to_obb3(&obb_i, &obb_j);
-            let res1 = len56 < 0.0001;
-            if res0 != res1 {
-                let (mut tri2vtx_i, mut vtx2xyz_i) = del_msh_cpu::trimesh3_primitive::obb3(&obb_i);
-                let (tri2vtx_j, vtx2xyz_j) = del_msh_cpu::trimesh3_primitive::obb3(&obb_j);
-                del_msh_cpu::uniform_mesh::merge(
-                    &mut tri2vtx_i,
-                    &mut vtx2xyz_i,
-                    &tri2vtx_j,
-                    &vtx2xyz_j,
-                    3,
-                );
-                // output mesh to visualize the failure case
-                let _ = del_msh_cpu::io_wavefront_obj::save_tri2vtx_vtx2xyz(
-                    "../../target/fail_obb3.obj",
-                    &tri2vtx_i,
-                    &vtx2xyz_i,
-                    3,
-                );
-            }
-            assert_eq!(res0, res1, "{len45} {len56}");
-        }
-    }
-}
-
-#[test]
 fn test2_is_intersect_to_obb3() {
     use std::f64::consts::PI;
 

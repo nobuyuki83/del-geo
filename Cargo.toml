@@ -25,8 +25,8 @@ slice-of-array = "0.3.2"
 del-geo-core = { path="del-geo-core"}
 
 # external my library
-# del-msh-core = {path = "../del-msh/del-msh-core"}
-del-msh-cpu = { git = "https://github.com/nobuyuki83/del-msh.git"}
+#del-msh-cpu = {path = "../del-msh/del-msh-cpu"}
+#del-msh-cpu = { git = "https://github.com/nobuyuki83/del-msh.git"}
 
 
 
