@@ -21,6 +21,7 @@ pub mod obb3;
 pub mod vec2;
 pub mod vec3;
 //
+pub mod barrier;
 pub mod bezier_cubic;
 pub mod bezier_quadratic;
 pub mod ccd2;
@@ -35,6 +36,7 @@ pub mod mat2_sym;
 pub mod mat3_array_of_cols;
 pub mod mat3_row_major;
 pub mod mat3_sym;
+pub mod mat3x4_array_of_cols;
 pub mod mat3x4_col_major;
 pub mod matn_col_major;
 pub mod matn_row_major;

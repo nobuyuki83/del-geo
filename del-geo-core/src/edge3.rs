@@ -297,7 +297,11 @@ fn test_nearest_to_edge3() {
         let p1 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
         let q0 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
         let q1 = crate::vec3::sample_unit_cube::<_, f64>(&mut reng);
-        let (dist, rp, rq) = crate::edge3::nearest_to_edge3(&p0, &p1, &q0, &q1);
+        let (dist, rp, rq) = nearest_to_edge3(&p0, &p1, &q0, &q1);
+        {
+            let [sqdist, rp0, rq0] = nearest_to_edge3_accurate(&p0, &p1, &q0, &q1);
+            println!("{} {} {}", dist * dist - sqdist, rp - rp0, rq - rq0);
+        }
         //
         let vp = p1.sub(&p0);
         //let pc0 = p0 + f64::clamp(rp - eps, 0.0, 1.0) * vp;
@@ -319,6 +323,106 @@ fn test_nearest_to_edge3() {
         assert!(dist <= pc2.sub(&qc1).norm());
         assert!(dist <= pc2.sub(&qc2).norm());
     }
+}
+
+/// Closest-point barycentric coefficients of two segments:
+///
+/// A(s) = ea0 + s * (ea1 - ea0)
+/// B(t) = eb0 + t * (eb1 - eb0)
+///
+/// Returns:
+///
+/// [sqdist, param_a, param_b]
+pub fn nearest_to_edge3_accurate<T: num_traits::Float>(
+    ea0: &[T; 3],
+    ea1: &[T; 3],
+    eb0: &[T; 3],
+    eb1: &[T; 3],
+) -> [T; 3] {
+    let clamp_unit = |v: T| {
+        if v > T::zero() {
+            if v < T::one() { v } else { T::one() }
+        } else {
+            T::zero()
+        }
+    };
+
+    use crate::vec3::{cross, dot, sub};
+    let r0 = sub(ea1, ea0);
+    let r1 = sub(eb1, eb0);
+    let d = sub(ea0, eb0);
+
+    let a = dot(&r0, &r0);
+    let e = dot(&r1, &r1);
+    let b = dot(&r0, &r1);
+    let c = dot(&r0, &d);
+    let f = dot(&r1, &d);
+
+    let zero = T::zero();
+    let one = T::one();
+
+    // If an edge has collapsed to a point, every parameter on that
+    // edge represents the same point.
+    let inv_a = if a > zero { one / a } else { zero };
+    let inv_e = if e > zero { one / e } else { zero };
+
+    // Interior stationary-point candidate.
+    //
+    // Use |r0 x r1|^2 instead of a*e - b*b for better numerical
+    // conditioning for nearly parallel edges.
+    let n = cross(&r0, &r1);
+    let nn = dot(&n, &n);
+
+    let inv_nn = if nn > zero { one / nn } else { zero };
+
+    let r1_cross_d = cross(&r1, &d);
+
+    let s_stat = clamp_unit(dot(&n, &r1_cross_d) * inv_nn);
+
+    let t_stat = clamp_unit((b * s_stat + f) * inv_e);
+
+    // Four boundary candidates.
+    //
+    // s = 0: project ea0 onto edge B
+    // s = 1: project ea1 onto edge B
+    // t = 0: project eb0 onto edge A
+    // t = 1: project eb1 onto edge A
+    let t_a0 = clamp_unit(f * inv_e);
+    let t_a1 = clamp_unit((f + b) * inv_e);
+
+    let s_b0 = clamp_unit(-c * inv_a);
+    let s_b1 = clamp_unit((b - c) * inv_a);
+
+    let cand_s = [s_stat, zero, one, s_b0, s_b1];
+    let cand_t = [t_stat, t_a0, t_a1, zero, one];
+
+    let mut best_s = zero;
+    let mut best_t = zero;
+    let mut best_sqdist = T::max_value();
+
+    for i in 0..5 {
+        let s = cand_s[i];
+        let t = cand_t[i];
+
+        // Difference between the two candidate closest points:
+        //
+        // A(s) - B(t)
+        // = d + s*r0 - t*r1
+        let v = [
+            d[0] + s * r0[0] - t * r1[0],
+            d[1] + s * r0[1] - t * r1[1],
+            d[2] + s * r0[2] - t * r1[2],
+        ];
+
+        let sqdist = dot(&v, &v);
+        if sqdist < best_sqdist {
+            best_sqdist = sqdist;
+            best_s = s;
+            best_t = t;
+        }
+    }
+
+    [best_sqdist, best_s, best_t]
 }
 
 /// the two edges need to be co-planar
@@ -358,4 +462,63 @@ where
     let t = T::one() / (rq0 - rq1);
     let (rq0, rq1) = (rq0 * t, -rq1 * t);
     Some((rp0, rp1, rq0, rq1))
+}
+
+pub fn lerp<T>(p0: &[T; 3], p1: &[T; 3], s: T) -> [T; 3]
+where
+    T: num_traits::Float,
+{
+    [
+        p0[0] + s * (p1[0] - p0[0]),
+        p0[1] + s * (p1[1] - p0[1]),
+        p0[2] + s * (p1[2] - p0[2]),
+    ]
+}
+
+#[allow(clippy::type_complexity)]
+pub fn wdwddw_squared_length_difference<T>(
+    node2xyz_def: &[[T; 3]; 2],
+    stiffness: T,
+    edge_length_ini: T,
+) -> (T, [[T; 3]; 2], [[[T; 9]; 2]; 2])
+where
+    T: num_traits::Float,
+{
+    use crate::mat3_col_major::Mat3ColMajor;
+    use crate::vec3::Vec3;
+    //
+    let one = T::one();
+    let half = one / (one + one);
+    let v = node2xyz_def[0].sub(&node2xyz_def[1]);
+    let l = v.norm();
+    let c = edge_length_ini - l;
+    let dw = [v.scale(-c * stiffness / l), v.scale(c * stiffness / l)];
+    let m = {
+        let mvv = crate::mat3_col_major::from_scaled_outer_product(one, &v, &v);
+        let t0 = stiffness * edge_length_ini / (l * l * l);
+        let t1 = stiffness * (l - edge_length_ini) / l;
+        let t2 = crate::mat3_col_major::from_identity().scale(t1);
+        mvv.scale(t0).add(&t2)
+    };
+    let ddw = [[m, m.scale(-one)], [m.scale(-one), m]];
+    let w = half * stiffness * c * c;
+    (w, dw, ddw)
+}
+
+pub fn w_squared_length_difference<T>(
+    node2xyz_def: &[[T; 3]; 2],
+    stiffness: T,
+    edge_length_ini: T,
+) -> T
+where
+    T: num_traits::Float,
+{
+    use crate::vec3::Vec3;
+    //
+    let one = T::one();
+    let half = one / (one + one);
+    let v = node2xyz_def[0].sub(&node2xyz_def[1]);
+    let l = v.norm();
+    let c = edge_length_ini - l;
+    half * stiffness * c * c
 }
