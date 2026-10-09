@@ -505,7 +505,7 @@ pub fn test_nearest_to_point3() {
         assert!(diff_pos < 1.0e-15);
         let diff_r0 = (a.1 - b.1[0]).abs();
         assert!(diff_r0 < 1.0e-15);
-        let diff_r1 = (a.1 - b.1[0]).abs();
+        let diff_r1 = (a.2 - b.1[1]).abs();
         assert!(diff_r1 < 1.0e-15);
     }
 }
