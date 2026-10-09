@@ -368,6 +368,8 @@ fn test_w_inverse_distance_cubic_integrated_over_wedge() {
     }
 }
 
+// ----------------------------------------------
+
 pub fn nearest_to_point3<T>(q0: &[T; 3], q1: &[T; 3], q2: &[T; 3], ps: &[T; 3]) -> ([T; 3], T, T)
 where
     T: num_traits::Float + std::fmt::Debug,
@@ -407,7 +409,107 @@ where
     (r01, r0, r1)
 }
 
-// -------------------------------------
+// Voronoi-region method from Ericson, "Real-Time Collision Detection".
+// Returns (closest_point, barycentric_coords) where `bary[i]` is the
+// weight on vertex i ∈ {a, b, c}. On-edge / on-vertex tie-breaking
+// follows the Ericson Voronoi-region branching.
+pub fn nearest_to_point3_fast(
+    a: &[f64; 3],
+    b: &[f64; 3],
+    c: &[f64; 3],
+    p: &[f64; 3],
+) -> ([f64; 3], [f64; 3]) {
+    use crate::vec3::{dot, sub};
+    let ab = sub(b, a);
+    let ac = sub(c, a);
+    let ap = sub(p, a);
+
+    let d1 = dot(&ab, &ap);
+    let d2 = dot(&ac, &ap);
+
+    if d1 <= 0.0 && d2 <= 0.0 {
+        return (*a, [1.0, 0.0, 0.0]);
+    }
+
+    let bp = sub(p, b);
+    let d3 = dot(&ab, &bp);
+    let d4 = dot(&ac, &bp);
+
+    if d3 >= 0.0 && d4 <= d3 {
+        return (*b, [0.0, 1.0, 0.0]);
+    }
+
+    let vc = d1 * d4 - d3 * d2;
+    if vc <= 0.0 && d1 >= 0.0 && d3 <= 0.0 {
+        let denom = d1 - d3;
+        let v = if denom != 0.0 { d1 / denom } else { 0.0 };
+        let pt = [a[0] + v * ab[0], a[1] + v * ab[1], a[2] + v * ab[2]];
+        return (pt, [1.0 - v, v, 0.0]);
+    }
+
+    let cp = sub(p, c);
+    let d5 = dot(&ab, &cp);
+    let d6 = dot(&ac, &cp);
+
+    if d6 >= 0.0 && d5 <= d6 {
+        return (*c, [0.0, 0.0, 1.0]);
+    }
+
+    let vb = d5 * d2 - d1 * d6;
+    if vb <= 0.0 && d2 >= 0.0 && d6 <= 0.0 {
+        let denom = d2 - d6;
+        let w = if denom != 0.0 { d2 / denom } else { 0.0 };
+        let pt = [a[0] + w * ac[0], a[1] + w * ac[1], a[2] + w * ac[2]];
+        return (pt, [1.0 - w, 0.0, w]);
+    }
+
+    let va = d3 * d6 - d5 * d4;
+    let d4_d3 = d4 - d3;
+    let d5_d6 = d5 - d6;
+    if va <= 0.0 && d4_d3 >= 0.0 && d5_d6 >= 0.0 {
+        let denom = d4_d3 + d5_d6;
+        let w = if denom != 0.0 { d4_d3 / denom } else { 0.0 };
+        let bc = sub(c, b);
+        let pt = [b[0] + w * bc[0], b[1] + w * bc[1], b[2] + w * bc[2]];
+        return (pt, [0.0, 1.0 - w, w]);
+    }
+
+    let denom = va + vb + vc;
+    if denom == 0.0 {
+        return (*a, [1.0, 0.0, 0.0]);
+    }
+    let v = vb / denom;
+    let w = vc / denom;
+    let u = 1.0 - v - w;
+    let pt = [
+        a[0] + v * ab[0] + w * ac[0],
+        a[1] + v * ab[1] + w * ac[1],
+        a[2] + v * ab[2] + w * ac[2],
+    ];
+    (pt, [u, v, w])
+}
+
+#[test]
+pub fn test_nearest_to_point3() {
+    use rand::RngExt;
+    use rand::SeedableRng;
+    let mut reng = rand_chacha::ChaChaRng::seed_from_u64(0);
+    for _ in 0..100 {
+        let p0: [f64; 3] = std::array::from_fn(|_| reng.random());
+        let p1: [f64; 3] = std::array::from_fn(|_| reng.random());
+        let p2: [f64; 3] = std::array::from_fn(|_| reng.random());
+        let q: [f64; 3] = std::array::from_fn(|_| reng.random());
+        let a = nearest_to_point3(&p0, &p1, &p2, &q);
+        let b = nearest_to_point3_fast(&p0, &p1, &p2, &q);
+        let diff_pos = crate::edge3::length(&a.0, &b.0);
+        assert!(diff_pos < 1.0e-15);
+        let diff_r0 = (a.1 - b.1[0]).abs();
+        assert!(diff_r0 < 1.0e-15);
+        let diff_r1 = (a.1 - b.1[0]).abs();
+        assert!(diff_r1 < 1.0e-15);
+    }
+}
+
 pub fn nearest_to_origin3<T>(q0: &[T; 3], q1: &[T; 3], q2: &[T; 3]) -> ([T; 3], T, T, T)
 where
     T: num_traits::Float + std::fmt::Debug,
@@ -416,6 +518,55 @@ where
     let (p, bc0, bc1) = nearest_to_point3(q0, q1, q2, origin);
     let bc2 = T::one() - bc0 - bc1;
     (p, bc0, bc1, bc2)
+}
+
+pub fn squared_distance_against_point(
+    v0: &[f64; 3],
+    v1: &[f64; 3],
+    v2: &[f64; 3],
+    p: &[f64; 3],
+) -> f64 {
+    use crate::vec3::{dot, sub};
+    let (closest, _) = nearest_to_point3_fast(v0, v1, v2, p);
+    let d = sub(p, &closest);
+    dot(&d, &d)
+}
+
+pub fn tri_edge_distance_sq(t: &[[f64; 3]; 3], e: &[[f64; 3]; 2], threshold_sq: f64) -> f64 {
+    let mut min_sq = f64::INFINITY;
+    // Edge endpoints to triangle (2)
+    for k in 0..2 {
+        let d = squared_distance_against_point(&t[0], &t[1], &t[2], &e[k]);
+        if d < min_sq {
+            min_sq = d;
+            if min_sq < threshold_sq {
+                return min_sq;
+            }
+        }
+    }
+    // Triangle vertices to edge (3)
+    for k in 0..3 {
+        let d = crate::edge3::squared_distance_against_point(&e[0], &e[1], &t[k]);
+        if d < min_sq {
+            min_sq = d;
+            if min_sq < threshold_sq {
+                return min_sq;
+            }
+        }
+    }
+    // Triangle edges to edge (3)
+    let edges = [(0usize, 1usize), (1, 2), (2, 0)];
+    for ek in 0..3 {
+        let (a0, a1) = (t[edges[ek].0], t[edges[ek].1]);
+        let d = crate::edge3::squared_distance_against_edge(&a0, &a1, &e[0], &e[1]);
+        if d < min_sq {
+            min_sq = d;
+            if min_sq < threshold_sq {
+                return min_sq;
+            }
+        }
+    }
+    min_sq
 }
 
 // below: intersection

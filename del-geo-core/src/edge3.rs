@@ -59,42 +59,15 @@ where
     ]
 }
 
-pub fn nearest_to_origin3<T>(p0: &[T; 3], p1: &[T; 3]) -> ([T; 3], T, T)
+pub fn lerp<T>(p0: &[T; 3], p1: &[T; 3], s: T) -> [T; 3]
 where
     T: num_traits::Float,
 {
-    let origin = &[T::zero(); 3];
-    let (_dist, t) = nearest_to_point3(p0, p1, origin);
-    let p = position_from_ratio(p0, p1, t);
-    let s0 = T::one() - t;
-    (p, s0, t)
-}
-
-/// * Returns `(dist, ratio)`
-///   - `dist` : distance
-///   - `ratio`: ratio
-pub fn nearest_to_point3<T>(p0: &[T; 3], p1: &[T; 3], point_pos: &[T; 3]) -> (T, T)
-where
-    T: num_traits::Float,
-{
-    use crate::vec3::Vec3;
-    let zero = T::zero();
-    let one = T::one();
-    let half = one / (one + one);
-    let d = p1.sub(p0);
-    let t = {
-        if d.dot(&d) > T::epsilon() {
-            let ps = std::array::from_fn(|i| p0[i] - point_pos[i]);
-            let a = d.dot(&d);
-            let b = d.dot(&ps);
-            (-b / a).clamp(zero, one)
-        } else {
-            half
-        }
-    };
-    let p = crate::vec3::axpy(t, &d, p0);
-    let dist = length(&p, point_pos);
-    (dist, t)
+    [
+        p0[0] + s * (p1[0] - p0[0]),
+        p0[1] + s * (p1[1] - p0[1]),
+        p0[2] + s * (p1[2] - p0[2]),
+    ]
 }
 
 pub fn wdw_integral_of_inverse_distance_cubic<T>(
@@ -195,6 +168,47 @@ mod tests {
             assert!(dv0.sub(&dv1).norm() < 0.03 * (dv0.norm() + 1.0));
         }
     }
+}
+
+// ----------------------------------
+// below proximity
+
+pub fn nearest_to_origin3<T>(p0: &[T; 3], p1: &[T; 3]) -> ([T; 3], T, T)
+where
+    T: num_traits::Float,
+{
+    let origin = &[T::zero(); 3];
+    let (_dist, t) = nearest_to_point3(p0, p1, origin);
+    let p = position_from_ratio(p0, p1, t);
+    let s0 = T::one() - t;
+    (p, s0, t)
+}
+
+/// * Returns `(dist, ratio)`
+///   - `dist` : distance
+///   - `ratio`: ratio
+pub fn nearest_to_point3<T>(p0: &[T; 3], p1: &[T; 3], point_pos: &[T; 3]) -> (T, T)
+where
+    T: num_traits::Float,
+{
+    use crate::vec3::Vec3;
+    let zero = T::zero();
+    let one = T::one();
+    let half = one / (one + one);
+    let d = p1.sub(p0);
+    let t = {
+        if d.dot(&d) > T::epsilon() {
+            let ps = std::array::from_fn(|i| p0[i] - point_pos[i]);
+            let a = d.dot(&d);
+            let b = d.dot(&ps);
+            (-b / a).clamp(zero, one)
+        } else {
+            half
+        }
+    };
+    let p = crate::vec3::axpy(t, &d, p0);
+    let dist = length(&p, point_pos);
+    (dist, t)
 }
 
 pub fn nearest_to_edge3<T>(p0: &[T; 3], p1: &[T; 3], q0: &[T; 3], q1: &[T; 3]) -> (T, T, T)
@@ -464,16 +478,85 @@ where
     Some((rp0, rp1, rq0, rq1))
 }
 
-pub fn lerp<T>(p0: &[T; 3], p1: &[T; 3], s: T) -> [T; 3]
-where
-    T: num_traits::Float,
-{
-    [
-        p0[0] + s * (p1[0] - p0[0]),
-        p0[1] + s * (p1[1] - p0[1]),
-        p0[2] + s * (p1[2] - p0[2]),
-    ]
+pub fn squared_distance_against_edge(
+    a0: &[f64; 3],
+    a1: &[f64; 3],
+    b0: &[f64; 3],
+    b1: &[f64; 3],
+) -> f64 {
+    use crate::vec3::{dot, sub};
+    const EPS_LEN_SQ: f64 = 1.0e-12;
+    const EPS_DENOM: f64 = 1.0e-12;
+    let d1 = sub(a1, a0);
+    let d2 = sub(b1, b0);
+    let r = sub(a0, b0);
+
+    let a = dot(&d1, &d1);
+    let e = dot(&d2, &d2);
+    let f = dot(&d2, &r);
+
+    let (s, t);
+    if a < EPS_LEN_SQ && e < EPS_LEN_SQ {
+        let d = sub(a0, b0);
+        return dot(&d, &d);
+    } else if a < EPS_LEN_SQ {
+        s = 0.0;
+        t = (f / e).clamp(0.0, 1.0);
+    } else if e < EPS_LEN_SQ {
+        t = 0.0;
+        s = (-dot(&d1, &r) / a).clamp(0.0, 1.0);
+    } else {
+        let b_val = dot(&d1, &d2);
+        let c = dot(&d1, &r);
+        // Gram determinant |d1 x d2|^2, a quartic (L^4) quantity, not a length^2.
+        let denom = a * e - b_val * b_val;
+        let s_init = if denom.abs() > EPS_DENOM {
+            ((b_val * f - c * e) / denom).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let t_init = (b_val * s_init + f) / e;
+
+        if t_init < 0.0 {
+            t = 0.0;
+            s = (-c / a).clamp(0.0, 1.0);
+        } else if t_init > 1.0 {
+            t = 1.0;
+            s = ((b_val - c) / a).clamp(0.0, 1.0);
+        } else {
+            s = s_init;
+            t = t_init;
+        }
+    }
+
+    let closest_a = [a0[0] + s * d1[0], a0[1] + s * d1[1], a0[2] + s * d1[2]];
+    let closest_b = [b0[0] + t * d2[0], b0[1] + t * d2[1], b0[2] + t * d2[2]];
+    let diff = sub(&closest_a, &closest_b);
+    dot(&diff, &diff)
 }
+
+pub fn squared_distance_against_point(e0: &[f64; 3], e1: &[f64; 3], p: &[f64; 3]) -> f64 {
+    use crate::vec3::{dot, sub};
+    const EPS_LEN_SQ: f64 = 1.0e-12;
+    // const EPS_DENOM: f64 = 1.0e-12;
+    let edge = sub(e1, e0);
+    let edge_len_sq = dot(&edge, &edge);
+    if edge_len_sq < EPS_LEN_SQ {
+        let d = sub(p, e0);
+        return dot(&d, &d);
+    }
+    let t = (dot(&sub(p, e0), &edge) / edge_len_sq).clamp(0.0, 1.0);
+    let closest = [
+        e0[0] + t * edge[0],
+        e0[1] + t * edge[1],
+        e0[2] + t * edge[2],
+    ];
+    let d = sub(p, &closest);
+    dot(&d, &d)
+}
+
+// end: proximity
+// ----------------------------------------------
 
 #[allow(clippy::type_complexity)]
 pub fn wdwddw_squared_length_difference<T>(
