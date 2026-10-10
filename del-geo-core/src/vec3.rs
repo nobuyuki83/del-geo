@@ -17,7 +17,7 @@ where
     fn add_in_place(&mut self, other: &Self);
     fn cross(&self, other: &Self) -> Self;
     fn orthogonalize(&self, v: &Self) -> Self;
-    fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<Self>;
+    fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<(Self, Real)>;
     fn xy(&self) -> [Real; 2];
     fn normalize_in_place(&mut self) -> Real;
     fn element_wise_mult(&self, other: &Self) -> Self;
@@ -66,7 +66,7 @@ where
     fn orthogonalize(&self, v: &Self) -> Self {
         orthogonalize(self, v)
     }
-    fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<[Real; 3]> {
+    fn transform_homogeneous(&self, v: &[Real; 16]) -> Option<([Real; 3], Real)> {
         crate::mat4_col_major::transform_homogeneous(v, self)
     }
     fn xy(&self) -> [Real; 2] {

@@ -5,11 +5,18 @@ pub trait Mat4ColMajor<Real>
 where
     Self: Sized,
 {
-    fn transform_homogeneous(&self, a: &[Real; 3]) -> Option<[Real; 3]>;
+    /// transform a 3D point as homogeneous coordinate `(x,y,z,1)` and divide by `w`.
+    /// return `(transformed point, w)`, or `None` if `w` is zero
+    fn transform_homogeneous(&self, a: &[Real; 3]) -> Option<([Real; 3], Real)>;
+    /// matrix product `self * b`
     fn mult_mat(&self, b: &Self) -> Self;
+    /// transform a direction vector using only the upper-left 3x3 block (translation ignored)
     fn transform_direction(&self, a: &[Real; 3]) -> [Real; 3];
+    /// inverse matrix, or `None` if the matrix is singular
     fn try_inverse(&self) -> Option<Self>;
+    /// element-wise addition `self += other`
     fn add_in_place(&mut self, other: &Self);
+    /// transposed matrix
     fn transpose(&self) -> [Real; 16];
 }
 
@@ -17,7 +24,7 @@ impl<Real> Mat4ColMajor<Real> for [Real; 16]
 where
     Real: num_traits::Float,
 {
-    fn transform_homogeneous(&self, v: &[Real; 3]) -> Option<[Real; 3]> {
+    fn transform_homogeneous(&self, v: &[Real; 3]) -> Option<([Real; 3], Real)> {
         transform_homogeneous(self, v)
     }
     fn mult_mat(&self, b: &Self) -> Self {
@@ -42,6 +49,7 @@ where
 use crate::aabb3::max_edge_size;
 use num_traits::AsPrimitive;
 
+/// 4x4 identity matrix
 pub fn from_identity<Real>() -> [Real; 16]
 where
     Real: num_traits::Zero + num_traits::One + Copy,
@@ -53,6 +61,7 @@ where
     ]
 }
 
+/// diagonal matrix `diag(m11, m22, m33, m44)`
 pub fn from_diagonal<Real>(m11: Real, m22: Real, m33: Real, m44: Real) -> [Real; 16]
 where
     Real: num_traits::Zero + Copy,
@@ -63,6 +72,7 @@ where
     ]
 }
 
+/// homogeneous transformation of uniform scaling by `s` (i.e., `diag(s, s, s, 1)`)
 pub fn from_scale_uniform<Real>(s: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -74,6 +84,7 @@ where
     ]
 }
 
+/// homogeneous transformation of translation by `v`
 pub fn from_translate<Real>(v: &[Real; 3]) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -85,6 +96,7 @@ where
     ]
 }
 
+/// homogeneous transformation of rotation around the x-axis by `theta` (radian, right-handed)
 pub fn from_rot_x<Real>(theta: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -98,6 +110,7 @@ where
     ]
 }
 
+/// homogeneous transformation of rotation around the y-axis by `theta` (radian, right-handed)
 pub fn from_rot_y<Real>(theta: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -111,6 +124,7 @@ where
     ]
 }
 
+/// homogeneous transformation of rotation around the z-axis by `theta` (radian, right-handed)
 pub fn from_rot_z<Real>(theta: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -125,6 +139,7 @@ where
 }
 
 /// rotation matrix where x-rotation, y-rotation and z-rotation is applied sequentially
+/// (i.e., `Rz(rz) * Ry(ry) * Rx(rx)`). angles are in radian
 pub fn from_bryant_angles<Real>(rx: Real, ry: Real, rz: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -168,6 +183,12 @@ pub fn from_transform_ndc2pix(img_shape: (usize, usize)) -> [f32; 16] {
     ]
 }
 
+/*
+/// transformation that maps the NDC cube `[-1,+1]^3` to a box centered at the AABB that covers it,
+/// where the x/y aspect ratio of the box is `asp` (width / height).
+/// The inverse of this matrix fits the AABB into the NDC while preserving the x/y aspect ratio.
+/// * `aabb` - `[min_x, min_y, min_z, max_x, max_y, max_z]`
+/// * `asp` - aspect ratio (width / height) of the screen
 pub fn from_aabb3_fit_into_ndc_preserving_xyasp<Real>(aabb: &[Real; 6], asp: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -205,8 +226,10 @@ where
         one,
     ]
 }
+ */
 
 /// transform aabb to unit square (0,1)^3 while preserving aspect ratio
+/// (uniformly scaled so that the longest edge becomes 1, and centered at (0.5, 0.5, 0.5))
 /// return 4x4 homogeneous transformation matrix in **column major** order
 pub fn from_aabb3_fit_into_unit_preserve_asp<Real>(aabb_world: &[Real; 6]) -> [Real; 16]
 where
@@ -231,7 +254,7 @@ where
     ]
 }
 
-/// transform aabb to unit square (0,1)^3
+/// transform aabb to unit square (0,1)^3 (each axis is scaled independently)
 /// return 4x4 homogeneous transformation matrix in **column major** order
 pub fn from_aabb3_fit_into_unit<Real>(aabb_world: &[Real; 6]) -> [Real; 16]
 where
@@ -255,7 +278,8 @@ where
 }
 
 /// this function is typically used to make 3D homogeneous tranformation matrix
-/// from 2D homogeneous transformation mtrix
+/// from 2D homogeneous transformation mtrix.
+/// x and y are transformed by `m` while z is left unchanged
 pub fn from_mat3_col_major_adding_z<Real>(m: &[Real; 9]) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -268,6 +292,8 @@ where
     ]
 }
 
+/// embed a 3x3 matrix `m` to the upper-left block of a 4x4 matrix.
+/// the bottom-right element is set to `dia`, and the other elements are zero
 pub fn from_mat3_col_major_adding_w<Real>(m: &[Real; 9], dia: Real) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -282,6 +308,7 @@ where
 // above: from method (making 4x4 matrix)
 // ----------------------------------------
 
+/// extract the upper-left 3x3 block (column major)
 pub fn to_mat3_col_major_xyz<T>(m: &[T; 16]) -> [T; 9]
 where
     T: num_traits::Float,
@@ -289,6 +316,7 @@ where
     [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]]
 }
 
+/// extract the translation part (the first three elements of the fourth column)
 pub fn to_vec3_translation<T>(m: &[T; 16]) -> [T; 3]
 where
     T: num_traits::Float,
@@ -299,7 +327,12 @@ where
 // above: to method
 // ----------------------------------------
 
-pub fn transform_homogeneous<Real>(transform: &[Real; 16], x: &[Real; 3]) -> Option<[Real; 3]>
+/// transform a 3D point `x` as homogeneous coordinate `(x,y,z,1)` and divide by `w`.
+/// return `(transformed point, w)`, or `None` if `w` is zero
+pub fn transform_homogeneous<Real>(
+    transform: &[Real; 16],
+    x: &[Real; 3],
+) -> Option<([Real; 3], Real)>
 where
     Real: num_traits::Float,
 {
@@ -311,9 +344,11 @@ where
     let y0 = transform[0] * x[0] + transform[4] * x[1] + transform[8] * x[2] + transform[12];
     let y1 = transform[1] * x[0] + transform[5] * x[1] + transform[9] * x[2] + transform[13];
     let y2 = transform[2] * x[0] + transform[6] * x[1] + transform[10] * x[2] + transform[14];
-    Some([y0 / y3, y1 / y3, y2 / y3])
+    Some(([y0 / y3, y1 / y3, y2 / y3], y3))
 }
 
+/// jacobian of the homogeneous transformation (see `transform_homogeneous`) at point `p`.
+/// return 3x3 matrix in column major order where `(i,j)` element is `d q_i / d p_j`
 pub fn jacobian_transform<Real>(t: &[Real; 16], p: &[Real; 3]) -> [Real; 9]
 where
     Real: num_traits::Float,
@@ -350,7 +385,7 @@ fn test_jacobian_transform() {
     for a in vec_a.iter() {
         // let p0 = [1.3, 0.3, -0.5];
         let p0 = [0.5, 0.3, 0.0];
-        let q0 = transform_homogeneous(a, &p0).unwrap();
+        let (q0, _) = transform_homogeneous(a, &p0).unwrap();
         let dqdp = jacobian_transform(a, &p0);
         let eps = 1.0e-6;
         for j_dim in 0..3 {
@@ -359,7 +394,7 @@ fn test_jacobian_transform() {
                 p1[j_dim] += eps;
                 p1
             };
-            let q1 = transform_homogeneous(a, &p1).unwrap();
+            let (q1, _) = transform_homogeneous(a, &p1).unwrap();
             for i_dim in 0..3 {
                 let v_num = (q1[i_dim] - q0[i_dim]) / eps;
                 let v_ana = dqdp[i_dim + 3 * j_dim];
@@ -370,6 +405,7 @@ fn test_jacobian_transform() {
     }
 }
 
+/// transform a direction vector `x` using only the upper-left 3x3 block (translation ignored)
 pub fn transform_direction<Real>(transform: &[Real; 16], x: &[Real; 3]) -> [Real; 3]
 where
     Real: num_traits::Float,
@@ -380,6 +416,8 @@ where
     [y0, y1, y2]
 }
 
+/// inverse matrix, or `None` if the matrix is singular.
+/// (the row-major routine can be used because `inv(A^T) = inv(A)^T`)
 pub fn try_inverse<Real>(b: &[Real; 16]) -> Option<[Real; 16]>
 where
     Real: num_traits::Float,
@@ -387,6 +425,9 @@ where
     crate::matn_row_major::try_inverse::<Real, 4, 16>(b)
 }
 
+/// inverse matrix computed by LU decomposition with partial pivoting.
+/// more robust than `try_inverse` when a diagonal element is (near) zero.
+/// return `None` if a pivot is smaller than the machine epsilon
 pub fn try_inverse_with_pivot<Real>(a: &[Real; 16]) -> Option<[Real; 16]>
 where
     Real: num_traits::Float,
@@ -547,6 +588,9 @@ where
     }
 }
 
+/// view matrix (transformation from world to camera coordinate) compatible with blender
+/// * `cam_location` - location of the camera in the world coordinate
+/// * `cam_rot_{x,y,z}_deg` - XYZ euler angles of the camera (unit: degree)
 pub fn camera_external_blender<Real>(
     cam_location: &[Real; 3],
     cam_rot_x_deg: Real,
@@ -571,6 +615,7 @@ where
     crate::mat4_col_major::mult_mat_col_major(&rot_zyx, &transl)
 }
 
+/// multiply all the elements by the scalar `s`
 pub fn scale<Real>(m: &[Real; 16], s: Real) -> [Real; 16]
 where
     Real: Copy + std::ops::Mul<Output = Real>,
@@ -578,6 +623,7 @@ where
     m.map(|x| s * x)
 }
 
+/// matrix product `a * b`
 pub fn mult_mat_col_major<Real>(a: &[Real; 16], b: &[Real; 16]) -> [Real; 16]
 where
     Real: num_traits::Float,
@@ -593,6 +639,7 @@ where
     o
 }
 
+/// matrix-vector product `a * b` for a 4D vector `b`
 pub fn mult_vec<Real>(a: &[Real; 16], b: &[Real; 4]) -> [Real; 4]
 where
     Real: num_traits::Float,
@@ -624,6 +671,7 @@ fn test_inverse_multmat() {
     }
 }
 
+/// transposed matrix
 pub fn transpose<Real>(m: &[Real; 16]) -> [Real; 16]
 where
     Real: Copy,
@@ -635,16 +683,17 @@ where
 }
 
 /// ray that goes through `pos_world: [f32;3]` that will be -z direction in the normalized device coordinate (NDC).
-/// return `(ray_org: [f32;3], ray_dir: [f32;2])`
+/// the ray starts on the front plane (z=+1 in NDC) and ends on the back plane (z=-1 in NDC).
+/// return `(ray_org: [f32;3], ray_dir: [f32;3])`
 pub fn ray_from_transform_world2ndc(
     transform_world2ndc: &[f32; 16],
     pos_world: &[f32; 3],
     transform_ndc2world: &[f32; 16],
 ) -> ([f32; 3], [f32; 3]) {
-    let pos_mid_ndc = transform_homogeneous(transform_world2ndc, pos_world).unwrap();
-    let ray_stt_world =
+    let (pos_mid_ndc, _) = transform_homogeneous(transform_world2ndc, pos_world).unwrap();
+    let (ray_stt_world, _) =
         transform_homogeneous(transform_ndc2world, &[pos_mid_ndc[0], pos_mid_ndc[1], 1.0]).unwrap();
-    let ray_end_world =
+    let (ray_end_world, _) =
         transform_homogeneous(transform_ndc2world, &[pos_mid_ndc[0], pos_mid_ndc[1], -1.0])
             .unwrap();
     (
@@ -667,13 +716,14 @@ where
     let two = one + one;
     let x0 = two * pix_coord.0 / (image_size.0) - one;
     let y0 = one - two * pix_coord.1 / (image_size.1);
-    let p0 = transform_homogeneous(transform_ndc2world, &[x0, y0, one]).unwrap();
-    let p1 = transform_homogeneous(transform_ndc2world, &[x0, y0, -one]).unwrap();
+    let (p0, _) = transform_homogeneous(transform_ndc2world, &[x0, y0, one]).unwrap();
+    let (p1, _) = transform_homogeneous(transform_ndc2world, &[x0, y0, -one]).unwrap();
     let ray_org = p0;
     let ray_dir = crate::vec3::sub(&p1, &p0);
     (ray_org, ray_dir)
 }
 
+/// matrix product of three matrices `a * b * c`
 pub fn mult_three_mats_col_major<Real>(a: &[Real; 16], b: &[Real; 16], c: &[Real; 16]) -> [Real; 16]
 where
     Real: num_traits::Float,
