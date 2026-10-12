@@ -563,6 +563,7 @@ pub fn wdwddw_squared_length_difference<T>(
     node2xyz_def: &[[T; 3]; 2],
     stiffness: T,
     edge_length_ini: T,
+    is_spd_projection: bool,
 ) -> (T, [[T; 3]; 2], [[[T; 9]; 2]; 2])
 where
     T: num_traits::Float,
@@ -570,6 +571,7 @@ where
     use crate::mat3_col_major::Mat3ColMajor;
     use crate::vec3::Vec3;
     //
+    let zero = T::zero();
     let one = T::one();
     let half = one / (one + one);
     let v = node2xyz_def[0].sub(&node2xyz_def[1]);
@@ -579,7 +581,12 @@ where
     let m = {
         let mvv = crate::mat3_col_major::from_scaled_outer_product(one, &v, &v);
         let t0 = stiffness * edge_length_ini / (l * l * l);
-        let t1 = stiffness * (l - edge_length_ini) / l;
+        let t1 = stiffness
+            * if is_spd_projection {
+                (one - edge_length_ini / l).max(zero)
+            } else {
+                one - edge_length_ini / l
+            };
         let t2 = crate::mat3_col_major::from_identity().scale(t1);
         mvv.scale(t0).add(&t2)
     };
