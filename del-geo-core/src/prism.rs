@@ -329,8 +329,7 @@ fn test_nearest_to_origin() {
         r >= -1.0e-10
             && s >= -1.0e-10
             && r + s <= 1.0 + 1.0e-10
-            && t >= -1.0e-10
-            && t <= 1.0 + 1.0e-10,
+            && (-1.0e-10..=1.0 + 1.0e-10).contains(&t),
         "pco out of domain: {:?}",
         pco
     );

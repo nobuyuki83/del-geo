@@ -173,9 +173,7 @@ fn test_to_mat3_from_axisangle_vec() {
     }
     {
         // test small angle rotation
-        let org = [1.0, 0.3, -0.5f64]
-            .normalize()
-            .scale(std::f64::EPSILON.sqrt());
+        let org = [1.0, 0.3, -0.5f64].normalize().scale(f64::EPSILON.sqrt());
         let a0 = org.scale(1.6);
         let a1 = org.scale(0.8);
         let r0 = to_mat3_from_axisangle_vec(&a0);
@@ -184,7 +182,7 @@ fn test_to_mat3_from_axisangle_vec() {
         let r0a = r1.mult_mat_col_major(&r1);
         for i in 0..9 {
             let err = (r0[i] - r0a[i]).abs();
-            assert!(err < std::f64::EPSILON);
+            assert!(err < f64::EPSILON);
         }
     }
 }

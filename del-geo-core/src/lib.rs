@@ -57,6 +57,7 @@ pub mod tri;
 pub mod tri2;
 pub mod tri2_scanline;
 pub mod tri3;
+pub mod tri3_kelvinlet;
 pub mod unit2;
 pub mod uvec3;
 pub mod vec4;

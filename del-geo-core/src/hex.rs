@@ -847,12 +847,9 @@ fn test_nearest_to_origin() {
         let (p, pco) = nearest_to_origin(&p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7);
         let (r0, r1, r2) = (pco[0], pco[1], pco[2]);
         assert!(
-            r0 >= -1.0 - 1.0e-10
-                && r0 <= 1.0 + 1.0e-10
-                && r1 >= -1.0 - 1.0e-10
-                && r1 <= 1.0 + 1.0e-10
-                && r2 >= -1.0 - 1.0e-10
-                && r2 <= 1.0 + 1.0e-10,
+            (-1.0 - 1.0e-10..=1.0 + 1.0e-10).contains(&r0)
+                && (-1.0 - 1.0e-10..=1.0 + 1.0e-10).contains(&r1)
+                && (-1.0 - 1.0e-10..=1.0 + 1.0e-10).contains(&r2),
             "outside: pco out of domain: {:?}",
             pco
         );
