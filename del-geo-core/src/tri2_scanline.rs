@@ -80,11 +80,12 @@ impl TriangleScanlineIter {
                 // pixel (ix, iy) is covered if its center (ix+0.5, iy+0.5) is inside the triangle.
                 // A pixel ix is covered on this scanline when ix+0.5 is in [x_left, x_right],
                 // i.e. ix >= ceil(x_left - 0.5) and ix <= floor(x_right - 0.5).
-                // NOTE: f32 edge-intersection rounding can make x_right land just below the
-                // true boundary (e.g. 114.49999 instead of 114.5), silently dropping a boundary
-                // pixel. Add a small epsilon before flooring if that matters to the caller.
-                let x_start = (x_left - 0.5).ceil() as i32;
-                let x_end = (x_right - 0.5).floor() as i32;
+                // A small epsilon is added/subtracted before floor/ceil to avoid missing boundary
+                // pixels when f32 rounding places the intersection just short of a .5 boundary.
+                // The downstream barycentric check filters any falsely included pixels.
+                const EPS: f32 = 5e-4;
+                let x_start = (x_left - 0.5 - EPS).ceil() as i32;
+                let x_end = (x_right - 0.5 + EPS).floor() as i32;
 
                 if x_start <= x_end {
                     self.cur_x = x_start;

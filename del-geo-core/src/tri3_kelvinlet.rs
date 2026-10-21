@@ -32,7 +32,7 @@ pub struct Evaluation<T> {
 /// `nu == 0.5` evaluates the incompressible limit. Signed densities are allowed.
 /// Input coordinates and density must be finite. Degenerate or extremely thin
 /// triangles are rejected. Geometry is normalized internally by its longest edge.
-pub fn evaluate<T>(
+pub fn evaluate_kernel<T>(
     vertices: [Vec3<T>; 3],
     density: [T; 3],
     x: Vec3<T>,
@@ -147,7 +147,7 @@ where
             }
         }
     }
-
+    // solid angle
     let omega = if h == zero {
         // Only h*omega enters the formulas; its planar limit is zero.
         zero
@@ -204,8 +204,31 @@ pub fn displacement<T>(kernel: Mat3ArrayOfRows<T>, force: Vec3<T>) -> Vec3<T>
 where
     T: num_traits::Float,
 {
-    let kernel: &[T; 9] = kernel.as_flattened().try_into().unwrap();
-    crate::mat3_row_major::mult_vec(kernel, &force)
+    crate::mat3_array_of_rows::mult_vec(&kernel, &force)
+}
+
+pub fn eval_lhs_triangle_kelvinlet<T>(
+    node2xyz: &[[T; 3]; 3],
+    node2rhs: &[[T; 3]; 3],
+    xyz_wtx: &[T; 3],
+    mu: T,
+    nu: T,
+) -> [T; 3]
+where
+    T: num_traits::Float + num_traits::FloatConst,
+{
+    let mut lhs_wtx = [T::zero(); 3];
+    for i_node in 0..3 {
+        let density = {
+            let mut density = [T::zero(); 3];
+            density[i_node] = T::one();
+            density
+        };
+        let eval = evaluate_kernel(*node2xyz, density, *xyz_wtx, mu, nu).unwrap();
+        let lhs0 = crate::mat3_array_of_rows::mult_vec(&eval.kernel, &node2rhs[i_node]);
+        crate::vec3::add_in_place(&mut lhs_wtx, &lhs0)
+    }
+    lhs_wtx
 }
 
 fn asinh_scaled<T>(t: T, q: T) -> T
@@ -269,7 +292,7 @@ mod tests {
     fn off_surface_matches_independent_quadrature() {
         let v = [[0.1, 0.2, 0.3], [1.3, 0.1, 0.6], [0.3, 1.1, 0.5]];
         for x in [[0.4, 0.25, 0.9], [-0.4, 0.7, -0.6]] {
-            let out = evaluate::<T>(v, [0.8, 1.2, 0.5], x, 2.0, 0.3).unwrap();
+            let out = evaluate_kernel::<T>(v, [0.8, 1.2, 0.5], x, 2.0, 0.3).unwrap();
             let (p, h) = quadrature(v, [0.8, 1.2, 0.5], x, 600);
             close(out.potential, p, 2e-6);
             for i in 0..3 {
@@ -285,7 +308,7 @@ mod tests {
         for k in 0..3 {
             let v = [V[k], V[(k + 1) % 3], V[(k + 2) % 3]];
             let r = [rho[k], rho[(k + 1) % 3], rho[(k + 2) % 3]];
-            let out = evaluate::<T>(v, r, v[0], 1.0, 0.5).unwrap();
+            let out = evaluate_kernel::<T>(v, r, v[0], 1.0, 0.5).unwrap();
             let (p, h) = quadrature(v, r, v[0], 800);
             close(out.potential, p, 2e-6);
             for i in 0..3 {
@@ -298,11 +321,13 @@ mod tests {
     #[test]
     fn plane_limits_and_winding() {
         for xy in [[0.3, 0.2, 0.0], [0.6, 0.0, 0.0], V[0], V[1], V[2]] {
-            let at = evaluate::<T>(V, [1.0; 3], xy, 1.0, 0.3).unwrap();
-            let reversed = evaluate::<T>([V[0], V[2], V[1]], [1.0; 3], xy, 1.0, 0.3).unwrap();
+            let at = evaluate_kernel::<T>(V, [1.0; 3], xy, 1.0, 0.3).unwrap();
+            let reversed =
+                evaluate_kernel::<T>([V[0], V[2], V[1]], [1.0; 3], xy, 1.0, 0.3).unwrap();
             for sign in [-1.0, 1.0] {
-                let near = evaluate::<T>(V, [1.0; 3], add(&xy, &[0.0, 0.0, sign * 1e-9]), 1.0, 0.3)
-                    .unwrap();
+                let near =
+                    evaluate_kernel::<T>(V, [1.0; 3], add(&xy, &[0.0, 0.0, sign * 1e-9]), 1.0, 0.3)
+                        .unwrap();
                 for i in 0..3 {
                     for j in 0..3 {
                         close(at.kernel[i][j], reversed.kernel[i][j], 1e-12);
@@ -315,7 +340,7 @@ mod tests {
     #[test]
     fn constant_density_vertex_has_known_potential() {
         let v = [[0.0; 3], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]];
-        let out = evaluate::<T>(v, [1.0; 3], v[0], 1.0, 0.3).unwrap();
+        let out = evaluate_kernel::<T>(v, [1.0; 3], v[0], 1.0, 0.3).unwrap();
         close(out.potential, 2.0_f64.sqrt() * 1.0_f64.asinh(), 1e-13);
         close(
             (0..3).map(|i| out.hessian_s[i][i]).sum(),
@@ -326,8 +351,8 @@ mod tests {
     #[test]
     fn scale_density_and_invalid_inputs() {
         let x = [0.4, 0.2, 0.7];
-        let base = evaluate::<T>(V, [0.8, 1.2, 0.5], x, 1.0, 0.3).unwrap();
-        let scaled = evaluate::<T>(
+        let base = evaluate_kernel::<T>(V, [0.8, 1.2, 0.5], x, 1.0, 0.3).unwrap();
+        let scaled = evaluate_kernel::<T>(
             V.map(|v| scale(&v, 7.0)),
             [1.6, 2.4, 1.0],
             scale(&x, 7.0),
@@ -340,8 +365,8 @@ mod tests {
                 close(scaled.kernel[i][j], 14.0 * base.kernel[i][j], 1e-12);
             }
         }
-        assert!(evaluate::<T>([[0.0; 3]; 3], [1.0; 3], x, 1.0, 0.3).is_err());
-        assert!(evaluate::<T>(V, [1.0; 3], x, 0.0, 0.3).is_err());
-        assert!(evaluate::<T>(V, [1.0; 3], x, 1.0, 0.6).is_err());
+        assert!(evaluate_kernel::<T>([[0.0; 3]; 3], [1.0; 3], x, 1.0, 0.3).is_err());
+        assert!(evaluate_kernel::<T>(V, [1.0; 3], x, 0.0, 0.3).is_err());
+        assert!(evaluate_kernel::<T>(V, [1.0; 3], x, 1.0, 0.6).is_err());
     }
 }
