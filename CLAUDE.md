@@ -28,7 +28,7 @@ When asked to push:
 1. Check if `cargo publish` is possible by looking at the dependencies in Cargo.toml files. The dependent crate should be published in crates io.
 2. Commit the change following "committing changes", abort if there is any errors
 3. Check GitHub and check the CI passes or not. If CI does not succeed, abort. 
-4. Increment the version for "del-msh-cpu" and "del-msh-dlpack" and "del-msh-numpy" 
+4. Increment the version for "del-geo-core" and "del-geo-cpp-headers".
 5. create the tag with the version name (e.g., "v0.1.50") and push the tag
 6. Check GitHub and check the CI passes or not. If CI does not succeed, abort. 
 7. Generate release note in mark down format such that the user can put it on GitHub. 
